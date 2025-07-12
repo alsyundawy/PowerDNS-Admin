@@ -145,7 +145,7 @@ admin-lte@3.2.0:
     summernote "^0.8.20"
     sweetalert2 "^11.4.0"
     tempusdominus-bootstrap-4 "^5.39.3"
-	tempusdominus-core "^5.19.3":"
+    tempusdominus-core "^5.19.3"
     jquery ">=1.11"
     moment "^2.29.1"
 
