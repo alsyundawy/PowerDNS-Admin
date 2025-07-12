@@ -42,10 +42,10 @@
   resolved "https://registry.yarnpkg.com/@foliojs-fork/restructure/-/restructure-2.0.2.tgz#73759aba2aff1da87b7c4554e6839c70d43c92b4"
   integrity sha512-59SgoZ3EXbkfSX7b63tsou/SDGzwUEK6MuB5sKqgVK1/XE0fxmpsOb9DQI8LXW3KfGnAjImCGhhEb7uPPAUVNA==
 
-"@fortawesome/fontawesome-free@^5.15.4":
-  version "5.15.4"
-  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.15.4.tgz#ecda5712b61ac852c760d8b3c79c96adca5554e5"
-  integrity sha512-eYm8vijH/hpzr/6/1CJ/V/Eb1xQFW2nnUKArb3z+yUWv7HTwj6M7SP957oMjfZjAHU6qpoNc2wQvIxBLWYa/Jg==
+"@fortawesome/fontawesome-free@6.3.0", "@fortawesome/fontawesome-free@^5.15.4":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-6.3.0.tgz#b5877182692a6f7a39d1108837bec24247ba4bd7"
+  integrity sha512-qVtd5i1Cc7cdrqnTWqTObKQHjPWAiRwjUPaXObaeNPcy7+WKxJumGBx66rfSFgK6LNpIasVKkEgW8oyf0tmPLA==
 
 "@lgaitan/pace-progress@^1.0.7":
   version "1.0.7"
@@ -90,7 +90,7 @@ admin-lte@3.2.0:
     "@lgaitan/pace-progress" "^1.0.7"
     "@sweetalert2/theme-bootstrap-4" "^5.0.8"
     "@ttskch/select2-bootstrap4-theme" "^1.5.2"
-    bootstrap "^4.6.2"
+    bootstrap "^4.6.1"
     bootstrap-colorpicker "^3.4.0"
     bootstrap-slider "^11.0.2"
     bootstrap-switch "3.3.4"
@@ -126,12 +126,12 @@ admin-lte@3.2.0:
     icheck-bootstrap "^3.0.1"
     inputmask "^5.0.7"
     ion-rangeslider "^2.3.1"
-    jquery "^3.6.3"
+    jquery "^3.6.0"
     jquery-knob-chif "^1.2.13"
     jquery-mapael "^2.2.0"
     jquery-mousewheel "^3.1.13"
-    jquery-ui-dist "^1.13.3"
-    jquery-validation "^1.19.5"
+    jquery-ui-dist "^1.13.0"
+    jquery-validation "^1.19.3"
     jqvmap-novulnerability "^1.5.1"
     jsgrid "^1.5.3"
     jszip "^3.7.1"
@@ -144,12 +144,7 @@ admin-lte@3.2.0:
     sparklines "^1.3.0"
     summernote "^0.8.20"
     sweetalert2 "^11.4.0"
-    tempusdominus-bootstrap-4 "^5.39.3"
-    tempusdominus-core "^5.19.3"
-    jquery ">=1.11"
-    moment "^2.29.1"
-
-@popperjs/core@^2.11.6:
+    tempusdominus-bootstrap-4 "^5.39.0"
     toastr "^2.1.4"
     uplot "^1.6.18"
 
@@ -223,15 +218,15 @@ bootstrap4-duallistbox@^4.0.2:
   resolved "https://registry.yarnpkg.com/bootstrap4-duallistbox/-/bootstrap4-duallistbox-4.0.2.tgz#c6942e34a39d0d05e436d51ebaf31c9349f119d3"
   integrity sha512-vQdANVE2NN0HMaZO9qWJy0C7u04uTpAmtUGO3KLq3xAZKCboJweQ437hDTszI6pbYV2olJCGZMbdhvIkBNGeGQ==
 
-bootstrap@^4.6.2:
+bootstrap@4.6.2, bootstrap@^4.6.1:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-4.6.2.tgz#8e0cd61611728a5bf65a3a2b8d6ff6c77d5d7479"
   integrity sha512-51Bbp/Uxr9aTuy6ca/8FbFloBUJZLHwnhTcnjIeRn2suQWsWzcuJhGjKDB5eppVte/8oCdOL3VuwxvZDUggwGQ==
 
 bootstrap@>=4.0:
-  version "5.3.7"
-  resolved "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.7.tgz#8640065036124d961d885d80b5945745e1154d90"
-  integrity sha512-7KgiD8UHjfcPBHEpDNg+zGz8L3LqR3GVwqZiBRFX04a1BCArZOz1r2kjly2HQ0WokqTO0v1nF+QAt8dsW4lKlw==
+  version "5.2.3"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-5.2.3.tgz#54739f4414de121b9785c5da3c87b37ff008322b"
+  integrity sha512-cEKPM+fwb3cT8NzQZYEu4HilJ3anCrWqh3CHAok1p9jXqMPsPTBhU25fBckEJHJ/p+tTxTFTsFQGM+gaHpi3QQ==
 
 brfs@^2.0.0, brfs@^2.0.2:
   version "2.0.2"
@@ -323,9 +318,9 @@ clone@^1.0.4:
   integrity sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==
 
 codemirror@^5.65.1:
-  version "5.65.19"
-  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.65.19.tgz#71016c701d6a4b6e1982b0f6e7186be65e49653d"
-  integrity sha512-+aFkvqhaAVr1gferNMuN8vkTSrWIFvzlMV9I2KBLCWS2WpZ2+UAkZjlMZmEuT+gcXTi6RrGQCkWq1/bDtGqhIA==
+  version "5.65.11"
+  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.65.11.tgz#c818edc3274788c008f636520c5490a1f7009b4f"
+  integrity sha512-Gp62g2eKSCHYt10axmGhKq3WoJSvVpvhXmowNq7pZdRVowwtvBR/hi2LSP5srtctKkRT33T6/n8Kv1UGp7JW4A==
 
 color-convert@^1.9.3:
   version "1.9.3"
@@ -1024,14 +1019,14 @@ jquery-sparkline@^2.4.0:
   resolved "https://registry.yarnpkg.com/jquery-sparkline/-/jquery-sparkline-2.4.0.tgz#1be8b7b704dd3857152708aefb1d4a4b3a69fb33"
   integrity sha512-SzjpMkOwlnqZpH4Ni2UbdRU5GxDl/BljgN8Smlun7CXUDqRhjPf2eolJ37KKcaG0/ufsMKY+XDERfPTV1hIcjg==
 
-jquery-ui-dist@^1.13.3:
-  version "1.13.3"
-  resolved "https://registry.yarnpkg.com/jquery-ui-dist/-/jquery-ui-dist-1.13.3.tgz#13c186eb403e660c96b9b7edb7ae1466eaef9974"
-  integrity sha512-qeTR3SOSQ0jgxaNXSFU6+JtxdzNUSJKgp8LCzVrVKntM25+2YBJW1Ea8B2AwjmmSHfPLy2dSlZxJQN06OfVFhg==
+jquery-ui-dist@^1.13.0, jquery-ui-dist@^1.13.2:
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/jquery-ui-dist/-/jquery-ui-dist-1.13.2.tgz#899fbb3c6210de19ace10657cf844a3b97f3be70"
+  integrity sha512-oVDRd1NLtTbBwpRKAYdIRgpWVDzeBhfy7Gu0RmY6JEaZtmBq6kDn1pm5SgDiAotrnDS+RoTRXO6xvcNTxA9tOA==
   dependencies:
     jquery ">=1.8.0 <4.0.0"
 
-jquery-validation@^1.19.5:
+jquery-validation@^1.19.3, jquery-validation@^1.19.5:
   version "1.19.5"
   resolved "https://registry.yarnpkg.com/jquery-validation/-/jquery-validation-1.19.5.tgz#557495b7cad79716897057c4447ad3cd76fda811"
   integrity sha512-X2SmnPq1mRiDecVYL8edWx+yTBZDyC8ohWXFhXdtqFHgU9Wd4KHkvcbCoIZ0JaSaumzS8s2gXSkP8F7ivg/8ZQ==
@@ -1126,9 +1121,9 @@ minimist@^1.1.3:
   integrity sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==
 
 moment-timezone@^0.5.34:
-  version "0.5.45"
-  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.45.tgz#cb685acd56bac10e61a8e6a3d2070d3c8b7b6c6c"
-  integrity sha512-HIWmqA86KcmCAhnMAN0wuDOARV/525R2Vr3x2pJKQjDS1K1K9lAZ4u0c3n+PU03Fpsn2EiV8N8qOb6VrR0W4Epw==
+  version "0.5.40"
+  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.40.tgz#c148f5149fd91dd3e29bf481abc8830ecba16b89"
+  integrity sha512-tWfmNkRYmBkPJz5mr9GVDn9vRlVZOTe6yqY92rFxiOdWXbjaR0+9LwQnZGGuNR63X456NqmEkbskte8tWL5ePg==
   dependencies:
     moment ">= 2.9.0"
 
@@ -1505,17 +1500,3 @@ xtend@^4.0.2, xtend@~4.0.1:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.2.tgz#bb72779f5fa465186b1f438f674fa347fdb5db54"
   integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
-
-
-tempusdominus-core@5.19.3:
-  version "5.19.3"
-  resolved "https://registry.yarnpkg.com/tempusdominus-core/-/tempusdominus-core-5.19.3.tgz#767e7a0949d6f4b1e5f986a3b3437e7094185bd6"
-  integrity sha512-GfBa1OdM3miGwMb2NV7ZKaH3Gab7pXafVvILnZliiiAwYu94gWa4qYv0fA4C8oV3AXb/GGT7yQAZN5R3H+4wcRw==
-  dependencies:
-    jquery ">=1.11"
-    moment "^2.29.1"
-
-popperjs/core@^2.11.6:
-  version "2.11.8"
-  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032b035107b8331d7a7ae02c6abd5651fb6f"
-  integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
