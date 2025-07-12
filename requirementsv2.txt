@@ -1,4 +1,5 @@
 Authlib==1.6.0
+Flask==2.3.3
 Flask-Assets==2.1.0
 Flask-Login==0.6.3
 Flask-Mail==0.10.0
@@ -7,7 +8,7 @@ Flask-SQLAlchemy==2.5.1
 Flask-SSLify==0.1.5
 Flask-SeaSurf==2.0.0
 Flask-Session==0.8.0
-Flask==2.3.3
+flask_session_captcha==1.5.0
 Jinja2==3.1.6
 PyYAML==6.0.2
 SQLAlchemy==1.4.54
@@ -19,7 +20,6 @@ configobj==5.0.9
 cryptography==45.0.5
 cssmin==0.2.0
 dnspython>=2.7.0
-flask_session_captcha==1.5.0
 gunicorn==23.0.0
 itsdangerous==2.1.2
 jsonschema[format]>=3.2.0,<4.0.0  # until https://github.com/Yelp/bravado-core/pull/385
