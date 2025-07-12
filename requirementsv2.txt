@@ -32,6 +32,8 @@ pyotp==2.8.0
 pytest==8.3.5
 python-ldap==3.4.4
 python3-saml==1.16.0
+lxml==6.0.0
+xmlsec==1.3.16
 pytimeparse==1.1.8
 pytz==2025.2
 qrcode==7.3.1
