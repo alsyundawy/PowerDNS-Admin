@@ -1,4 +1,4 @@
-Authlib==1.6.1
+Authlib==1.6.0
 Flask-Assets==2.1.0
 Flask-Login==0.6.3
 Flask-Mail==0.10.0
@@ -12,10 +12,10 @@ Jinja2==3.1.6
 PyYAML==6.0.2
 SQLAlchemy==1.4.54
 #alembic==1.9.0
-bcrypt==4.3.0
-bravado-core==6.1.1
-certifi==2025.8.3
-cffi==1.17.1
+bcrypt==4.1.2
+bravado-core==5.17.1
+certifi==2025.7.14
+cffi==1.15.1
 configobj==5.0.9
 cryptography==45.0.5
 cssmin==0.2.0
@@ -29,14 +29,14 @@ lima==0.5
 mysqlclient==2.2.7
 passlib==1.7.4
 #pyOpenSSL==22.1.0
-pyasn1==0.6.1
-pyotp==2.9.0
-pytest==8.4.1
+pyasn1==0.4.8
+pyotp==2.8.0
+pytest==8.3.5
 python-ldap==3.4.4
 python3-saml==1.16.0
 pytimeparse==1.1.8
 pytz==2025.2
-qrcode==8.2
+qrcode==7.4.2
 requests==2.32.4
 rjsmin==1.2.4
 webcolors==24.11.1
@@ -46,3 +46,4 @@ rcssmin==1.2.1
 zxcvbn==4.5.0
 psycopg2==2.9.10
 setuptools==80.9.0
+rcssmin==1.2.1
