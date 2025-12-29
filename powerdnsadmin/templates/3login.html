@@ -6,13 +6,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Log in · {{ SITE_NAME }}</title>
 
-  <!-- Security & privacy meta (note: headers are stronger; set these server-side) -->
-  <meta name="referrer" content="no-referrer-when-downgrade">
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'nonce-{{ CSP_NONCE|default('') }}' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
-  <!-- Note: 'unsafe-inline' style-src is present because template includes inline styles.
-       To harden CSP later, move styles to external file and remove 'unsafe-inline'. -->
-
   <!-- Modern UI font -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -55,8 +48,6 @@
 
     form{display:block}
     .field{margin-bottom:12px}
-
-    /* input limits added for security: maxlength keeps client-side length reasonable without changing layout */
     .input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#fff;font-size:15px;outline:none;box-sizing:border-box}
     .input::placeholder{color:rgba(255,255,255,0.48)}
 
@@ -89,9 +80,6 @@
     .input:focus{box-shadow:0 0 0 4px rgba(96,165,250,0.06);border-color:rgba(96,165,250,0.4)}
     .btn-primary:focus{outline:3px solid rgba(96,165,250,0.12)}
     .alert{padding:10px;border-radius:10px;background:rgba(255,60,60,0.06);border:1px solid rgba(255,60,60,0.12);color:#ffb4b4;font-weight:600}
-
-    /* visually hide honeypot but keep it accessible to some bots (intended) */
-    .hp-field { position: absolute !important; left: -9999px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
   </style>
 </head>
 <body>
@@ -115,42 +103,26 @@
       </div>
 
       {% if error %}
-        <div class="alert" role="alert" aria-live="polite">{{ error }}</div>
+        <div class="alert" role="alert">{{ error }}</div>
       {% endif %}
 
       {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
-      <form id="loginForm"
-            action=""
-            method="post"
-            novalidate
-            autocomplete="off"
-            accept-charset="UTF-8"
-            aria-describedby="login-desc">
-
+      <form action="" method="post" novalidate>
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
-        <!-- Honeypot: bots will often fill this; server should reject if non-empty -->
-        <div class="hp-field" aria-hidden="true">
-          <label for="hp_name">Do not fill</label>
-          <input id="hp_name" name="hp_name" type="text" autocomplete="off" tabindex="-1">
-        </div>
 
         <div class="field">
           <label for="username" class="sr-only">Username</label>
-          <!-- client constraints: maxlength + pattern (server must revalidate) -->
-          <input id="username" name="username" type="text" class="input" placeholder="Username" required autofocus
-                 maxlength="64" pattern="[A-Za-z0-9@._\-]{1,64}" autocomplete="username"
-                 {% if username %}value="{{ username }}"{% endif %} aria-label="Username">
+          <input id="username" name="username" type="text" class="input" placeholder="Username" required autofocus {% if username %}value="{{ username }}"{% endif %} aria-label="Username">
         </div>
 
         <div class="field">
           <label for="password" class="sr-only">Password</label>
-          <input id="password" name="password" type="password" class="input" placeholder="Password" required maxlength="128" autocomplete="current-password" aria-label="Password">
+          <input id="password" name="password" type="password" class="input" placeholder="Password" required {% if password %}value="{{ password }}"{% endif %} aria-label="Password">
         </div>
 
         {% if SETTING.get('otp_field_enabled') %}
         <div class="field">
-          <input name="otptoken" type="text" class="input" placeholder="OTP token (if enabled)" autocomplete="one-time-code" aria-label="OTP Token" maxlength="12">
+          <input name="otptoken" type="text" class="input" placeholder="OTP token (if enabled)" autocomplete="off" aria-label="OTP Token">
         </div>
         {% endif %}
 
@@ -181,7 +153,7 @@
       {% endif %}
 
       {% if SETTING.get('google_oauth_enabled') or SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled') or SETTING.get('azure_oauth_enabled') %}
-      <div style="margin-top:6px" id="login-desc">
+      <div style="margin-top:6px">
         {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
           <div class="helper">— OR —</div>
         {% endif %}
@@ -211,11 +183,7 @@
         <div class="helper">No account? <a href="{{ url_for('index.register') }}">Create an account</a></div>
       {% endif %}
 
-      <div class="footer" role="contentinfo">
-        Powered by <a href="https://github.com/alsyundawy/PowerDNS-Admin" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a>
-        <span aria-hidden="true" style="opacity:0.6;margin:0 8px">|</span>
-        Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a>
-      </div>
+      <div class="footer">Powered by <a href="https://github.com/alsyundawy/PowerDNS-Admin" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a> <span aria-hidden="true" style="opacity:0.6;margin:0 8px">|</span> Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a></div>
 
     </main>
   </div>
@@ -224,134 +192,10 @@
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
   {%- endassets %}
 
-  <!-- Inline client-side hygiene script. Use nonce to satisfy CSP if server provides one -->
-  <script nonce="{{ CSP_NONCE|default('') }}">
+  <script>
     (function(){
-      // client-side hygiene: trim and enforce length before submit (server-side must re-validate)
-      var form = document.getElementById('loginForm');
-      if(form){
-        form.addEventListener('submit', function(e){
-          var hp = document.getElementById('hp_name');
-          if(hp && hp.value && hp.value.trim() !== ''){
-            // honeypot filled - likely bot. prevent submit and optionally report.
-            e.preventDefault();
-            // Optionally: show a generic message (do not expose details)
-            alert('Invalid submission.');
-            return;
-          }
-          var u = document.getElementById('username');
-          var p = document.getElementById('password');
-          if(u && p){
-            u.value = u.value.trim().slice(0,64);
-            p.value = p.value.slice(0,128);
-          }
-        }, {passive:false});
-      }
       var u = document.getElementById('username'); if(u) try{u.focus();u.select()}catch(e){}
     })();
   </script>
-
-  <!--
-    SERVER-SIDE SECURITY CHECKLIST & IMPLEMENTATION NOTES (must be implemented on server / webserver)
-
-    1) CSP & Nonce:
-       - Generate a cryptographically secure nonce per-request and pass to template as CSP_NONCE.
-       - Set CSP header (preferred) rather than only meta tag:
-         Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-<nonce>'; style-src 'self' 'nonce-<nonce>' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:;
-       - Avoid 'unsafe-inline' after moving inline styles/scripts to external files.
-
-    2) Cookies & Sessions:
-       - SESSION_COOKIE_SECURE = True (only over HTTPS)
-       - SESSION_COOKIE_HTTPONLY = True
-       - SESSION_COOKIE_SAMESITE = 'Lax' or 'Strict' as appropriate
-       - regenerate session id on login (session.regenerate / clear + new id)
-
-    3) Password hashing and verification:
-       - Use Argon2 (recommended) or bcrypt with secure parameters.
-       - Verify in constant time; use library functions (argon2.PasswordHasher.verify)
-       - Rehash stored passwords when parameters change.
-
-    4) Rate limiting & account protection:
-       - Apply per-IP and per-account rate limits (e.g., 5 attempts per minute).
-       - Implement progressive backoff, temporary account lockout after N failures, or CAPTCHA.
-       - Log failed attempts (timestamp, IP) for audit; do not log passwords.
-
-    5) Avoid username enumeration:
-       - Always return the same generic error "Invalid credentials" and same timing for missing user
-         (use dummy hash verification to equalize time when user not found).
-
-    6) SQL & DB:
-       - Use ORM (SQLAlchemy) or parameterized queries only.
-       - Never construct SQL by string interpolation with user input.
-
-    7) Response headers (set on server or via reverse proxy):
-       - Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-       - X-Frame-Options: DENY
-       - X-Content-Type-Options: nosniff
-       - Referrer-Policy: same-origin or no-referrer-when-downgrade
-       - Permissions-Policy: (as applicable)
-
-    8) Logging & Monitoring:
-       - Ship auth logs to a secure log store; monitor abnormal patterns.
-       - Alert on repeated failures, brute-force patterns.
-
-    9) Third-party OAuth / SSO:
-       - Validate redirect_uris, state parameters, use PKCE where appropriate.
-       - Limit scopes to least privilege.
-
-    10) Development hygiene:
-       - Keep dependencies up-to-date; run SCA scans.
-       - Use secure default config (no debug mode on production).
-
-    Minimal server-side Flask example snippet (login verification sketch):
-
-    from argon2 import PasswordHasher
-    from sqlalchemy.exc import SQLAlchemyError
-    from flask_limiter import Limiter
-    from flask import request, render_template, session, redirect, url_for, flash
-
-    limiter = Limiter(app, key_func=get_remote_address)
-    ph = PasswordHasher()
-
-    @app.route('/login', methods=['GET','POST'])
-    @limiter.limit("5 per minute")
-    def login():
-        if request.method == 'POST':
-            username = (request.form.get('username') or '').strip()[:64]
-            pwd = (request.form.get('password') or '')[:128]
-            hp = request.form.get('hp_name','')
-            if hp:
-                # honeypot filled -> reject silently
-                flash('Invalid credentials', 'error')
-                return render_template('login.html')
-            if not username or not pwd:
-                flash('Invalid credentials', 'error')
-                return render_template('login.html')
-            try:
-                user = User.query.filter_by(username=username).first()
-            except SQLAlchemyError:
-                flash('Internal error', 'error')
-                return render_template('login.html')
-            # timing-equalization: always run a password verify attempt
-            dummy_hash = '$argon2id$v=19$m=102400,t=2,p=8$...'
-            try:
-                if user:
-                    ph.verify(user.password_hash, pwd)
-                    # success: create session, regen id, redirect
-                    session.clear()
-                    session['user_id'] = user.id
-                    return redirect(url_for('index'))
-                else:
-                    # verify against dummy to match timing
-                    ph.verify(dummy_hash, pwd)
-            except Exception:
-                pass
-            flash('Invalid credentials', 'error')
-            return render_template('login.html')
-        # GET
-        return render_template('login.html')
-
-    ------------------------------------------------------------------------------------------------------------
-  -->
 </body>
 </html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Log In - {{ SITE_NAME }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta http-equiv="refresh" content="{{ 60 * SETTING.get('session_timeout') }}">
+
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    {# keep existing asset pipeline if present (optional) #}
+    {% assets "css_login" -%}
+        <link rel="stylesheet" href="{{ ASSET_URL }}">
+    {%- endassets %}
+
+    {% if SETTING.get('custom_css') %}
+        <link rel="stylesheet" href="/static/custom/{{ SETTING.get('custom_css') }}">
+    {% endif %}
+
+    <style>
+        /* Modern, elegant login styles (self-contained override) */
+        :root{
+            --bg-1: #0f1724; /* deep slate */
+            --bg-2: #081226; /* gradient end */
+            --card-bg: rgba(255,255,255,0.04);
+            --card-border: rgba(255,255,255,0.06);
+            --accent: linear-gradient(90deg,#5eead4,#60a5fa);
+            --muted: rgba(255,255,255,0.65);
+            --glass: rgba(255,255,255,0.03);
+        }
+        html,body{height:100%;margin:0;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 600px at 10% 10%, rgba(96,165,250,0.06), transparent), linear-gradient(120deg,var(--bg-1), var(--bg-2)); color:#fff}
+        .login-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+        .login-card{width:100%;max-width:420px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--card-border);border-radius:14px;padding:28px;box-shadow:0 10px 30px rgba(2,6,23,0.6);backdrop-filter: blur(6px)}
+        .brand{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:8px}
+        .brand img{max-height:56px;max-width:160px;object-fit:contain}
+        .brand .site-name{font-weight:700;font-size:20px;letter-spacing:0.4px;color:var(--muted)}
+        .login-title{text-align:center;font-size:18px;margin:6px 0 18px;color:#e6eef8}
+        .help-block{color: #fca5a5}
+        .form-control{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:var(--glass);color:#fff;outline:none;box-sizing:border-box}
+        .form-control::placeholder{color:rgba(255,255,255,0.5)}
+        .input-group{margin-bottom:14px}
+        .btn-primary{width:100%;padding:12px;border-radius:10px;border:0;background-image:var(--accent);color:#042027;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(96,165,250,0.12);}
+        .btn-social{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff;margin-top:8px}
+        .helper-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+        .remember{display:flex;align-items:center;gap:8px;color:var(--muted)}
+        .login-footer{text-align:center;margin-top:14px;color:rgba(255,255,255,0.6);font-size:13px}
+        .logo-wrap{display:flex;align-items:center;justify-content:center;padding:10px;border-radius:10px}
+
+        /* small screens */
+        @media (max-width:420px){.login-card{padding:20px;border-radius:12px}.brand img{max-height:46px}}
+    </style>
+</head>
+<body class="hold-transition">
+<div class="login-wrapper">
+    <div class="login-card" role="main" aria-labelledby="login-heading">
+        <div class="brand">
+            {% if SETTING.get('site_logo') %}
+                <div class="logo-wrap">
+                    {% if SETTING.get('site_logo').startswith('http') %}
+                        <img src="{{ SETTING.get('site_logo') }}" alt="{{ SITE_NAME }} logo">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/' ~ SETTING.get('site_logo')) }}" alt="{{ SITE_NAME }} logo">
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="site-name">
+                {% if SETTING.get('site_name') %}
+                    {{ SETTING.get('site_name') }}
+                {% else %}
+                    <strong>{{ SITE_NAME }}</strong>
+                {% endif %}
+            </div>
+        </div>
+
+        <h2 id="login-heading" class="login-title">Sign in to continue</h2>
+
+        <div class="login-body">
+            {% if error %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endif %}
+
+            {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+                <form action="" method="post" novalidate>
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="input-group">
+                        <input id="username" name="username" type="text" class="form-control" placeholder="Username" required autofocus {% if username %}value="{{ username }}"{% endif %} aria-label="Username">
+                    </div>
+
+                    <div class="input-group">
+                        <input id="password" name="password" type="password" class="form-control" placeholder="Password" required {% if password %}value="{{ password }}"{% endif %} aria-label="Password">
+                    </div>
+
+                    {% if SETTING.get('otp_field_enabled') %}
+                        <div class="input-group">
+                            <input name="otptoken" type="text" class="form-control" placeholder="OTP Token" autocomplete="off" aria-label="OTP Token">
+                        </div>
+                    {% endif %}
+
+                    {# authentication selection (keeps compatibility) #}
+                    {% if SETTING.get('ldap_enabled') and SETTING.get('local_db_enabled') %}
+                        <div class="input-group">
+                            <select class="form-control" name="auth_method">
+                                <option value="LOCAL">LOCAL Authentication</option>
+                                {% if SETTING.get('login_ldap_first') %}
+                                    <option value="LDAP" selected>LDAP Authentication</option>
+                                {% else %}
+                                    <option value="LDAP">LDAP Authentication</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    {% elif SETTING.get('ldap_enabled') and not SETTING.get('local_db_enabled') %}
+                        <input type="hidden" name="auth_method" value="LDAP">
+                    {% else %}
+                        <input type="hidden" name="auth_method" value="LOCAL">
+                    {% endif %}
+
+                    <div style="margin-top:8px">
+                        <div class="helper-row">
+                            <label class="remember"><input type="checkbox" name="remember" id="remember"> Remember Me</label>
+                            <button type="submit" class="btn-primary">Sign In</button>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+
+            {% if SETTING.get('google_oauth_enabled') or SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled') or SETTING.get('azure_oauth_enabled') %}
+                <div style="margin-top:14px">
+                    {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+                        <div class="login-footer">— OR —</div>
+                    {% endif %}
+
+                    {% if SETTING.get('oidc_oauth_enabled') %}
+                        <a href="{{ url_for('index.oidc_login') }}" class="btn-social" role="button">Sign in using OpenID Connect</a>
+                    {% endif %}
+                    {% if SETTING.get('github_oauth_enabled') %}
+                        <a href="{{ url_for('index.github_login') }}" class="btn-social" role="button">Sign in using Github</a>
+                    {% endif %}
+                    {% if SETTING.get('google_oauth_enabled') %}
+                        <a href="{{ url_for('index.google_login') }}" class="btn-social" role="button">Sign in using Google</a>
+                    {% endif %}
+                    {% if SETTING.get('azure_oauth_enabled') %}
+                        <a href="{{ url_for('index.azure_login') }}" class="btn-social" role="button">Sign in using Microsoft Azure</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if saml_enabled %}
+                <div style="margin-top:10px;text-align:center"><a href="{{ url_for('index.saml_login') }}">SAML login</a></div>
+            {% endif %}
+
+            {% if SETTING.get('signup_enabled') %}
+                <div style="margin-top:12px;text-align:center">
+                    <a href="{{ url_for('index.register') }}">Create an account</a>
+                    {% if SETTING.get('verify_user_email') %}<div><a href="{{ url_for('index.resend_confirmation_email') }}">Resend confirmation email</a></div>{% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+
+        <div class="login-footer" style="margin-top:18px">
+            Powered by <a href="https://github.com/ngoduykhanh/PowerDNS-Admin" target="_blank" rel="noopener">PowerDNS-Admin</a>
+        </div>
+
+    </div>
+</div>
+
+{# keep existing JS pipeline (optional) #}
+{% assets "js_login" -%}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+{%- endassets %}
+
+<script>
+    // small progressive enhancement: focus username on load
+    (function(){
+        try{document.getElementById('username') && document.getElementById('username').focus();}catch(e){}
+    })();
+</script>
+</body>
+</html>
