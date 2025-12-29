@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: [ "master" ]
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * *'
 
 # If using a dependency submission action in this workflow this permission will need to be set to:
 #
