@@ -12,7 +12,6 @@ Flask==2.2.5
 Jinja2==3.1.6
 PyYAML==6.0.3
 SQLAlchemy==1.4.54
-#alembic==1.9.0
 bcrypt==5.0.0
 bravado-core==6.1.1
 certifi==2025.11.12
@@ -28,7 +27,6 @@ lima==0.5
 --use-feature=no-binary-enable-wheel-cache lxml==4.9.4
 mysqlclient==2.2.7
 passlib==1.7.4
-#pyOpenSSL==22.1.0
 pyasn1==0.6.1
 pyotp==2.9.0
 pytest==9.0.2
