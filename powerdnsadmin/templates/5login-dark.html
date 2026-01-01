@@ -1,0 +1,198 @@
+<!--
+  Login template
+  Description: Responsive, accessible login page for PowerDNS-Admin. Preserves existing Jinja placeholders and server-side hooks (csrf, settings, oauth links).
+  Author: ALSYUNDAWY IT SOLUTION (modified)
+  Created: 2026-01-02
+  Updated: 2026-01-02
+  Notes:
+    - Default theme is LIGHT; user toggle stored in localStorage as "pdns_theme" ("light"|"dark").
+    - Inline JS uses CSP nonce via {{ CSP_NONCE|default('') }}.
+    - CSS & JS are minified for production-readiness; keep server CSP consistent with inline nonce if you lock down script-src.
+    - Avoided common adblock-trigger classnames (no "ads","promo","banner", etc).
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Log in · {{ SITE_NAME }}</title>
+<meta name="referrer" content="no-referrer-when-downgrade">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<meta http-equiv="refresh" content="{{ 60 * SETTING.get('session_timeout') }}">
+<link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+{% assets "css_login" -%}
+  <link rel="stylesheet" href="{{ ASSET_URL }}">
+{%- endassets %}
+
+<style>
+/* Minified CSS - theme-ready (light default). Keep variables to allow quick tuning. */
+:root{--bg: #ffffff;--card:#ffffff;--muted:#58606a;--text:#0b1220;--glass:rgba(2,6,23,0.04);--accent-from:#06b6d4;--accent-to:#2563eb;--radius:14px;--glass-border:rgba(2,6,23,0.06);color-scheme:light}
+[data-theme="dark"]{--bg:#071120;--card:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));--muted:rgba(255,255,255,0.68);--text:#ffffff;--glass:rgba(255,255,255,0.02);--glass-border:rgba(255,255,255,0.04);--accent-from:#5eead4;--accent-to:#60a5fa;color-scheme:dark}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 18px;gap:18px;box-sizing:border-box}
+.site-header{display:flex;align-items:center;justify-content:center;padding:6px}
+.site-header img{height:72px;object-fit:contain}
+.card{width:100%;max-width:560px;padding:28px;border-radius:18px;background:var(--card);border:1px solid var(--glass-border);box-shadow:0 10px 40px var(--glass);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;box-sizing:border-box}
+.brand{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:2px}
+.brand .title{font-weight:700;font-size:20px;color:var(--text);letter-spacing:0.2px}
+.brand .subtitle{font-size:15px;color:var(--muted);margin-top:2px}
+form{display:block}
+.field{margin-bottom:12px}
+.input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid rgba(11,17,32,0.06);background:transparent;color:var(--text);font-size:15px;outline:none;box-sizing:border-box}
+.input::placeholder{color:var(--muted)}
+.row{display:flex;gap:12px;align-items:center}
+.row .left{flex:0 0 auto}
+.row .right{flex:1 1 auto;display:flex;justify-content:flex-end}
+.remember{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600}
+.remember input{width:18px;height:18px;appearance:none;border-radius:4px;border:1px solid rgba(11,17,32,0.12);background:transparent;display:inline-block}
+.remember input:checked{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));border:0}
+.btn{padding:10px 16px;border-radius:12px;border:0;font-weight:700;cursor:pointer;background:transparent}
+.btn-primary{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));color:#042027;box-shadow:0 8px 24px rgba(37,99,235,0.12)}
+.cta{min-width:220px}
+.helper{font-size:14px;color:var(--muted);text-align:center;margin-top:6px}
+.helper a{color:var(--accent-to);text-decoration:none;font-weight:600}
+.footer{text-align:center;color:var(--muted);font-size:13px;margin-top:6px}
+.footer a{color:var(--accent-to)}
+.alert{padding:10px;border-radius:10px;background:rgba(255,60,60,0.06);border:1px solid rgba(255,60,60,0.12);color:#ffb4b4;font-weight:600}
+.hp-field{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important}
+.theme-toggle{position:fixed;top:12px;right:12px;z-index:1200;display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;cursor:pointer;backdrop-filter:blur(6px)}
+.theme-toggle svg{display:block;width:22px;height:22px}
+.input:focus{box-shadow:0 0 0 4px rgba(37,99,235,0.06);border-color:rgba(37,99,235,0.4)}
+.btn-primary:focus{outline:3px solid rgba(37,99,235,0.12)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media (max-width:520px){.card{padding:20px;border-radius:12px}.site-header img{height:56px}.row{flex-direction:column;align-items:stretch}.row .right{justify-content:stretch}.cta{width:100%}}
+@media (min-width:2000px){.card{max-width:760px;padding:44px;border-radius:20px}} 
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="site-header" role="banner">
+    {% set header_logo = SETTING.get('site_logo') if SETTING.get('site_logo') else 'logo.png' %}
+    {% if header_logo.startswith('http') %}
+      <a href="/" aria-label="Home"><img src="{{ header_logo }}" alt="{{ SITE_NAME }} logo"></a>
+    {% else %}
+      <a href="/" aria-label="Home"><img src="{{ url_for('static', filename='img/' ~ header_logo) }}" alt="{{ SITE_NAME }} logo"></a>
+    {% endif %}
+  </header>
+
+  <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" aria-pressed="false" title="Toggle light/dark">
+    <!-- SVGs combined; JS will toggle visibility via aria-pressed -->
+    <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  </button>
+
+  <main class="card" role="main" aria-labelledby="login-title">
+    <div class="brand">
+      <div class="title" id="login-title">{{ SETTING.get('site_name') or SITE_NAME }}</div>
+      <div class="subtitle">Sign in to continue</div>
+    </div>
+
+    {% if error %}
+      <div class="alert" role="alert" aria-live="polite">{{ error }}</div>
+    {% endif %}
+
+    {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+    <form id="loginForm" action="" method="post" novalidate autocomplete="off" accept-charset="UTF-8" aria-describedby="login-desc">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="hp-field" aria-hidden="true">
+        <label for="hp_name">Do not fill</label>
+        <input id="hp_name" name="hp_name" type="text" autocomplete="off" tabindex="-1">
+      </div>
+
+      <div class="field">
+        <label for="username" class="sr-only">Username</label>
+        <input id="username" name="username" type="text" class="input" placeholder="Username" required autofocus maxlength="64" pattern="[A-Za-z0-9@._\-]{1,64}" autocomplete="username" {% if username %}value="{{ username }}"{% endif %} aria-label="Username">
+      </div>
+
+      <div class="field">
+        <label for="password" class="sr-only">Password</label>
+        <input id="password" name="password" type="password" class="input" placeholder="Password" required maxlength="128" autocomplete="current-password" aria-label="Password">
+      </div>
+
+      {% if SETTING.get('otp_field_enabled') %}
+      <div class="field">
+        <input name="otptoken" type="text" class="input" placeholder="OTP token (if enabled)" autocomplete="one-time-code" aria-label="OTP Token" maxlength="12">
+      </div>
+      {% endif %}
+
+      {% if SETTING.get('ldap_enabled') and SETTING.get('local_db_enabled') %}
+      <div class="field">
+        <select class="input" name="auth_method" aria-label="Authentication method">
+          <option value="LOCAL">Local Authentication</option>
+          <option value="LDAP" {% if SETTING.get('login_ldap_first') %}selected{% endif %}>LDAP Authentication</option>
+        </select>
+      </div>
+      {% elif SETTING.get('ldap_enabled') and not SETTING.get('local_db_enabled') %}
+        <input type="hidden" name="auth_method" value="LDAP">
+      {% else %}
+        <input type="hidden" name="auth_method" value="LOCAL">
+      {% endif %}
+
+      <div class="row" style="margin-top:6px">
+        <div class="left">
+          <label class="remember"><input type="checkbox" name="remember" id="remember"> Remember me</label>
+        </div>
+        <div class="right">
+          <button type="submit" class="btn btn-primary cta" aria-label="Sign in">Sign In</button>
+        </div>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if SETTING.get('google_oauth_enabled') or SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled') or SETTING.get('azure_oauth_enabled') %}
+    <div style="margin-top:6px" id="login-desc">
+      {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+        <div class="helper">— OR —</div>
+      {% endif %}
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        {% if SETTING.get('oidc_oauth_enabled') %}
+          <a href="{{ url_for('index.oidc_login') }}" class="btn" style="border:1px solid rgba(11,17,32,0.04);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with OpenID Connect</a>
+        {% endif %}
+        {% if SETTING.get('github_oauth_enabled') %}
+          <a href="{{ url_for('index.github_login') }}" class="btn" style="border:1px solid rgba(11,17,32,0.04);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with GitHub</a>
+        {% endif %}
+        {% if SETTING.get('google_oauth_enabled') %}
+          <a href="{{ url_for('index.google_login') }}" class="btn" style="border:1px solid rgba(11,17,32,0.04);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with Google</a>
+        {% endif %}
+        {% if SETTING.get('azure_oauth_enabled') %}
+          <a href="{{ url_for('index.azure_login') }}" class="btn" style="border:1px solid rgba(11,17,32,0.04);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with Microsoft</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if saml_enabled %}
+      <div style="text-align:center"><a href="{{ url_for('index.saml_login') }}" style="color:var(--accent-to);text-decoration:none;font-weight:600">SAML login</a></div>
+    {% endif %}
+
+    {% if SETTING.get('signup_enabled') %}
+      <div class="helper">No account? <a href="{{ url_for('index.register') }}">Create an account</a></div>
+    {% endif %}
+
+    <div class="footer" role="contentinfo">
+      Powered by <a href="https://github.com/alsyundawy/PowerDNS-Admin" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a>
+      <span aria-hidden="true" style="opacity:0.6;margin:0 8px">|</span>
+      Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a>
+    </div>
+  </main>
+</div>
+
+{% assets "js_login" -%}
+  <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+{%- endassets %}
+
+<script nonce="{{ CSP_NONCE|default('') }}">
+/* Minified client JS: theme toggle + form hygiene. Keep nonce for CSP. */
+(function(){try{var ls=localStorage,doc=document,win=window;function setTheme(t){doc.documentElement.setAttribute('data-theme',t);var btn=doc.getElementById('themeToggle');if(btn){btn.setAttribute('aria-pressed',t==='dark');}var sun=doc.getElementById('iconSun'),moon=doc.getElementById('iconMoon');if(sun&&moon){if(t==='dark'){sun.style.display='none';moon.style.display='block'}else{sun.style.display='block';moon.style.display='none'}}}
+var pref=(function(){try{return ls.getItem('pdns_theme')||'light'}catch(e){return 'light'}})();setTheme(pref);
+var toggle=document.getElementById('themeToggle');if(toggle){toggle.addEventListener('click',function(){try{var cur=doc.documentElement.getAttribute('data-theme')||'light',next=cur==='dark'?'light':'dark';setTheme(next);try{ls.setItem('pdns_theme',next)}catch(e){}}catch(e){}});}
+var form=doc.getElementById('loginForm');if(form){form.addEventListener('submit',function(e){try{var hp=doc.getElementById('hp_name');if(hp&&hp.value&&hp.value.trim()!==''){e.preventDefault();alert('Invalid submission.');return}var u=doc.getElementById('username'),p=doc.getElementById('password');if(u&&p){u.value=u.value.trim().slice(0,64);p.value=p.value.slice(0,128)}}catch(er){}},{passive:false});}
+var u=doc.getElementById('username');if(u)try{u.focus();u.select()}catch(e){} }catch(err){} })();
+</script>
+</body>
+</html>

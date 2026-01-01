@@ -1,14 +1,13 @@
 <!--
   FILE: templates/login.html
-  DESCRIPTION: Login page template with default DARK theme and robust logo fallbacks.
+  DESCRIPTION: Login page template (PowerDNS-Admin style) with light/dark theme toggle.
   AUTHOR: ALSYUNDAWY IT SOLUTION
   CREATED: 2023-01-01
   LAST_UPDATED: 2026-01-02
   NOTES:
-    - Struktur form & Jinja dipertahankan.
-    - Default theme: dark (unless user has saved preference in localStorage).
-    - Logo selection: prefer SETTING.site_logo_light / site_logo_dark; if absent -> SETTING.site_logo -> 'logo.png'.
-    - Inline CSS/JS minified for performance; use CSP nonce if provided.
+    - Struktur form dan template Jinja2 dipertahankan.
+    - Client-side JS performs minimal hygiene only; server MUST re-validate all inputs.
+    - Inline CSS/JS are minified for performance; CSP nonce token is used for inline script tag.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -18,8 +17,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Log in · {{ SITE_NAME }}</title>
 
+  <!-- Security meta (prefer setting stronger headers server-side) -->
   <meta name="referrer" content="no-referrer-when-downgrade">
 
+  <!-- Modern UI font -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <meta http-equiv="refresh" content="{{ 60 * SETTING.get('session_timeout') }}">
@@ -29,57 +30,40 @@
     <link rel="stylesheet" href="{{ ASSET_URL }}">
   {%- endassets %}
 
-  {# Logo selection logic:
-     - logo_default = SETTING.site_logo or 'logo.png'
-     - logo_light = SETTING.site_logo_light if provided else logo_default
-     - logo_dark  = SETTING.site_logo_dark  if provided else logo_default
-     This guarantees that if logo1/logo2 absent, logo_default (logo.png) will be used.
-  #}
-  {% set logo_default = SETTING.get('site_logo') if SETTING.get('site_logo') else 'logo.png' %}
-  {% set logo_light = SETTING.get('site_logo_light') if SETTING.get('site_logo_light') else logo_default %}
-  {% set logo_dark  = SETTING.get('site_logo_dark')  if SETTING.get('site_logo_dark')  else logo_default %}
-
-  {# Determine URL for light/dark logos (allow absolute URLs) #}
-  {% if logo_light.startswith('http') %}
-    {% set light_src = logo_light %}
-  {% else %}
-    {% set light_src = url_for('static', filename='img/' ~ logo_light) %}
-  {% endif %}
-  {% if logo_dark.startswith('http') %}
-    {% set dark_src = logo_dark %}
-  {% else %}
-    {% set dark_src = url_for('static', filename='img/' ~ logo_dark) %}
-  {% endif %}
-
   <style>
-/* Minified CSS: variables for light/dark; typography sharpening; responsive; accessible */
-:root{--bg-1:#ffffff;--bg-2:#f7fbff;--glass-border:rgba(2,6,23,0.04);--text-primary:#04131a;--text-muted:rgba(2,6,23,0.6);--accent-from:#06b6d4;--accent-to:#3b82f6;--radius:14px;color-scheme:light}
-[data-theme="dark"]{--bg-1:#071120;--bg-2:#081428;--glass-border:rgba(255,255,255,0.04);--text-primary:#ffffff;--text-muted:rgba(255,255,255,0.68);--accent-from:#5eead4;--accent-to:#60a5fa;--radius:14px;color-scheme:dark}
-*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;background:radial-gradient(800px 400px at 10% 10%,rgba(96,165,250,0.03),transparent),linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--text-primary)}
+:root{--bg-1:#ffffff;--bg-2:#f7fbff;--glass-border:rgba(2,6,23,0.04);--muted:rgba(2,6,23,0.6);--accent-from:#06b6d4;--accent-to:#3b82f6;--radius:14px;color-scheme:light}
+[data-theme="dark"]{--bg-1:#071120;--bg-2:#081428;--glass-border:rgba(255,255,255,0.04);--muted:rgba(255,255,255,0.68);--accent-from:#5eead4;--accent-to:#60a5fa;--radius:14px;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,-apple-system; -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;background:radial-gradient(800px 400px at 10% 10%,rgba(96,165,250,0.03),transparent),linear-gradient(180deg,var(--bg-1),var(--bg-2));color:var(--muted)}
 .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:3.2rem 1.2rem;gap:1.125rem;transition:background .25s ease}
 .site-header{display:flex;align-items:center;justify-content:center;padding:0.375rem 0}
-.site-header img{height:72px;object-fit:contain;-webkit-user-drag:none;user-select:none}
+.site-header img{height:72px;object-fit:contain}
 .theme-toggle{position:fixed;right:16px;top:12px;z-index:60;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--glass-border);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 6px 18px rgba(2,6,23,0.06);cursor:pointer}
 .theme-toggle:focus{outline:3px solid rgba(59,130,246,0.18)}
 .card{width:100%;max-width:560px;padding:32px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid var(--glass-border);box-shadow:0 10px 50px rgba(2,6,23,0.06);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:16px;align-items:stretch;position:relative;overflow:hidden;min-width:260px}
 .brand{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:4px}
-.brand .title{font-weight:700;font-size:1.125rem;color:var(--text-primary);letter-spacing:0.2px}
-.brand .subtitle{font-size:.9375rem;color:var(--text-muted);margin-top:2px}
-form{display:block}.field{margin-bottom:0.75rem}
-.input{width:100%;padding:0.875rem 1rem;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.85);color:var(--text-primary);font-size:0.9375rem;outline:none;box-sizing:border-box}
+.brand .title{font-weight:700;font-size:1.125rem;color:var(--muted);letter-spacing:0.2px}
+.brand .subtitle{font-size:.9375rem;color:var(--muted);margin-top:2px}
+form{display:block}
+.field{margin-bottom:0.75rem}
+.input{width:100%;padding:0.875rem 1rem;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.85);color:#04131a;font-size:0.9375rem;outline:none;box-sizing:border-box}
 [data-theme="dark"] .input{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);color:#fff}
-.input::placeholder{color:rgba(2,6,23,0.35)} [data-theme="dark"] .input::placeholder{color:rgba(255,255,255,0.48)}
-.row{display:flex;gap:12px;align-items:center}.row .left{flex:0 0 auto}.row .right{flex:1 1 auto;display:flex;justify-content:flex-end}
-.remember{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-weight:600}
+.input::placeholder{color:rgba(2,6,23,0.35)}
+[data-theme="dark"] .input::placeholder{color:rgba(255,255,255,0.48)}
+.row{display:flex;gap:12px;align-items:center}
+.row .left{flex:0 0 auto}
+.row .right{flex:1 1 auto;display:flex;justify-content:flex-end}
+.remember{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600}
 .remember input{width:18px;height:18px;appearance:none;border-radius:4px;border:1px solid rgba(0,0,0,0.12);background:transparent;display:inline-block}
 [data-theme="dark"] .remember input{border:1px solid rgba(255,255,255,0.12)}
 .remember input:checked{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));border:0}
 .btn{padding:0.75rem 1.25rem;border-radius:12px;border:0;font-weight:700;cursor:pointer}
 .btn-primary{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));color:#042027;box-shadow:0 8px 24px rgba(96,165,250,0.12)}
 .cta{min-width:220px}
-.helper{font-size:0.875rem;color:var(--text-muted);text-align:center;margin-top:6px}
+.helper{font-size:0.875rem;color:var(--muted);text-align:center;margin-top:6px}
 .helper a{color:var(--accent-to);text-decoration:none;font-weight:600}
-.footer{text-align:center;color:var(--text-muted);font-size:0.8125rem;margin-top:6px}
+.footer{text-align:center;color:rgba(2,6,23,0.6);font-size:0.8125rem;margin-top:6px}
+[data-theme="dark"] .footer{color:rgba(255,255,255,0.6)}
+.footer a{color:rgba(96,165,250,0.95)}
 .alert{padding:10px;border-radius:10px;background:rgba(255,60,60,0.06);border:1px solid rgba(255,60,60,0.12);color:#ffb4b4;font-weight:600}
 .hp-field{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important}
 .input:focus{box-shadow:0 0 0 4px rgba(96,165,250,0.06);border-color:rgba(96,165,250,0.4)}
@@ -92,16 +76,17 @@ form{display:block}.field{margin-bottom:0.75rem}
 <body>
   <div class="page" id="pageRoot">
     <header class="site-header" role="banner">
-      <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
-        <img id="siteLogo"
-             src="{{ dark_src }}" 
-             data-light-src="{{ light_src }}"
-             data-dark-src="{{ dark_src }}"
-             alt="{{ SETTING.get('site_name') or SITE_NAME }} logo" />
-      </a>
+      {% set header_logo = SETTING.get('site_logo') if SETTING.get('site_logo') else 'logo.png' %}
+      {% if header_logo.startswith('http') %}
+        <a href="/" aria-label="Home"><img src="{{ header_logo }}" alt="{{ SITE_NAME }} logo"></a>
+      {% else %}
+        <a href="/" aria-label="Home"><img src="{{ url_for('static', filename='img/' ~ header_logo) }}" alt="{{ SITE_NAME }} logo"></a>
+      {% endif %}
     </header>
 
+    <!-- Theme toggle -->
     <button id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme" type="button">
+      <!-- Inline SVG icon (kept small to avoid external asset blocking) -->
       <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
         <path d="M12 3v2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
         <path d="M12 19v2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
@@ -181,16 +166,16 @@ form{display:block}.field{margin-bottom:0.75rem}
         {% endif %}
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
           {% if SETTING.get('oidc_oauth_enabled') %}
-            <a href="{{ url_for('index.oidc_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--text-muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with OpenID Connect</a>
+            <a href="{{ url_for('index.oidc_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with OpenID Connect</a>
           {% endif %}
           {% if SETTING.get('github_oauth_enabled') %}
-            <a href="{{ url_for('index.github_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--text-muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with GitHub</a>
+            <a href="{{ url_for('index.github_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with GitHub</a>
           {% endif %}
           {% if SETTING.get('google_oauth_enabled') %}
-            <a href="{{ url_for('index.google_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--text-muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with Google</a>
+            <a href="{{ url_for('index.google_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with Google</a>
           {% endif %}
           {% if SETTING.get('azure_oauth_enabled') %}
-            <a href="{{ url_for('index.azure_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--text-muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with Microsoft</a>
+            <a href="{{ url_for('index.azure_login') }}" class="btn" style="border:1px solid var(--glass-border);background:transparent;color:var(--muted);padding:10px;border-radius:10px;text-decoration:none;text-align:center;">Sign in with Microsoft</a>
           {% endif %}
         </div>
       </div>
@@ -217,8 +202,7 @@ form{display:block}.field{margin-bottom:0.75rem}
   {%- endassets %}
 
   <script nonce="{{ CSP_NONCE|default('') }}">
-/* minified script: default DARK theme, logo fallback, and form hygiene */
-(function(){var d=document,ls=window.localStorage||null,root=d.documentElement,logo=d.getElementById('siteLogo'),toggle=d.getElementById('themeToggle'),icon=d.getElementById('themeIcon');function applyTheme(t){if(!t)t='dark';root.setAttribute('data-theme',t);if(logo){var l=logo.getAttribute('data-light-src')||logo.src,r=logo.getAttribute('data-dark-src')||logo.src;logo.src=(t==='dark'?r:l);}try{if(ls)ls.setItem('site-theme',t);}catch(e){}}function getStoredOrDefault(){try{if(ls){var s=ls.getItem('site-theme');if(s)return s}}catch(e){}return'dark'}function updateIcon(t){if(!icon)return;var isDark=t==='dark';if(isDark){icon.innerHTML='<path d=\"M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z\" fill=\"currentColor\"/>'}else{icon.innerHTML='<g stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.6\"><path d=\"M12 3v2\"/><path d=\"M12 19v2\"/><path d=\"M4.22 4.22l1.42 1.42\"/><path d=\"M18.36 18.36l1.42 1.42\"/><path d=\"M1 12h2\"/><path d=\"M21 12h2\"/><path d=\"M4.22 19.78l1.42-1.42\"/><path d=\"M18.36 5.64l1.42-1.42\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/></g>'}}function toggleTheme(){var cur=root.getAttribute('data-theme')||'dark';applyTheme(cur==='dark'?'light':'dark');updateIcon(root.getAttribute('data-theme'))}if(toggle){toggle.addEventListener('click',function(e){e.preventDefault();toggleTheme();},false);toggle.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleTheme()}});}var initial=getStoredOrDefault();applyTheme(initial);updateIcon(initial);var form=d.getElementById('loginForm');if(form){form.addEventListener('submit',function(e){var hp=d.getElementById('hp_name');if(hp&&hp.value&&hp.value.trim()!==''){e.preventDefault();alert('Invalid submission.');return;}var u=d.getElementById('username'),p=d.getElementById('password');if(u)u.value=u.value.trim().slice(0,64);if(p)p.value=p.value.slice(0,128);},{passive:false});}try{var u0=d.getElementById('username');if(u0)try{u0.focus();u0.select()}catch(e){} }catch(e){} })();
+/*!minified-client-js*/(function(){var doc=window.document,ls=window.localStorage||null,root=doc.documentElement,pageRoot=doc.getElementById('pageRoot'),toggle=doc.getElementById('themeToggle'),icon=doc.getElementById('themeIcon');function applyTheme(t){if(!t) t='light';root.setAttribute('data-theme',t);if(pageRoot) pageRoot.style.transition='background .25s ease';if(ls) try{ls.setItem('site-theme',t)}catch(e){}updateIcon(t);}function readStored(){try{if(ls){var s=ls.getItem('site-theme');if(s) return s}}catch(e){}var mq=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)');if(mq&&mq.matches) return 'dark';return 'light';}function updateIcon(t){if(!icon) return;var isDark=t==='dark';icon.innerHTML=isDark?'<path d=\"M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z\" fill=\"currentColor\"/>':'<g stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.6\"><path d=\"M12 3v2\"/><path d=\"M12 19v2\"/><path d=\"M4.22 4.22l1.42 1.42\"/><path d=\"M18.36 18.36l1.42 1.42\"/><path d=\"M1 12h2\"/><path d=\"M21 12h2\"/><path d=\"M4.22 19.78l1.42-1.42\"/><path d=\"M18.36 5.64l1.42-1.42\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/></g>';}function toggleTheme(){var cur=root.getAttribute('data-theme')||'light';applyTheme(cur==='light'?'dark':'light')}if(toggle){toggle.addEventListener('click',function(e){e.preventDefault();toggleTheme();},false);toggle.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleTheme()}});}applyTheme(readStored());/* form hygiene */var form=doc.getElementById('loginForm');if(form){form.addEventListener('submit',function(e){var hp=doc.getElementById('hp_name');if(hp&&hp.value&&hp.value.trim()!==''){e.preventDefault();alert('Invalid submission.');return;}var u=doc.getElementById('username'),p=doc.getElementById('password');if(u){u.value=u.value.trim().slice(0,64)}if(p){p.value=p.value.slice(0,128)}},{passive:false});}try{var u0=doc.getElementById('username');if(u0)try{u0.focus();u0.select()}catch(e){} }catch(e){};})();
   </script>
 </body>
 </html>
