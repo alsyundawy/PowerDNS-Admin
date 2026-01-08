@@ -283,31 +283,31 @@ def api_login_delete_zone(domain_name):
     current_app.logger.debug(msg_str.format(domain_name))
 
     try:
-        resp = utils.fetch_remote(urljoin(pdns_api_url, api_full_uri),
-                                  method='DELETE',
-                                  headers=headers,
-                                  accept='application/json; q=1',
-                                  verify=Setting().get('verify_ssl_connections'))
+        # Use fetch_json to enforce JSON handling and avoid returning raw upstream content
+        resp = utils.fetch_json(urljoin(pdns_api_url, api_full_uri),
+                                method='DELETE',
+                                headers=headers,
+                                verify=Setting().get('verify_ssl_connections'))
 
-        if resp.status_code == 204:
-            current_app.logger.debug("Request to powerdns API successful")
+        current_app.logger.debug("Request to powerdns API successful")
 
-            domain = Domain()
-            domain_id = domain.get_id_by_name(domain_name)
-            domain.update()
+        domain = Domain()
+        domain_id = domain.get_id_by_name(domain_name)
+        domain.update()
 
-            history = History(msg='Delete zone {0}'.format(
-                utils.pretty_domain_name(domain_name)),
-                detail='',
-                created_by=current_user.username,
-                domain_id=domain_id)
-            history.add()
+        history = History(msg='Delete zone {0}'.format(
+            utils.pretty_domain_name(domain_name)),
+            detail='',
+            created_by=current_user.username,
+            domain_id=domain_id)
+        history.add()
 
     except Exception as e:
         current_app.logger.error('Error: {0}'.format(e))
         abort(500)
 
-    return resp.content, resp.status_code, resp.headers.items()
+    # Return a controlled empty JSON response instead of raw upstream content
+    return jsonify({}), 204
 
 
 @api_bp.route('/pdnsadmin/apikeys', methods=['POST'])
