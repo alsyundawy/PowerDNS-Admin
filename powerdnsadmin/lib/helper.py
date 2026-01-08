@@ -28,7 +28,13 @@ def forward_request():
         'X-API-KEY': pdns_api_key
     }
 
-    url = urljoin(pdns_api_url, request.full_path)
+    # Build a relative path from the incoming request path and query string
+    relative_path = request.path
+    if request.query_string:
+        # request.query_string is bytes; decode safely to str
+        relative_path = relative_path + "?" + request.query_string.decode("utf-8", "ignore")
+
+    url = urljoin(pdns_api_url, relative_path)
 
     resp = requests.request(request.method,
                             url,
