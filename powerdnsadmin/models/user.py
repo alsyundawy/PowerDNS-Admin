@@ -232,8 +232,10 @@ class User(db.Model):
                         .format(self.username, src_ip))
                     return False
 
+            # Escape user-controlled username before using it in LDAP filter
+            escaped_username = ldap.filter.escape_filter_chars(self.username or '')
             searchFilter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME,
-                                                    self.username,
+                                                    escaped_username,
                                                     LDAP_FILTER_BASIC)
             current_app.logger.debug('Ldap searchFilter {0}'.format(searchFilter))
 
