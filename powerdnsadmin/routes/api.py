@@ -1201,23 +1201,31 @@ def api_get_zones(server_id):
             current_app.logger.debug("Account zones: {}".format('/'.join(accounts_domains)))
             content = json.dumps([i for i in json.loads(resp.content)
                                   if i['name'].rstrip('.') in allowed_domains])
-            return content, resp.status_code, resp.headers.items()
+            response = make_response(content, resp.status_code)
+            response.headers['Content-Type'] = 'application/json'
+            return response
         else:
-            return resp.content, resp.status_code, resp.headers.items()
+            response = make_response(resp.content, resp.status_code)
+            response.headers['Content-Type'] = 'application/json'
+            return response
 
 
 @api_bp.route('/servers', methods=['GET'])
 @apikey_auth
 def api_server_forward():
     resp = helper.forward_request()
-    return resp.content, resp.status_code, resp.headers.items()
+    response = make_response(resp.content, resp.status_code)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 
 @api_bp.route('/servers/<string:server_id>', methods=['GET'])
 @apikey_auth
 def api_server_config_forward(server_id):
     resp = helper.forward_request()
-    return resp.content, resp.status_code, resp.headers.items()
+    response = make_response(resp.content, resp.status_code)
+    response.headers['Content-Type'] = 'application/json'
+    return response
 
 
 # The endpoint to synchronize Domains in background
