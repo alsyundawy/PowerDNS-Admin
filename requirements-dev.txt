@@ -62,7 +62,7 @@ bravado-core==6.1.1
 certifi==2025.11.12
 cffi==2.0.0
 configobj==5.0.9
-cryptography==46.0.3
+cryptography==46.0.5
 cssmin==0.2.0
 dnspython>=2.8.0
 gunicorn==23.0.0
@@ -73,7 +73,7 @@ lima==0.5
 mysqlclient==2.2.7
 passlib==1.7.4
 #pyOpenSSL==22.1.0
-pyasn1==0.6.1
+pyasn1==0.6.2
 pyotp==2.9.0
 pytest==9.0.2
 python-ldap==3.4.5
