@@ -1,5 +1,5 @@
 gatot
-Authlib==1.6.6
+Authlib==1.6.12
 Flask-Assets==2.1.0
 Flask-Login==0.6.3
 Flask-Mail==0.10.0
@@ -26,7 +26,7 @@ flask_session_captcha==1.3.0
 
 
 Working
-Authlib==1.6.6
+Authlib==1.6.12
 Flask-Assets==2.1.0
 Flask-Login==0.6.3
 Flask-Mail==0.10.0
@@ -38,7 +38,7 @@ Flask-Session==0.4.0
 flask_session_captcha==1.3.0
 
 dev
-Authlib==1.6.6
+Authlib==1.6.12
 Flask-Assets==2.1.0
 Flask-Login==0.6.3
 Flask-Mail==0.10.0
@@ -62,7 +62,7 @@ bravado-core==6.1.1
 certifi==2025.11.12
 cffi==2.0.0
 configobj==5.0.9
-cryptography==46.0.5
+cryptography==46.0.7
 cssmin==0.2.0
 dnspython>=2.8.0
 gunicorn==23.0.0
@@ -73,18 +73,18 @@ lima==0.5
 mysqlclient==2.2.7
 passlib==1.7.4
 #pyOpenSSL==22.1.0
-pyasn1==0.6.2
+pyasn1==0.6.3
 pyotp==2.9.0
-pytest==9.0.2
+pytest==9.0.3
 python-ldap==3.4.5
 python3-saml==1.16.0
 pytimeparse==1.1.8
 pytz==2025.2
 qrcode==8.2
-requests==2.32.5
+requests==2.33.0
 rjsmin==1.2.5
 webcolors==25.10.0
-werkzeug==3.1.4
+werkzeug==3.1.6
 zipp==3.23.0
 rcssmin==1.2.2
 zxcvbn==4.5.0
