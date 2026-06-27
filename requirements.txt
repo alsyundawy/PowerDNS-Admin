@@ -17,7 +17,7 @@ bravado-core==6.4.1
 certifi==2026.5.20
 cffi==2.0.0
 configobj==5.0.9
-cryptography==48.0.0
+cryptography==48.0.1
 cssmin==0.2.0
 dnspython>=2.8.0
 gunicorn==26.0.0
