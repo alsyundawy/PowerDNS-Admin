@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class>
 <head>
     {% block head %}
         <meta charset="utf-8">
@@ -9,7 +9,9 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/style.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/source_sans_pro.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/roboto_mono.css') }}">
+        <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <!-- Tell Safari to not recognise telephone numbers -->
         <meta name="format-detection" content="telephone=no">
         {% assets "css_main" -%}
             <link rel="stylesheet" href="{{ ASSET_URL }}">{%- endassets %}
@@ -25,24 +27,28 @@
 <div class="wrapper">
     {% block pageheader %}
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Header Navbar: style can be found in header.less -->
+            <!-- Sidebar toggle button-->
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link no-prompt" data-widget="pushmenu" href="#" role="button" aria-label="Toggle sidebar">
+                    <a class="nav-link no-prompt" data-widget="pushmenu" href="#" role="button">
                         <i class="fa-solid fa-bars"></i>
                     </a>
                 </li>
             </ul>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <a class="nav-link no-prompt" data-widget="fullscreen" href="#" role="button" aria-label="Toggle fullscreen">
+                    <a class="nav-link no-prompt" data-widget="fullscreen" href="#" role="button">
                         <i class="fa-solid fa-expand-arrows-alt"></i>
                     </a>
                 </li>
             </ul>
         </nav>
-    {% endblock %}
 
+    {% endblock %}
+    <!-- Left side column. contains the logo and sidebar -->
     <aside class="main-sidebar sidebar-dark-primary">
+        <!-- Logo -->
         <a href="{{ url_for('index.index') }}" class="brand-link">
             <img src="{{ url_for('static', filename='img/favicon.png') }}" alt="PowerDNS-Admin FavIcon"
                  class="brand-image img-circle elevation-3" style="opacity: .8">
@@ -54,7 +60,7 @@
         {% endif %}
       </span>
         </a>
-
+        <!-- sidebar: style can be found in sidebar.less -->
         <div class="sidebar">
             {% if current_user.id is defined %}
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
@@ -70,7 +76,7 @@
                         </span>
                     </div>
                 </div>
-
+                <!-- sidebar menu: : style can be found in sidebar.less -->
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
                     <li class="nav-header">Zone Management</li>
                     <li class="{{ 'nav-item active' if active_page == 'nav-item dashboard' else 'nav-item' }}">
@@ -79,7 +85,6 @@
                             <p>Dashboard</p>
                         </a>
                     </li>
-
                     {% if SETTING.get('allow_user_create_domain') or current_user.role.name in ['Administrator', 'Operator'] %}
                         <li class="{{ 'nav-item active' if active_page == 'nav-item new_domain' else 'nav-item' }}">
                             <a href="{{ url_for('domain.add') }}" class="nav-link">
@@ -88,7 +93,6 @@
                             </a>
                         </li>
                     {% endif %}
-
                     {% if SETTING.get('allow_user_remove_domain') or current_user.role.name in ['Administrator', 'Operator'] %}
                         <li class="{{ 'nav-item active' if active_page == 'remove_domain' else 'nav-item' }}">
                             <a href="{{ url_for('domain.remove') }}" class="nav-link">
@@ -97,7 +101,6 @@
                             </a>
                         </li>
                     {% endif %}
-
                     <li class="nav-header">Administration</li>
                     <li class="{{ 'nav-item active' if active_page == 'admin_global_search' else 'nav-item' }}">
                         <a href="{{ url_for('admin.global_search') }}" class="nav-link">
@@ -105,7 +108,6 @@
                             <p>Global Search</p>
                         </a>
                     </li>
-
                     {% if current_user.role.name in ['Administrator', 'Operator'] or SETTING.get('allow_user_view_history') %}
                         <li class="{{ 'nav-item active' if active_page == 'admin_history' else 'nav-item' }}">
                             <a href="{{ url_for('admin.history') }}" class="nav-link">
@@ -114,7 +116,6 @@
                             </a>
                         </li>
                     {% endif %}
-
                     {% if current_user.role.name in ['Administrator', 'Operator'] %}
                         <li class="{{ 'nav-item active' if active_page == 'server_statistics' else 'nav-item' }}">
                             <a href="{{ url_for('admin.server_statistics') }}" class="nav-link">
@@ -153,7 +154,7 @@
                             </a>
                         </li>
                         <li class="{{ 'nav-item active' if active_page == 'admin_settings' else 'nav-item' }}">
-                            <a href="#" class="nav-link no-prompt" aria-expanded="{{ 'true' if active_page == 'admin_settings' else 'false' }}">
+                            <a href="#" class="nav-link no-prompt">
                                 <i class="nav-icon fa-solid fa-cog"></i>
                                 <p>
                                     Settings
@@ -194,10 +195,13 @@
                 </ul>
             {% endif %}
         </div>
+        <!-- /.sidebar -->
     </aside>
 
+    <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
         {% block dashboard_stat %}
+            <!-- Content Header (Page header) -->
             <div class="content-header">
                 <div class="container-fluid">
                     <div class="row mb-2">
@@ -217,39 +221,37 @@
                 </div>
             </div>
         {% endblock %}
-
         {% block content %}
         {% endblock %}
     </div>
-
+    <!-- /.content-wrapper -->
     <footer class="main-footer">
         <strong><a href="https://github.com/alsyundawy/PowerDNS-Admin">PowerDNS-Admin Modified By Alsyundawy</a></strong> - A PowerDNS web
         interface with advanced features.
         <span class="float-right">Version 0.4.2 Modified By Alsyundawy</span>
     </footer>
 </div>
-
+<!-- ./wrapper -->
 <script type="text/javascript">
-    const SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-    const PDNS_VERSION = {{ pdns_version|tojson|safe }};
-    window.SCRIPT_ROOT = SCRIPT_ROOT;
-    window.PDNS_VERSION = PDNS_VERSION;
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    var PDNS_VERSION = '{{ pdns_version }}';
 </script>
-
 {% block scripts %}
     {% assets "js_main" -%}
         <script type="text/javascript" src="{{ ASSET_URL }}"></script>
         {% if SETTING.get('warn_session_timeout') and current_user.is_authenticated %}
             <script>
-                const sessionWarningChannel = new BroadcastChannel('powerdnsadmin');
-
-                sessionWarningChannel.addEventListener('message', function (e) {
-                    if (e.data === 'close_session_timeout_modal') {
-                        $('#modal_session_warning').modal('hide');
+                // close the session warning popup when receive
+                // a boradcast message
+                var bc = new BroadcastChannel('powerdnsadmin');
+                bc.addEventListener('message', function (e) {
+                    if (e.data == 'close_session_timeout_modal') {
+                        $("#modal_session_warning").modal('hide');
                     }
                 });
 
-                $(document.body).on('click', '.button_stay_signed_in', function () {
+                // Stay Signed In button click event
+                $(document.body).on("click", ".button_stay_signed_in", function (e) {
                     $.get({
                         url: $.jTimeout().options.extendUrl,
                         cache: false,
@@ -260,21 +262,25 @@
                     $.jTimeout().options.onClickExtend();
                 });
 
-                $(document.body).on('click', '.button_sign_out', function () {
+                // Sign Out button click event
+                $(document.body).on("click", ".button_sign_out", function (e) {
                     window.location.replace("{{ url_for('index.logout') }}");
                 });
 
+                // Things happen when session warning popup shown
                 $(document).on('show.bs.modal', '#modal_session_warning', function () {
-                    const secondsLeft = jTimeout.getSecondsTillExpiration();
-                    const timerHandle = timer($('#modal-time'), secondsLeft);
+                    var secondsLeft = jTimeout.getSecondsTillExpiration();
+                    var t = timer($('#modal-time'), secondsLeft);
 
                     $(this).on('hidden.bs.modal', function () {
-                        clearInterval(timerHandle);
-                        $('#modal-time').text('');
+                        clearInterval(t);
+                        $('#modal-time').text("");
                         $(this).off('hidden.bs.modal');
                     });
+
                 });
 
+                // jTimeout definition
                 $(function () {
                     $.jTimeout({
                         flashTitle: true,
@@ -291,10 +297,15 @@
                         loginUrl: '{{ url_for("index.login") }}',
 
                         onClickExtend: function () {
-                            sessionWarningChannel.postMessage('close_session_timeout_modal');
+                            // broadcast a message to tell other tabes
+                            // close the session warning popup
+                            var bc = new BroadcastChannel('powerdnsadmin');
+                            bc.postMessage('close_session_timeout_modal');
                         },
 
                         onMouseMove: function () {
+                            // if the mouse is moving while popup is present, we
+                            // don't extend the session.
                             if (!$('#modal_session_warning').hasClass('in')) {
                                 $.get({
                                     url: $.jTimeout().options.extendUrl,
@@ -306,16 +317,17 @@
                             }
                         },
 
-                        onTimeout: function () {
+                        onTimeout: function (jTimeout) {
                             window.location.replace("{{ url_for('index.logout') }}");
                         },
 
-                        onPriorCallback: function () {
-                            $('#modal_session_warning').modal('show');
+                        onPriorCallback: function (jTimeout) {
+                            $("#modal_session_warning").modal('show');
+                            ;
                         },
 
-                        onSessionExtended: function () {
-                            $('#modal_session_warning').modal('hide');
+                        onSessionExtended: function (jTimeout) {
+                            $("#modal_session_warning").modal('hide');
                         }
                     });
                 });
@@ -327,7 +339,7 @@
                 }
 
                 function showSuccessModal(message) {
-                    var modal = $('#modal_success');
+                    var modal = $("#modal_success");
                     modal.find('.modal-body p').text(message);
                     modal.modal('show');
                 }
@@ -335,10 +347,8 @@
         {% endif %}
     {%- endassets %}
 {% endblock %}
-
 {% block extrascripts %}
 {% endblock %}
-
 {% block defaultmodals %}
     <div class="modal fade modal-danger" id="modal_error">
         <div class="modal-dialog">
@@ -360,7 +370,7 @@
             </div>
         </div>
     </div>
-
+    <!-- /.modal -->
     <div class="modal fade modal-success" id="modal_success">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -381,7 +391,6 @@
             </div>
         </div>
     </div>
-
     <div class="modal fade modal-warning" data-backdrop="static" id="modal_session_warning">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -391,10 +400,11 @@
                 <div class="modal-body">
                     <p>Your session is about to expire. You will be automatically signed out in</p>
                     <h3><span id="modal-time"></span></h3>
-                    <p>To continue your session, select <strong>Stay Signed In</strong>.</p>
+                    <p>To coninue your ssession, select <strong>Stay Signed In</strong></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success float-right button_stay_signed_in" data-dismiss="modal">
+                    <button type="button" class="btn btn-success float-right button_stay_signed_in"
+                            data-dismiss="modal">
                         Stay Signed In
                     </button>
                     <button type="button" class="btn btn-danger float-left button_sign_out" data-dismiss="modal">
@@ -405,7 +415,6 @@
         </div>
     </div>
 {% endblock %}
-
 {% block modals %}
 {% endblock %}
 </body>

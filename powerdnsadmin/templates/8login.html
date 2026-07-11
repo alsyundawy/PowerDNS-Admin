@@ -1,0 +1,637 @@
+<!--
+  FILE: templates/login.html
+  DESCRIPTION: Login page template with dual-dark high-contrast themes and robust logo fallbacks.
+  AUTHOR: ALSYUNDAWY IT SOLUTION
+  CREATED: 2023-01-01
+  LAST_UPDATED: 2026-06-29
+  CHANGELOG:
+    - 2026-06-29: Re-designed both themes as eye-friendly dark modes (Slate Blue & Obsidian Dark) to prevent eye strain.
+    - 2026-06-29: Forced the use of the bright/light logo variant (dark_src) in all modes so the white subtitle is clearly visible.
+    - 2026-06-29: Increased the contrast of all text, borders, and input fields for maximum readability.
+    - 2026-06-29: Added inline flash-prevention script in <head> to eliminate dark/light theme flashes (FOUC).
+    - 2026-06-29: Added inline script right after logo to prevent dual logo fetches on load.
+    - 2026-06-29: Improved semantic hierarchy (changed title div to <h1>) for proper SEO and accessibility.
+    - 2026-06-29: Added meta description for better SEO indexing.
+    - 2026-06-29: Removed username input regex pattern attribute to prevent LDAP/OAuth character-restriction bugs.
+    - 2026-06-29: Added error box shake animations and customized checkbox design with checkmark indicator.
+    - 2026-06-29: Refactored OAuth buttons inline styles to a clean, transition-supported CSS class (.btn-oauth).
+    - 2026-06-29: Secured session timeout Jinja variable multiplication fallback to prevent server 500 errors.
+    - 2026-06-29: Removed novalidate to enable browser-native field validation.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Log in · {{ SITE_NAME }}</title>
+  <meta name="description" content="Log in to your account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations." />
+
+  <meta name="referrer" content="no-referrer-when-downgrade">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  
+  {% set session_timeout = SETTING.get('session_timeout')|int(15) %}
+  <meta http-equiv="refresh" content="{{ 60 * session_timeout }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+  {% assets "css_login" -%}
+    <link rel="stylesheet" href="{{ ASSET_URL }}">
+  {%- endassets %}
+
+  {# Logo selection logic:
+     - logo_default = SETTING.site_logo or 'logo.png'
+     - logo_light = SETTING.site_logo_light if provided else logo_default
+     - logo_dark  = SETTING.site_logo_dark  if provided else logo_default
+     This guarantees that if logo1/logo2 absent, logo_default (logo.png) will be used.
+  #}
+  {% set logo_default = SETTING.get('site_logo') if SETTING.get('site_logo') else 'logo.png' %}
+  {% set logo_light = SETTING.get('site_logo_light') or logo_default %}
+  {% set logo_dark  = SETTING.get('site_logo_dark')  or logo_default %}
+
+  {# Determine URL for light/dark logos (allow absolute URLs) #}
+  {% if logo_light.startswith('http') %}
+    {% set light_src = logo_light %}
+  {% else %}
+    {% set light_src = url_for('static', filename='img/' ~ logo_light) %}
+  {% endif %}
+  {% if logo_dark.startswith('http') %}
+    {% set dark_src = logo_dark %}
+  {% else %}
+    {% set dark_src = url_for('static', filename='img/' ~ logo_dark) %}
+  {% endif %}
+
+  <script nonce="{{ CSP_NONCE|default('') }}">
+    (function(){
+      var t='dark';
+      try{t=localStorage.getItem('site-theme')||'dark'}catch(e){}
+      document.documentElement.setAttribute('data-theme',t);
+    })();
+  </script>
+
+  <style>
+/* Custom Properties & Themes */
+:root {
+  --bg-1: #0f172a;
+  --bg-2: #020617;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-from: #38bdf8;
+  --accent-to: #0ea5e9;
+  --glass-border: rgba(56, 189, 248, 0.22);
+  --card-bg: rgba(15, 23, 42, 0.65);
+  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.15);
+  --input-bg: rgba(2, 6, 23, 0.55);
+  --input-border: rgba(56, 189, 248, 0.3);
+  --radius: 14px;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] {
+  --bg-1: #0a0518;
+  --bg-2: #02010a;
+  --text-primary: #ffffff;
+  --text-muted: #a5b4fc;
+  --accent-from: #818cf8;
+  --accent-to: #6366f1;
+  --glass-border: rgba(129, 140, 248, 0.22);
+  --card-bg: rgba(10, 5, 24, 0.68);
+  --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.15);
+  --input-bg: rgba(2, 1, 10, 0.6);
+  --input-border: rgba(129, 140, 248, 0.3);
+  --radius: 14px;
+  color-scheme: dark;
+}
+
+/* Core Page Setup */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15), transparent 50%), linear-gradient(180deg, var(--bg-1), var(--bg-2));
+  color: var(--text-primary);
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] html, [data-theme="dark"] body {
+  background: radial-gradient(circle at 50% -20%, rgba(129, 140, 248, 0.15), transparent 50%), linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.2rem;
+  gap: 1.5rem;
+}
+
+/* Header & Logo */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.site-header img {
+  height: 72px;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: fixed;
+  right: 16px;
+  top: 12px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.theme-toggle:focus {
+  outline: 3px solid rgba(59, 130, 246, 0.25);
+}
+.theme-toggle:hover {
+  transform: scale(1.08) rotate(8deg);
+  border-color: var(--accent-to);
+  color: var(--accent-to);
+}
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Glassmorphism Card Container */
+.card {
+  width: 100%;
+  max-width: 500px;
+  padding: 36px;
+  border-radius: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  min-width: 280px;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Branding Headers */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.brand .title {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+  margin: 0;
+}
+.brand .subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Forms & Inputs */
+form {
+  display: block;
+}
+.field {
+  margin-bottom: 0.875rem;
+}
+.input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.65;
+}
+.input:focus {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-to);
+  background: var(--bg-1);
+}
+
+/* Flex Row layout */
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.row .left {
+  flex: 0 0 auto;
+}
+.row .right {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Remember Me Switch */
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  user-select: none;
+  cursor: pointer;
+}
+.remember input {
+  width: 18px;
+  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  display: inline-block;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+.remember input:hover {
+  border-color: var(--accent-to);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+.remember input:checked {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  border-color: transparent;
+}
+.remember input:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid #0b1329;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Buttons (Primary & OAuth) */
+.btn {
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  color: #0b1329;
+  box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.5);
+  filter: brightness(1.05);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+.btn-primary:focus {
+  outline: 3px solid rgba(59, 130, 246, 0.3);
+}
+.cta {
+  min-width: 200px;
+}
+
+/* OAuth Button Style */
+.btn-oauth {
+  display: block;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 11px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-oauth:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-to);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.btn-oauth:active {
+  transform: translateY(0);
+}
+
+/* Alert / Errors */
+.alert {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+  animation: shake 0.4s ease;
+}
+
+/* Utility classes */
+.helper {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 6px;
+}
+.helper a {
+  color: var(--accent-to);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+.helper a:hover {
+  color: var(--accent-from);
+}
+
+.footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+.footer a:hover {
+  color: var(--accent-to);
+}
+
+.hp-field {
+  position: absolute !important;
+  left: -9999px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+.sr-only {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Responsive layout adjustments */
+@media (max-width: 520px) {
+  .card {
+    padding: 24px;
+    border-radius: 16px;
+  }
+  .site-header img {
+    height: 56px;
+  }
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .row .right {
+    justify-content: stretch;
+  }
+  .cta {
+    width: 100%;
+  }
+}
+@media (min-width: 1600px) {
+  .card {
+    max-width: 600px;
+    padding: 40px;
+    border-radius: 24px;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="page" id="pageRoot">
+    <header class="site-header" role="banner">
+      <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
+        <!-- Always load the bright/light logo (dark_src) in both modes so white subtitle text is fully legible on dark backgrounds -->
+        <img id="siteLogo"
+             src="{{ dark_src }}" 
+             data-light-src="{{ dark_src }}"
+             data-dark-src="{{ dark_src }}"
+             alt="{{ SETTING.get('site_name') or SITE_NAME }} logo" />
+        <script nonce="{{ CSP_NONCE|default('') }}">
+          (function(){
+            try {
+              var t = localStorage.getItem('site-theme') || 'dark';
+              var img = document.getElementById('siteLogo');
+              if (img && t === 'light') {
+                var l = img.getAttribute('data-light-src');
+                if (l) {
+                  try {
+                    var u = new URL(l, window.location.origin);
+                    if ((u.protocol === 'http:' || u.protocol === 'https:') && u.origin === window.location.origin) {
+                      img.src = u.href;
+                    }
+                  } catch (e) {}
+                }
+              }
+            } catch(e) {}
+          })();
+        </script>
+      </a>
+    </header>
+
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme" type="button">
+      <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <path d="M12 3v2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M12 19v2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M4.22 4.22l1.42 1.42" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M18.36 18.36l1.42 1.42" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M1 12h2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M21 12h2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M4.22 19.78l1.42-1.42" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+      </svg>
+    </button>
+
+    <main class="card" role="main" aria-labelledby="login-title">
+      <div class="brand">
+        <h1 id="login-title" class="title">{{ SETTING.get('site_name') or SITE_NAME }}</h1>
+        <div class="subtitle">Sign in to continue</div>
+      </div>
+
+      {% if error %}
+        <div class="alert" role="alert" aria-live="polite">{{ error }}</div>
+      {% endif %}
+
+      {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+      <form id="loginForm" action="" method="post" autocomplete="off" accept-charset="UTF-8" aria-describedby="login-desc">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <div class="hp-field" aria-hidden="true">
+          <label for="hp_name">Do not fill</label>
+          <input id="hp_name" name="hp_name" type="text" autocomplete="off" tabindex="-1">
+        </div>
+
+        <div class="field">
+          <label for="username" class="sr-only">Username</label>
+          <input id="username" name="username" type="text" class="input" placeholder="Username" required autofocus maxlength="64" autocomplete="username" {% if username %}value="{{ username }}"{% endif %} aria-label="Username">
+        </div>
+
+        <div class="field">
+          <label for="password" class="sr-only">Password</label>
+          <input id="password" name="password" type="password" class="input" placeholder="Password" required maxlength="128" autocomplete="current-password" aria-label="Password">
+        </div>
+
+        {% if SETTING.get('otp_field_enabled') %}
+        <div class="field">
+          <input name="otptoken" type="text" class="input" placeholder="OTP token (if enabled)" autocomplete="one-time-code" aria-label="OTP Token" maxlength="12">
+        </div>
+        {% endif %}
+
+        {% if SETTING.get('ldap_enabled') and SETTING.get('local_db_enabled') %}
+        <div class="field">
+          <select class="input" name="auth_method" aria-label="Authentication method">
+            <option value="LOCAL">Local Authentication</option>
+            <option value="LDAP" {% if SETTING.get('login_ldap_first') %}selected{% endif %}>LDAP Authentication</option>
+          </select>
+        </div>
+        {% elif SETTING.get('ldap_enabled') and not SETTING.get('local_db_enabled') %}
+          <input type="hidden" name="auth_method" value="LDAP">
+        {% else %}
+          <input type="hidden" name="auth_method" value="LOCAL">
+        {% endif %}
+
+        <div class="row" style="margin-top:6px">
+          <div class="left">
+            <label class="remember"><input type="checkbox" name="remember" id="remember"> Remember me</label>
+          </div>
+
+          <div class="right">
+            <button type="submit" class="btn btn-primary cta" aria-label="Sign in">Sign In</button>
+          </div>
+        </div>
+      </form>
+      {% endif %}
+
+      {% if SETTING.get('google_oauth_enabled') or SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled') or SETTING.get('azure_oauth_enabled') %}
+      <div style="margin-top:6px" id="login-desc">
+        {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+          <div class="helper">— OR —</div>
+        {% endif %}
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          {% if SETTING.get('oidc_oauth_enabled') %}
+            <a href="{{ url_for('index.oidc_login') }}" class="btn-oauth">Sign in with OpenID Connect</a>
+          {% endif %}
+          {% if SETTING.get('github_oauth_enabled') %}
+            <a href="{{ url_for('index.github_login') }}" class="btn-oauth">Sign in with GitHub</a>
+          {% endif %}
+          {% if SETTING.get('google_oauth_enabled') %}
+            <a href="{{ url_for('index.google_login') }}" class="btn-oauth">Sign in with Google</a>
+          {% endif %}
+          {% if SETTING.get('azure_oauth_enabled') %}
+            <a href="{{ url_for('index.azure_login') }}" class="btn-oauth">Sign in with Microsoft</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if saml_enabled %}
+        <div style="text-align:center"><a href="{{ url_for('index.saml_login') }}" style="color:var(--accent-to);text-decoration:none;font-weight:600">SAML login</a></div>
+      {% endif %}
+
+      {% if SETTING.get('signup_enabled') %}
+        <div class="helper">No account? <a href="{{ url_for('index.register') }}">Create an account</a></div>
+      {% endif %}
+
+      <div class="footer" role="contentinfo">
+        Powered by <a href="https://github.com/alsyundawy/PowerDNS-Admin" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a>
+        <span aria-hidden="true" style="opacity:0.6;margin:0 8px">|</span>
+        Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a>
+      </div>
+    </main>
+  </div>
+
+  {% assets "js_login" -%}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+  {%- endassets %}
+
+  <script nonce="{{ CSP_NONCE|default('') }}">
+/* minified script: default DARK theme, logo fallback, and form hygiene */
+(function(){var d=document,ls=window.localStorage||null,root=d.documentElement,logo=d.getElementById('siteLogo'),toggle=d.getElementById('themeToggle'),icon=d.getElementById('themeIcon');function safeSrc(v){if(!v)return'';try{v=String(v).trim()}catch(e){return''}if(!v)return'';if(/[\u0000-\u001F<>"']/g.test(v))return'';var a=document.createElement('a');a.href=v;var scheme=a.protocol;var isRelative=!scheme||scheme===':';var isProtocolRelative=v.indexOf('//')===0&&!v.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:/);if(isProtocolRelative)return'';if(isRelative)return v;var allowed=['http:','https:'];for(var i=0;i<allowed.length;i++){if(scheme===allowed[i])return v;}return''}function applyTheme(t){if(!t)t='dark';root.setAttribute('data-theme',t);if(logo){var base=safeSrc(logo.src),l=safeSrc(logo.getAttribute('data-light-src')||base),r=safeSrc(logo.getAttribute('data-dark-src')||base),chosen=t==='dark'?r:l;if(chosen){try{logo.src=encodeURI(chosen);}catch(e){logo.src=chosen;}}}try{if(ls)ls.setItem('site-theme',t);}catch(e){}}function getStoredOrDefault(){try{if(ls){var s=ls.getItem('site-theme');if(s)return s}}catch(e){}return'dark'}function updateIcon(t){if(!icon)return;var isDark=t==='dark';if(isDark){icon.innerHTML='<path d=\"M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z\" fill=\"currentColor\"/>'}else{icon.innerHTML='<g stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.6\"><path d=\"M12 3v2\"/><path d=\"M12 19v2\"/><path d=\"M4.22 4.22l1.42 1.42\"/><path d=\"M18.36 18.36l1.42 1.42\"/><path d=\"M1 12h2\"/><path d=\"M21 12h2\"/><path d=\"M4.22 19.78l1.42-1.42\"/><path d=\"M18.36 5.64l1.42-1.42\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/></g>'}}function toggleTheme(){var cur=root.getAttribute('data-theme')||'dark';applyTheme(cur==='dark'?'light':'dark');updateIcon(root.getAttribute('data-theme'))}if(toggle){toggle.addEventListener('click',function(e){e.preventDefault();toggleTheme();},false);toggle.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleTheme()}});}var initial=getStoredOrDefault();applyTheme(initial);updateIcon(initial);var form=d.getElementById('loginForm');if(form){form.addEventListener('submit',function(e){var hp=d.getElementById('hp_name');if(hp&&hp.value&&hp.value.trim()!==''){e.preventDefault();alert('Invalid submission.');return;}var u=d.getElementById('username'),p=d.getElementById('password');if(u)u.value=u.value.trim().slice(0,64);if(p)p.value=p.value.slice(0,128);},{passive:false});}try{var u0=d.getElementById('username');if(u0)try{u0.focus();u0.select()}catch(e){} }catch(e){} })();
+  </script>
+</body>
+</html>

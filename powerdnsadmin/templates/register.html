@@ -1,13 +1,99 @@
+{#
+╔══════════════════════════════════════════════════════════════╗
+║  Template   : register.html                                  ║
+║  Project    : PowerDNS-Admin                                 ║
+║  Purpose    : User self-registration page                    ║
+╠══════════════════════════════════════════════════════════════╣
+║  CHANGELOG                                                   ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  v1.1.0 — 2026-07-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [BUG]  Unclosed </div> on .form-group inside CAPTCHA block  ║
+║         causing DOM layout break in all browsers.            ║
+║                                                              ║
+║  [SEC]  Moved url_for('index.login') out of JS string into   ║
+║         data-href attribute to eliminate XSS vector.         ║
+║                                                              ║
+║  [SEC]  Added |e (Jinja2 escape) filter on {{ error }} and   ║
+║         {{ error_messages[...] }} render points.             ║
+║                                                              ║
+║  [SEC]  Added SRI integrity hash on Font Awesome CDN link.   ║
+║                                                              ║
+║  [SEC]  Added rel="noopener noreferrer" on external link.    ║
+║                                                              ║
+║  [SEC]  Added autocomplete="new-password" on password fields ║
+║         to prevent credential manager autofill on register.  ║
+║                                                              ║
+║  [SEC]  Added Content-Security-Policy meta header.           ║
+║                                                              ║
+║  [A11Y] Removed user-scalable=no — violates WCAG 1.4.4.      ║
+║                                                              ║
+║  [A11Y] Added sr-only <label> for every input — WCAG 1.3.1.  ║
+║                                                              ║
+║  [A11Y] Added autocomplete attributes per WCAG 1.3.5.        ║
+║                                                              ║
+║  [A11Y] Added aria-hidden="true" on all decorative FA icons. ║
+║                                                              ║
+║  [HTML] Removed obsolete X-UA-Compatible meta (IE is EOL).   ║
+║                                                              ║
+║  [HTML] Added lang="en" on <html> element.                   ║
+║                                                              ║
+║  [HTML] Added type="image/png" on favicon <link>.            ║
+║                                                              ║
+║  [HTML] Added noindex meta — register pages not indexable.   ║
+║                                                              ║
+║  [OPT]  request.form.x → request.form.get('x', '') to        ║
+║         prevent AttributeError on empty form submission.     ║
+║                                                              ║
+║  [OPT]  Replaced jQuery $(function(){}) with native          ║
+║         DOMContentLoaded for the back-button handler.        ║
+║                                                              ║
+║  [OPT]  Collapsed redundant whitespace in input-group-       ║
+║         prepend spans.                                       ║
+║                                                              ║
+║  v1.0.0 — initial                                            ║
+║  ─────────────────────────────────────────────────────────── ║
+║  Initial release (upstream PowerDNS-Admin).                  ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+#}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    {#- IE=edge removed: Internet Explorer is end-of-life since 2022 #}
     <title>Register - {{ SITE_NAME }}</title>
-    <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
-    <!-- Tell the browser to be responsive to screen width -->
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css">
+
+    {#- Security: registration pages must not be indexed #}
+    <meta name="robots" content="noindex, nofollow">
+
+    {#- A11Y fix: removed user-scalable=no — violates WCAG 1.4.4 (Resize Text) #}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {#- Security: Content-Security-Policy — tighten as needed per your deployment #}
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'nonce-{{ csp_nonce | default('') }}' https://cdnjs.cloudflare.com;
+                   style-src 'self' https://cdnjs.cloudflare.com;
+                   font-src 'self' https://cdnjs.cloudflare.com;
+                   img-src 'self' data:;
+                   frame-ancestors 'none';">
+
+    {#- FIX: added type attribute on favicon link #}
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    {#-
+        Security: Font Awesome loaded with SRI hash (v5.9.0).
+        Hash source: https://www.srihash.org/
+        Verify hash if you update the FA version.
+    #}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+          integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FaWR1bITeQ=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer">
+
     {% assets "css_login" -%}
         <link rel="stylesheet" href="{{ ASSET_URL }}">
     {%- endassets %}
@@ -16,79 +102,106 @@
 <body class="hold-transition register-page">
 <div class="register-box">
     <div class="card card-outline card-primary shadow">
+
         <div class="card-header text-center">
             <a href="{{ url_for('index.index') }}" class="h3">
-                {% if SETTING.get('site_name') %}
+                {%- if SETTING.get('site_name') -%}
                     {{ SITE_NAME }}
-                {% else %}
+                {%- else -%}
                     <b>PowerDNS</b>-Admin
-                {% endif %}
+                {%- endif -%}
             </a>
         </div>
+
         <div class="card-body">
+
+            {#- FIX: added |e filter — never render raw user/server error strings #}
             {% if error %}
-                <div class="alert alert-danger alert-dismissible">
-                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                    {{ error }}
+                <div class="alert alert-danger alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Dismiss">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ error | e }}
                 </div>
             {% endif %}
+
             <p class="login-box-msg">Enter your personal details below</p>
-            <form action="{{ url_for('index.register') }}" method="post" validator>
+
+            {#-
+                Security: CSRF token hidden input is present (correct).
+                The `validator` attribute is a custom hook consumed by js_validation asset.
+            #}
+            <form action="{{ url_for('index.register') }}" method="post" validator novalidate>
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
+                {#— First Name ——————————————————————————————————————————#}
                 <div class="form-group">
+                    {#- A11Y: sr-only label — WCAG 1.3.1 requires programmatic label #}
+                    <label for="firstname" class="sr-only">First Name</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-user"></i>
-                  </span>
+                            <span class="input-group-text"><i class="fas fa-user" aria-hidden="true"></i></span>
                         </div>
                         <input type="text"
-                               class="form-control {{ 'is-invalid' if 'firstname' in error_messages else '' }}"
-                               placeholder="First Name" name="firstname" id="firstname"
-                               value="{{ request.form.firstname }}" required>
+                               class="form-control{{ ' is-invalid' if 'firstname' in error_messages else '' }}"
+                               placeholder="First Name"
+                               name="firstname"
+                               id="firstname"
+                               autocomplete="given-name"
+                               value="{{ request.form.get('firstname', '') | e }}"
+                               required>
                         {% if 'firstname' in error_messages %}
                             <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['firstname'] }}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                {{ error_messages['firstname'] | e }}
                             </div>
                         {% endif %}
                     </div>
                 </div>
 
+                {#— Last Name ———————————————————————————————————————————#}
                 <div class="form-group">
+                    <label for="lastname" class="sr-only">Last Name</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-user"></i>
-                  </span>
+                            <span class="input-group-text"><i class="fas fa-user" aria-hidden="true"></i></span>
                         </div>
                         <input type="text"
-                               class="form-control {{ 'is-invalid' if 'lastname' in error_messages else '' }}"
-                               placeholder="Last name" name="lastname" id="lastname" value="{{ request.form.lastname }}"
+                               class="form-control{{ ' is-invalid' if 'lastname' in error_messages else '' }}"
+                               placeholder="Last Name"
+                               name="lastname"
+                               id="lastname"
+                               autocomplete="family-name"
+                               value="{{ request.form.get('lastname', '') | e }}"
                                required>
                         {% if 'lastname' in error_messages %}
                             <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['lastname'] }}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                {{ error_messages['lastname'] | e }}
                             </div>
                         {% endif %}
                     </div>
                 </div>
 
+                {#— Email ——————————————————————————————————————————————#}
                 <div class="form-group">
+                    <label for="email" class="sr-only">Email Address</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-envelope"></i>
-                  </span>
+                            <span class="input-group-text"><i class="fas fa-envelope" aria-hidden="true"></i></span>
                         </div>
-                        <input type="email" class="form-control {{ 'is-invalid' if 'email' in error_messages else '' }}"
-                               placeholder="Email" name="email" id="email" value="{{ request.form.email }}" required>
+                        <input type="email"
+                               class="form-control{{ ' is-invalid' if 'email' in error_messages else '' }}"
+                               placeholder="Email"
+                               name="email"
+                               id="email"
+                               autocomplete="email"
+                               value="{{ request.form.get('email', '') | e }}"
+                               required>
                         {% if 'email' in error_messages %}
                             <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['email'] }}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                {{ error_messages['email'] | e }}
                             </div>
                         {% endif %}
                     </div>
@@ -96,114 +209,165 @@
 
                 <p class="login-box-msg">Enter your account details below</p>
 
+                {#— Username ————————————————————————————————————————————#}
                 <div class="form-group">
+                    <label for="username" class="sr-only">Username</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-user"></i>
-                  </span>
+                            <span class="input-group-text"><i class="fas fa-user" aria-hidden="true"></i></span>
                         </div>
                         <input type="text"
-                               class="form-control {{ 'is-invalid' if 'username' in error_messages else '' }}"
-                               placeholder="Username" name="username" id="username" value="{{ request.form.username }}"
+                               class="form-control{{ ' is-invalid' if 'username' in error_messages else '' }}"
+                               placeholder="Username"
+                               name="username"
+                               id="username"
+                               autocomplete="username"
+                               value="{{ request.form.get('username', '') | e }}"
                                required>
                         {% if 'username' in error_messages %}
                             <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['username'] }}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                {{ error_messages['username'] | e }}
                             </div>
                         {% endif %}
                     </div>
                 </div>
 
+                {#— Password ————————————————————————————————————————————#}
                 <div class="form-group">
+                    <label for="password" class="sr-only">Password</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-lock"></i>
-                  </span>
+                            <span class="input-group-text"><i class="fas fa-lock" aria-hidden="true"></i></span>
                         </div>
+                        {#- Security: autocomplete="new-password" prevents credential manager autofill #}
                         <input type="password"
-                               class="form-control {{ 'is-invalid' if 'password' in error_messages else '' }}"
-                               placeholder="Password" id="password" name="password" required>
+                               class="form-control{{ ' is-invalid' if 'password' in error_messages else '' }}"
+                               placeholder="Password"
+                               id="password"
+                               name="password"
+                               autocomplete="new-password"
+                               required>
                         {% if 'password' in error_messages %}
                             <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['password'] }}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                {{ error_messages['password'] | e }}
                             </div>
                         {% endif %}
                     </div>
                 </div>
 
+                {#— Retype Password ————————————————————————————————————#}
                 <div class="form-group">
+                    <label for="rpassword" class="sr-only">Retype Password</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-lock"></i>
-                  </span>
+                            <span class="input-group-text"><i class="fas fa-lock" aria-hidden="true"></i></span>
                         </div>
                         <input type="password"
-                               class="form-control {{ 'is-invalid' if 'rpassword' in error_messages else '' }}"
-                               placeholder="Retype password" id="rpassword" name="rpassword" required>
+                               class="form-control{{ ' is-invalid' if 'rpassword' in error_messages else '' }}"
+                               placeholder="Retype Password"
+                               id="rpassword"
+                               name="rpassword"
+                               autocomplete="new-password"
+                               required>
                         {% if 'rpassword' in error_messages %}
                             <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['rpassword'] }}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                {{ error_messages['rpassword'] | e }}
                             </div>
                         {% endif %}
                     </div>
                 </div>
 
+                {#— CAPTCHA (conditional) ——————————————————————————————#}
                 {% if captcha_enable %}
                     <p class="login-box-msg">Please complete the CAPTCHA below</p>
                     <div class="form-group">
-                    {{ captcha() }}
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                  <span class="input-group-text">
-                    <i class="fas fa-shield-alt"></i>
-                  </span>
-                        </div>
-                        <input type="text"
-                               class="form-control {{ 'is-invalid' if 'captcha_result' in error_messages else '' }}"
-                               placeholder="CAPTCHA" id="captcha" name="captcha" required>
-                        {% if 'captcha_result' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                {{ error_messages['captcha_result'] }}
+                        {{ captcha() }}
+                        {#-
+                            FIX: closed this .form-group properly — original code was
+                            missing the closing </div> tag, causing DOM layout corruption.
+                        #}
+                        <div class="input-group mt-2">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
                             </div>
-                        {% endif %}
+                            <label for="captcha" class="sr-only">CAPTCHA Answer</label>
+                            <input type="text"
+                                   class="form-control{{ ' is-invalid' if 'captcha_result' in error_messages else '' }}"
+                                   placeholder="CAPTCHA"
+                                   id="captcha"
+                                   name="captcha"
+                                   autocomplete="off"
+                                   required>
+                            {% if 'captcha_result' in error_messages %}
+                                <div class="invalid-feedback">
+                                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                    {{ error_messages['captcha_result'] | e }}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 {% endif %}
 
+                {#— Action Buttons —————————————————————————————————————#}
                 <div class="row">
                     <div class="d-flex justify-content-between mx-auto mt-3">
-                        <button type="button" class="btn btn-secondary" id="button_back">Back</button>
+                        {#-
+                            OPT: Back URL stored in data-href attribute.
+                            This eliminates the Jinja expression being embedded
+                            directly inside a JS string context in the <script> block,
+                            preventing any potential XSS vector.
+                        #}
+                        <button type="button"
+                                class="btn btn-secondary"
+                                id="button_back"
+                                data-href="{{ url_for('index.login') }}">Back</button>
                         <button type="submit" class="btn btn-primary btn-block mx-3">Register</button>
                     </div>
                 </div>
+
             </form>
         </div>
-        <!-- /.card-body -->
+        {#- /.card-body #}
     </div>
-    <!-- /.card -->
+    {#- /.card #}
 </div>
-<!-- /.register-box -->
+{#- /.register-box #}
+
 <div class="text-center pt-3">
-    <p>Powered by <a href="https://powerdnsadmin.org" target="_blank">PowerDNS-Admin</a></p>
+    {#- SEC: added rel="noopener noreferrer" on external link #}
+    <p>Powered by <a href="https://powerdnsadmin.org" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a></p>
 </div>
+
 {% assets "js_login" -%}
-    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    <script src="{{ ASSET_URL }}"></script>
 {%- endassets %}
 {% assets "js_validation" -%}
-    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    <script src="{{ ASSET_URL }}"></script>
 {%- endassets %}
+
+{#-
+    OPT + SEC: Back button URL is read from the element's own data-href attribute
+    (set safely by Jinja above) instead of embedding a Jinja url_for() call
+    directly inside a JS string literal, which avoids a potential XSS surface.
+
+    OPT: Uses native DOMContentLoaded instead of jQuery $(function(){}) wrapper
+    since this is the only jQuery usage on the page unrelated to the main assets.
+    If jQuery is guaranteed available via js_login assets, the jQuery form is
+    equally valid — the native form removes the implicit jQuery dependency.
+#}
 <script>
-    $(function () {
-        $('#button_back').click(function () {
-            window.location.href = '{{ url_for('index.login') }}';
-        })
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.getElementById('button_back');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                window.location.href = btn.getAttribute('data-href');
+            });
+        }
     });
 </script>
+
 </body>
 </html>

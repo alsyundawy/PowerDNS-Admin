@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set active_page = "nav-item dashboard" %}
+{% set active_page = "dashboard" %}
 {% block title %}<title>Dashboard - {{ SITE_NAME }}</title>{% endblock %}
 
 {% block dashboard_stat %}
@@ -44,9 +44,7 @@
                                         {% for tab_id in zone_tabs.order %}
                                             <li class="nav-item">
                                                 <a class="nav-link {% if loop.first %}active{% endif %}"
-                                                   href="#tab_{{ tab_id }}" data-toggle="pill" role="tab"
-                                                   aria-selected="{{ 'true' if loop.first else 'false' }}"
-                                                   aria-controls="tab_{{ tab_id }}">
+                                                   href="#tab_{{ tab_id }}" data-toggle="pill" role="tab">
                                                     Zones <b>{{ zone_tabs.tabs[tab_id].display_name }}</b>
                                                 </a>
                                             </li>
@@ -55,15 +53,14 @@
                                 </div>
                             </div>
                         </div>
-
+                        <!-- /.card-header -->
                         <div class="card-body p-0">
                             <div class="tab-content">
                                 {% for tab_id in zone_tabs.order %}
-                                    <div id="tab_{{ tab_id }}"
-                                         class="tab-pane show {% if loop.first %}active{% endif %}"
-                                         role="tabpanel">
+                                    <div id='tab_{{ tab_id }}'
+                                         class="tab-pane show {% if loop.first %}active{% endif %}">
                                         <div class="card-body table-responsive records p-0 pt-2">
-                                            <table id="tbl_domain_list_{{ tab_id }}"
+                                            <table id='tbl_domain_list_{{ tab_id }}'
                                                    class="table table-striped table-hover table-sm records">
                                                 <thead>
                                                 <tr>
@@ -80,42 +77,46 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <!-- /.card-body -->
                                     </div>
+                                    <!-- /.tab-pane -->
                                 {% endfor %}
                             </div>
+                            <!-- /.tab-content -->
                         </div>
+                        <!-- /.card-body -->
                     </div>
+                    <!-- /.card -->
                 </div>
+                <!-- /.col -->
             </div>
+            <!-- /.row -->
         </div>
+        <!-- /.container-fluid -->
     </section>
 {% endblock %}
 
 {% block head_styles %}
     <style>
+        /* Page Specific Overrides */
         table.records tbody td:first-of-type { text-align: left; }
     </style>
 {% endblock %}
 
 {% block extrascripts %}
     <script>
+        //SYBPATCH START//
         function setUpDomainList(id, url) {
-            const $table = $(id);
-
-            if ($.fn.DataTable.isDataTable(id)) {
-                $table.DataTable().destroy();
-            }
-
-            $table.DataTable({
+            $(id).DataTable({
                 "paging": true,
                 "lengthChange": true,
-                "language": {
-                    "searchPlaceholder": "Use ^ and $ for start and end"
+                language: {
+                    searchPlaceholder: "Use ^ and $ for start and end",
                 },
                 "searching": true,
                 "ordering": true,
                 "columnDefs": [
-                    { "orderable": false, "targets": [-1] }
+                    {"orderable": false, "targets": [-1]}
                 ],
                 "processing": true,
                 "serverSide": true,
@@ -123,78 +124,74 @@
                 "info": false,
                 "autoWidth": false,
                 {% if SETTING.get('default_domain_table_size')|string in ['10','25','50','100'] %}
-                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    "lengthMenu": [[10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]],
                 {% else %}
-                "lengthMenu": [[10, 25, 50, 100, {{ SETTING.get('default_domain_table_size') }}, -1],
-                               [10, 25, 50, 100, {{ SETTING.get('default_domain_table_size') }}, "All"]],
+                    "lengthMenu": [[10, 25, 50, 100, {{ SETTING.get('default_domain_table_size') }}, -1],
+                        [10, 25, 50, 100, {{ SETTING.get('default_domain_table_size') }}, "All"]],
                 {% endif %}
                 "pageLength": {{ SETTING.get('default_domain_table_size') }}
             });
         }
 
         {% for tab_id in zone_tabs.order %}
-            setUpDomainList("#tbl_domain_list_{{ tab_id }}", "{{ url_for('dashboard.domains_custom', tab_id=tab_id) }}");
+            setUpDomainList("#tbl_domain_list_{{tab_id}}", "{{url_for('dashboard.domains_custom',tab_id=tab_id)}}");
         {% endfor %}
+        //SYBPATCH END//
 
         $(document.body).on('click', '.history-info-button', function () {
-            const modal = $('#modal_history_info');
-            const historyId = $(this).val();
-            const infoHtml = $('#history-info-div-' + historyId).html() || '';
-
-            $('#modal-info-content').html(infoHtml);
+            var modal = $("#modal_history_info");
+            var history_id = $(this).val();
+            var info = $("#history-info-div-" + history_id).html();
+            $('#modal-info-content').html(info);
             modal.modal('show');
         });
 
         $(document.body).on('click', '.refresh-bg-button', function () {
-            const modal = $('#modal_bg_reload');
+            var modal = $("#modal_bg_reload");
             modal.modal('show');
-            reload_domains(window.SCRIPT_ROOT + '/dashboard/domains-updater');
+            reload_domains($SCRIPT_ROOT + '/dashboard/domains-updater');
         });
 
-        $(document.body).on('click', '.button_template', function () {
-            const modal = $('#modal_template');
-            const domain = $(this).prop('id');
-            const form = [
-                '<label for="template_name">Template name</label>',
-                '<input type="text" class="form-control" name="template_name" id="template_name" placeholder="Enter a valid template name (required)">',
-                '<label for="template_description">Template description</label>',
-                '<input type="text" class="form-control" name="template_description" id="template_description" placeholder="Enter a template description (optional)">',
-                '<input id="domain" name="domain" type="hidden" value="' + $('<div>').text(domain).html() + '">'
-            ].join('');
-
+        $(document.body).on("click", ".button_template", function (e) {
+            var modal = $("#modal_template");
+            var domain = $(this).prop('id');
+            var form = "    <label for=\"template_name\">Template name</label> \
+                        <input type=\"text\" class=\"form-control\" name=\"template_name\" id=\"template_name\" placeholder=\"Enter a valid template name (required)\"> \
+                        <label for=\"template_description\">Template description</label> \
+                        <input type=\"text\" class=\"form-control\" name=\"template_description\" id=\"template_description\" placeholder=\"Enter a template description (optional)\"> \
+                        <input id=\"domain\" name=\"domain\" type=\"hidden\" value=\"" + domain + "\"> \
+                    ";
             modal.find('.modal-body p').html(form);
-
-            modal.find('#button_save').off('click').on('click', function () {
-                const data = { '_csrf_token': '{{ csrf_token() }}' };
-                data.name = modal.find('#template_name').val();
-                data.description = modal.find('#template_description').val();
-                data.domain = modal.find('#domain').val();
-
+            modal.find('#button_save').click(function () {
+                var data = {'_csrf_token': '{{ csrf_token() }}'};
+                data['name'] = modal.find('#template_name').val();
+                data['description'] = modal.find('#template_description').val();
+                data['domain'] = modal.find('#domain').val();
                 applyChanges(data, "{{ url_for('admin.create_template_from_zone') }}", true);
                 modal.modal('hide');
-            });
-
-            modal.find('#button_close').off('click').on('click', function () {
+            })
+            modal.find('#button_close').click(function () {
                 modal.modal('hide');
-            });
+            })
 
             modal.modal('show');
         });
 
         {% if current_user.role.name in ['Administrator', 'Operator'] or not SETTING.get('dnssec_admins_only') %}
-            $(document.body).on('click', '.button_dnssec', function () {
-                const domain = $(this).prop('id');
-                getdnssec(window.SCRIPT_ROOT + '/domain/' + encodeURIComponent(domain) + '/dnssec', domain);
+            $(document.body).on("click", ".button_dnssec", function () {
+                var domain = $(this).prop('id');
+                getdnssec($SCRIPT_ROOT + '/domain/' + encodeURIComponent(domain) + '/dnssec', domain);
             });
 
-            $(document.body).on('click', '.button_dnssec_enable', function () {
-                const domain = $(this).prop('id');
-                enable_dns_sec(window.SCRIPT_ROOT + '/domain/' + encodeURIComponent(domain) + '/dnssec/enable', '{{ csrf_token() }}');
+            $(document.body).on("click", ".button_dnssec_enable", function () {
+                var domain = $(this).prop('id');
+                enable_dns_sec($SCRIPT_ROOT + '/domain/' + encodeURIComponent(domain) + '/dnssec/enable', '{{ csrf_token() }}');
             });
 
-            $(document.body).on('click', '.button_dnssec_disable', function () {
-                const domain = $(this).prop('id');
-                enable_dns_sec(window.SCRIPT_ROOT + '/domain/' + encodeURIComponent(domain) + '/dnssec/disable', '{{ csrf_token() }}');
+            $(document.body).on("click", ".button_dnssec_disable", function () {
+                var domain = $(this).prop('id');
+                enable_dns_sec($SCRIPT_ROOT + '/domain/' + encodeURIComponent(domain) + '/dnssec/disable', '{{ csrf_token() }}');
             });
         {% endif %}
     </script>
@@ -211,7 +208,8 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div id="modal-info-content"></div>
+                    <div id="modal-info-content">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary float-right" data-dismiss="modal">
