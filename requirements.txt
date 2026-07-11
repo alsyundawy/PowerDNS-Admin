@@ -1,4 +1,4 @@
-Authlib==1.6.12
+Authlib==1.7.2
 Flask-Assets==2.1.0
 Flask-Login==0.6.3
 Flask-Mail==0.10.0
@@ -14,22 +14,23 @@ PyYAML==6.0.3
 SQLAlchemy==1.4.54
 bcrypt==5.0.0
 bravado-core==6.4.1
-certifi==2026.5.20
-cffi==2.0.0
+certifi==2026.6.17
+cffi==2.1.0
 configobj==5.0.9
-cryptography==48.0.1
+cryptography==49.0.0
 cssmin==0.2.0
 dnspython>=2.8.0
 gunicorn==26.0.0
 itsdangerous==2.1.2
 jsonschema[format]>=2.5.1,<4.0.0 # until https://github.com/Yelp/bravado-core/pull/385
+#jsonschema[format]>=3.2.0,<4.0.0 # until https://github.com/Yelp/bravado-core/pull/385
 lima==0.5
---use-feature=no-binary-enable-wheel-cache lxml==4.9.4
+--use-feature=no-binary-enable-wheel-cache lxml==6.1.1
 mysqlclient==2.2.8
 passlib==1.7.4
-pyasn1==0.6.3
-pyotp==2.9.0
-pytest==9.0.3
+pyasn1==0.6.4
+pyotp==2.10.0
+pytest==9.1.1
 python-ldap==3.4.7
 python3-saml==1.16.0
 pytimeparse==1.1.8
@@ -39,8 +40,8 @@ requests==2.34.2
 rjsmin==1.2.5
 webcolors==25.10.0
 werkzeug==3.1.8
-zipp==3.23.1
+zipp==4.1.0
 rcssmin==1.2.2
 zxcvbn==4.5.0
 psycopg2==2.9.12
-setuptools==82.0.1
+setuptools==83.0.0

@@ -1,17 +1,16 @@
 <!--
   FILE: templates/login.html
-  DESCRIPTION: Login page template with dual-dark high-contrast themes and robust logo fallbacks.
+  DESCRIPTION: Login page template with default DARK theme and robust logo fallbacks.
   AUTHOR: ALSYUNDAWY IT SOLUTION
   CREATED: 2023-01-01
   LAST_UPDATED: 2026-06-29
   CHANGELOG:
-    - 2026-06-29: Re-designed both themes as eye-friendly dark modes (Slate Blue & Obsidian Dark) to prevent eye strain.
-    - 2026-06-29: Forced the use of the bright/light logo variant (dark_src) in all modes so the white subtitle is clearly visible.
-    - 2026-06-29: Increased the contrast of all text, borders, and input fields for maximum readability.
+    - 2026-06-29: Cleaned and optimized HTML/CSS/JS.
     - 2026-06-29: Added inline flash-prevention script in <head> to eliminate dark/light theme flashes (FOUC).
     - 2026-06-29: Added inline script right after logo to prevent dual logo fetches on load.
     - 2026-06-29: Improved semantic hierarchy (changed title div to <h1>) for proper SEO and accessibility.
     - 2026-06-29: Added meta description for better SEO indexing.
+    - 2026-06-29: Optimized UI visuals (refined glassmorphism, background radial glows, scale/hover transitions).
     - 2026-06-29: Removed username input regex pattern attribute to prevent LDAP/OAuth character-restriction bugs.
     - 2026-06-29: Added error box shake animations and customized checkbox design with checkmark indicator.
     - 2026-06-29: Refactored OAuth buttons inline styles to a clean, transition-supported CSS class (.btn-oauth).
@@ -73,33 +72,33 @@
   <style>
 /* Custom Properties & Themes */
 :root {
-  --bg-1: #0f172a;
-  --bg-2: #020617;
-  --text-primary: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent-from: #38bdf8;
-  --accent-to: #0ea5e9;
-  --glass-border: rgba(56, 189, 248, 0.22);
-  --card-bg: rgba(15, 23, 42, 0.65);
-  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.15);
-  --input-bg: rgba(2, 6, 23, 0.55);
-  --input-border: rgba(56, 189, 248, 0.3);
+  --bg-1: #f8fafc;
+  --bg-2: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --accent-from: #0ea5e9;
+  --accent-to: #2563eb;
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --input-border: #cbd5e1;
   --radius: 14px;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg-1: #0a0518;
-  --bg-2: #02010a;
-  --text-primary: #ffffff;
-  --text-muted: #a5b4fc;
-  --accent-from: #818cf8;
-  --accent-to: #6366f1;
-  --glass-border: rgba(129, 140, 248, 0.22);
-  --card-bg: rgba(10, 5, 24, 0.68);
-  --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.15);
-  --input-bg: rgba(2, 1, 10, 0.6);
-  --input-border: rgba(129, 140, 248, 0.3);
+  --bg-1: #0b0f19;
+  --bg-2: #111827;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-from: #38bdf8;
+  --accent-to: #3b82f6;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --card-bg: rgba(17, 24, 39, 0.6);
+  --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --input-bg: rgba(15, 23, 42, 0.6);
+  --input-border: #334155;
   --radius: 14px;
   color-scheme: dark;
 }
@@ -116,13 +115,9 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15), transparent 50%), linear-gradient(180deg, var(--bg-1), var(--bg-2));
+  background: radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.12), transparent 50%), linear-gradient(180deg, var(--bg-1), var(--bg-2));
   color: var(--text-primary);
   transition: background-color 0.3s ease;
-}
-
-[data-theme="dark"] html, [data-theme="dark"] body {
-  background: radial-gradient(circle at 50% -20%, rgba(129, 140, 248, 0.15), transparent 50%), linear-gradient(180deg, var(--bg-1), var(--bg-2));
 }
 
 .page {
@@ -148,7 +143,7 @@ html, body {
   object-fit: contain;
   -webkit-user-drag: none;
   user-select: none;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
 }
 
 /* Theme Toggle Button */
@@ -247,10 +242,10 @@ form {
 }
 .input::placeholder {
   color: var(--text-muted);
-  opacity: 0.65;
+  opacity: 0.6;
 }
 .input:focus {
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
   border-color: var(--accent-to);
   background: var(--bg-1);
 }
@@ -298,7 +293,7 @@ form {
 }
 .remember input:hover {
   border-color: var(--accent-to);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .remember input:checked {
   background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
@@ -329,11 +324,11 @@ form {
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
   color: #0b1329;
-  box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.25);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.45);
   filter: brightness(1.05);
 }
 .btn-primary:active {
@@ -367,6 +362,9 @@ form {
   color: var(--text-primary);
   transform: translateY(-1px);
 }
+[data-theme="light"] .btn-oauth:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
 .btn-oauth:active {
   transform: translateY(0);
 }
@@ -375,13 +373,18 @@ form {
 .alert {
   padding: 12px;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #ef4444;
   font-weight: 600;
   font-size: 0.875rem;
   margin-bottom: 8px;
   animation: shake 0.4s ease;
+}
+[data-theme="dark"] .alert {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
 }
 
 /* Utility classes */
@@ -486,10 +489,9 @@ form {
   <div class="page" id="pageRoot">
     <header class="site-header" role="banner">
       <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
-        <!-- Always load the bright/light logo (dark_src) in both modes so white subtitle text is fully legible on dark backgrounds -->
         <img id="siteLogo"
              src="{{ dark_src }}" 
-             data-light-src="{{ dark_src }}"
+             data-light-src="{{ light_src }}"
              data-dark-src="{{ dark_src }}"
              alt="{{ SETTING.get('site_name') or SITE_NAME }} logo" />
         <script nonce="{{ CSP_NONCE|default('') }}">
