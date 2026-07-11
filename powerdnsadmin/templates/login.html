@@ -499,7 +499,14 @@ form {
               var img = document.getElementById('siteLogo');
               if (img && t === 'light') {
                 var l = img.getAttribute('data-light-src');
-                if (l) img.src = l;
+                if (l) {
+                  try {
+                    var u = new URL(l, window.location.origin);
+                    if ((u.protocol === 'http:' || u.protocol === 'https:') && u.origin === window.location.origin) {
+                      img.src = u.href;
+                    }
+                  } catch (e) {}
+                }
               }
             } catch(e) {}
           })();
