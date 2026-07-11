@@ -10,7 +10,7 @@
 name: 'Dependency review'
 on:
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "dev" ]
 
 # If using a dependency submission action in this workflow this permission will need to be set to:
 #
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout repository'
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v5
         # Commonly enabled options, see https://github.com/actions/dependency-review-action#configuration-options for all available options.
