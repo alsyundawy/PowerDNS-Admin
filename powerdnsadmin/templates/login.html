@@ -776,12 +776,11 @@ form {
     if (/[\u0000-\u001F<>"']/.test(v)) return '';
     // Reject protocol-relative URLs (//host) — ambiguous origin
     if (/^\/\//.test(v)) return '';
-    // Allow root-relative and path-relative URLs as-is
-    if (/^\//.test(v) || /^\.{0,2}\//.test(v) || !/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(v)) return v;
-    // For absolute URLs validate the scheme
-    var a = d.createElement('a');
-    a.href = v;
-    if (a.protocol === 'http:' || a.protocol === 'https:') return v;
+    // Canonicalize with URL parser and strictly allow http/https only
+    try {
+      var u = new URL(v, w.location.href);
+      if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+    } catch (e) {}
     return '';
   }
 
