@@ -89,4 +89,4 @@ zipp==3.23.0
 rcssmin==1.2.2
 zxcvbn==4.5.0
 psycopg2==2.9.11
-setuptools==80.9.0
+setuptools==83.0.0
