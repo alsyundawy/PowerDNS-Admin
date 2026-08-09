@@ -330,7 +330,7 @@ class Domain(db.Model):
                 'status': 'ok',
                 'msg': 'Added zone successfully to PowerDNS-Admin'
             }
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             current_app.logger.info("Rolled back zone {0}".format(d.name))
             raise
@@ -643,7 +643,6 @@ class Domain(db.Model):
         """
         Update records from Master DNS server
         """
-        import urllib.parse
 
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if domain:
@@ -675,7 +674,6 @@ class Domain(db.Model):
         """
         Get zone DNSSEC information
         """
-        import urllib.parse
 
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if domain:
@@ -713,7 +711,6 @@ class Domain(db.Model):
         """
         Enable zone DNSSEC
         """
-        import urllib.parse
 
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if domain:
@@ -784,7 +781,6 @@ class Domain(db.Model):
         """
         Remove keys DNSSEC
         """
-        import urllib.parse
 
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if domain:

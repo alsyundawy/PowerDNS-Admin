@@ -1114,7 +1114,7 @@ def dyndns_update():
                     history = History(
                         msg=
                         'DynDNS update: created record {0} in zone {1} successfully'
-                        .format(hostname, domain.name, str(ip)),
+                        .format(hostname, domain.name),
                         detail=json.dumps({
                             'domain': domain.name,
                             'record': hostname,
@@ -1153,7 +1153,6 @@ def saml_metadata():
     if not current_app.config.get('SAML_ENABLED', False):
         current_app.logger.error("SAML authentication is disabled.")
         abort(400)
-    from onelogin.saml2.utils import OneLogin_Saml2_Utils
     req = saml.prepare_flask_request(request)
     auth = saml.init_saml_auth(req)
     settings = auth.get_settings()

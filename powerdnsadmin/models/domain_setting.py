@@ -19,10 +19,10 @@ class DomainSetting(db.Model):
         self.value = value
 
     def __repr__(self):
-        return '<DomainSetting {0} for {1}>'.format(setting, self.domain.name)
+        return '<DomainSetting {0} for {1}>'.format(self.setting, self.domain.name)
 
     def __eq__(self, other):
-        return type(self) == type(other) and self.setting == other.setting
+        return type(self) is type(other) and self.setting == other.setting
 
     def set(self, value):
         try:

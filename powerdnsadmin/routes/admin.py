@@ -3,7 +3,6 @@ import datetime
 import traceback
 import re
 from base64 import b64encode
-from ast import literal_eval
 from flask import Blueprint, render_template, render_template_string, make_response, url_for, current_app, request, \
     redirect, jsonify, abort, flash, session
 from flask_login import login_required, current_user
@@ -1694,6 +1693,7 @@ def edit_template(template):
                 methods=['POST'],
                 strict_slashes=False)
 @login_required
+@operator_role_required
 def apply_records(template):
     try:
         jdata = request.json

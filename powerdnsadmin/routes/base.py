@@ -107,7 +107,7 @@ def login_via_authorization_header_or_remote_user(request):
 
         try:
             auth_header = str(base64.b64decode(auth_header), 'utf-8')
-        except (UnicodeDecodeError, TypeError) as e:
+        except (UnicodeDecodeError, TypeError):
             return None
 
         # NK: We use auth_components here as we don't know if we'll have a :, we split it maximum 1 times to grab the

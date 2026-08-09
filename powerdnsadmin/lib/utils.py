@@ -99,7 +99,7 @@ def fetch_remote(remote_url,
     try:
         if r.status_code not in (200, 201, 204, 400, 409, 422):
             r.raise_for_status()
-    except Exception as e:
+    except Exception:
         msg = "Returned status {0} and content {1}".format(r.status_code, r.text)
         raise RuntimeError('Error while fetching {0}. {1}'.format(
             remote_url, msg))
@@ -261,13 +261,13 @@ def pretty_json(data):
     return json.dumps(data, sort_keys=True, indent=4)
 
 
-def ensure_list(l):
-    if not l:
-        l = []
-    elif not isinstance(l, Iterable) or isinstance(l, str):
-        l = [l]
+def ensure_list(value):
+    if not value:
+        value = []
+    elif not isinstance(value, Iterable) or isinstance(value, str):
+        value = [value]
 
-    yield from l
+    yield from value
 
 
 def pretty_domain_name(domain_name):

@@ -5,14 +5,12 @@ from flask_login import login_required, current_user, login_manager
 from sqlalchemy import not_
 
 from ..decorators import operator_role_required
-from ..models.user import User, Anonymous
+from ..models.user import Anonymous
 from ..models.account import Account
 from ..models.account_user import AccountUser
 from ..models.domain import Domain
 from ..models.domain_user import DomainUser
 from ..models.setting import Setting
-from ..models.history import History
-from ..models.server import Server
 from ..models.sessions import clean_up_expired_sessions_if_due
 from ..models.base import db
 

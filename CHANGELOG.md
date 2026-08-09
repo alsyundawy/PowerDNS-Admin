@@ -44,6 +44,12 @@ restructuring or removing any working functionality.
     `dnssec` flag is only flipped after a successful PowerDNS operation (within a
     guarded transaction).
 
+- **routes/admin.py (`apply_records`)** - Zone-template mutation lacked operator authorization
+  - `/template/<template>/apply` only required `@login_required`, while its sibling
+    template routes (`edit_template`, `delete_template`) require `@operator_role_required`.
+    Any authenticated user could therefore replace a zone template's records. Added
+    `@operator_role_required` to match the sibling routes.
+
 ### Bug Fixes
 
 - **routes/index.py (`authenticate_user`)** - Login redirected back to `/login`
@@ -106,6 +112,21 @@ restructuring or removing any working functionality.
     working on Python 3.12+; added throttled expired-session cleanup
     (`clean_up_expired_sessions_if_due`, run from each blueprint `before_request`).
 
+- **models/domain_setting.py (`__repr__`)** - `NameError` when representing a setting
+  - The method formatted an undefined local `setting` instead of `self.setting`; now uses
+    `self.setting`.
+
+- **routes/index.py (`dyndns_update`)** - Format string with an unused argument
+  - The DynDNS success history message passed an extra `str(ip)` argument to `.format()`
+    although the template only defines `{0}` and `{1}`. Removed the unused argument
+    (resolves F523 / mypy `str-format`).
+
+- **models/user.py (LDAP group membership)** - Incorrect membership test
+  - `not ldap_group in ldap_user_groups` rewritten as `ldap_group not in ldap_user_groups`.
+
+- **models/domain_setting.py (`__eq__`)** - Type comparison style
+  - `type(self) == type(other)` rewritten as `type(self) is type(other)`.
+
 ### Code Quality / Maintainability
 
 - **Python < 3.12 `distutils` removal**
@@ -126,6 +147,23 @@ restructuring or removing any working functionality.
   `werkzeug.__version__`, which 3.1 removed, breaking `flask --version` and the test
   client).
 - **docs/oauth.md** Azure scope corrected to `User.Read openid email profile`.
+- **Lint (ruff/pyflakes) cleanup** - Removed dead code and silenced false positives
+  without changing behaviour:
+  - `lib/settings.py` - type comparisons `==` → `is` (`convert_type`); dropped two unused
+    `except JSONDecodeError as e` bindings (F841).
+  - `lib/utils.py` - renamed ambiguous `ensure_list(l)` parameter to `value` (E741);
+    dropped an unused `except Exception as e` binding (F841).
+  - `models/domain.py` - dropped an unused `except Exception as e` binding (F841) and four
+    redundant local `import urllib.parse` (the module-level import already provides
+    `urljoin`/`quote_plus`).
+  - `routes/admin.py` - removed unused `from ast import literal_eval` (F401).
+  - `routes/api.py` - removed an unused `resp` assignment (F841) and an unused
+    `except Exception as e` binding (F841).
+  - `routes/base.py` - dropped an unused `except (...) as e` binding (F841).
+  - `routes/dashboard.py` - removed unused imports `User`, `History`, `Server` (F401).
+  - `routes/index.py` - removed a redundant `OneLogin_Saml2_Utils` import (F401).
+  - `models/__init__.py` imports are intentionally kept (they register SQLAlchemy models)
+    and are excluded from this cleanup.
 
 ### Frontend / Templates
 

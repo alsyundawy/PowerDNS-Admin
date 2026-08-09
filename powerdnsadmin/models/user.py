@@ -378,7 +378,7 @@ class User(db.Model):
                                 for role, ldap_group in ldap_group_security_roles.items():
                                     # Continue when groups is not defined or
                                     # user is'nt member of LDAP group
-                                    if not ldap_group or not ldap_group in ldap_user_groups:
+                                    if not ldap_group or ldap_group not in ldap_user_groups:
                                         continue
 
                                     role_name = role
@@ -394,7 +394,7 @@ class User(db.Model):
                             else:
                                 current_app.logger.error('Invalid LDAP type')
                                 return False
-                        except Exception as e:
+                        except Exception:
                             current_app.logger.error(
                                 'LDAP group lookup for user "{0}" has failed. Authentication request from {1}'
                                 .format(self.username, src_ip))

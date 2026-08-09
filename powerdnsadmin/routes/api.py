@@ -306,10 +306,10 @@ def api_login_delete_zone(domain_name):
 
     try:
         # Use fetch_json to enforce JSON handling and avoid returning raw upstream content
-        resp = utils.fetch_json(urljoin(pdns_api_url, api_full_uri),
-                                method='DELETE',
-                                headers=headers,
-                                verify=Setting().get('verify_ssl_connections'))
+        utils.fetch_json(urljoin(pdns_api_url, api_full_uri),
+                        method='DELETE',
+                        headers=headers,
+                        verify=Setting().get('verify_ssl_connections'))
 
         current_app.logger.debug("Request to powerdns API successful")
 
@@ -1321,7 +1321,7 @@ def health():
 
     try:
         domain.get_domain_info(domain_to_query.name)
-    except Exception as e:
+    except Exception:
         current_app.logger.error(
             "Health Check - Failed to query authoritative server for zone {}".format(domain_to_query.name))
         return make_response("Down", 503)

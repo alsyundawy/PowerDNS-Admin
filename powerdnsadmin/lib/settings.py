@@ -585,32 +585,32 @@ class AppSettings(object):
             var_type = AppSettings.types[name]
 
             # Handle boolean values
-            if var_type == bool and isinstance(value, str):
+            if var_type is bool and isinstance(value, str):
                 if value.lower() in ['True', 'true', '1'] or value is True:
                     return True
                 else:
                     return False
 
             # Handle float values
-            if var_type == float:
+            if var_type is float:
                 return float(value)
 
             # Handle integer values
-            if var_type == int:
+            if var_type is int:
                 return int(value)
 
-            if (var_type == dict or var_type == list) and isinstance(value, str) and len(value) > 0:
+            if (var_type is dict or var_type is list) and isinstance(value, str) and len(value) > 0:
                 try:
                     return json.loads(value)
-                except JSONDecodeError as e:
+                except JSONDecodeError:
                     # Provide backwards compatibility for legacy non-JSON format
                     value = value.replace("'", '"').replace('True', 'true').replace('False', 'false')
                     try:
                         return json.loads(value)
-                    except JSONDecodeError as e:
+                    except JSONDecodeError:
                         raise ValueError('Cannot parse json {} for variable {}'.format(value, name))
 
-            if var_type == str:
+            if var_type is str:
                 return str(value)
 
         return value
