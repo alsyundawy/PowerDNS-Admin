@@ -5,14 +5,14 @@ from base64 import b64encode
 from urllib.parse import urljoin
 
 from flask import (Blueprint, g, request, abort, current_app, make_response, jsonify)
-from flask_login import current_user
 
 from .base import csrf
 from ..decorators import (
-    api_basic_auth, api_can_create_domain, is_json, apikey_auth,
+    api_basic_auth, api_can_create_domain, api_can_remove_domain, is_json,
+    apikey_auth,
     apikey_can_create_domain, apikey_can_remove_domain,
     apikey_is_admin, apikey_can_access_domain, apikey_can_configure_dnssec,
-    api_role_can, apikey_or_basic_auth,
+    api_role_can, apikey_or_basic_auth, api_current_user,
     callback_if_request_body_contains_key, allowed_record_types, allowed_record_ttl
 )
 from ..lib import utils, helper
@@ -29,14 +29,21 @@ from ..lib.schema import (
     ApiKeySchema, DomainSchema, ApiPlainKeySchema, UserSchema, AccountSchema,
     UserDetailedSchema,
 )
+from ..lib.user_authorization import user_update_authorization_error
 from ..models import (
     User, Domain, DomainUser, Account, AccountUser, History, Setting, ApiKey,
     Role,
 )
 from ..models.base import db
+from ..models.sessions import clean_up_expired_sessions_if_due
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 apilist_bp = Blueprint('apilist', __name__, url_prefix='/')
+
+#: The API views authenticate with HTTP Basic auth, which does not necessarily
+#: match the Flask-Login session user. Reuse the exact proxy the ``api_*``
+#: decorators use so guard and view always resolve to the same identity.
+current_user = api_current_user
 
 apikey_schema = ApiKeySchema(many=True)
 apikey_single_schema = ApiKeySchema()
@@ -84,11 +91,18 @@ def get_user_apikeys(domain_name=None):
         .filter(User.id == current_user.id)
 
     if domain_name:
-        info = apikey_query.filter(Domain.name == domain_name).all()
+        info = apikey_query.filter(Domain.name == domain_name).distinct().all()
     else:
-        info = apikey_query.all()
+        info = apikey_query.distinct().all()
 
-    return info
+    accessible_domains = {domain.name for domain in get_user_domains()}
+    return [
+        apikey for apikey in info
+        if apikey.role.name == 'User'
+        and not apikey.accounts
+        and {domain.name for domain in apikey.domains}.issubset(
+            accessible_domains)
+    ]
 
 
 def get_role_id(role_name, role_id=None):
@@ -115,6 +129,11 @@ def handle_400(err):
 @api_bp.errorhandler(401)
 def handle_401(err):
     return jsonify({"msg": "Unauthorized"}), 401
+
+
+@api_bp.errorhandler(404)
+def handle_404(err):
+    return jsonify({"msg": "Not Found"}), 404
 
 
 @api_bp.errorhandler(409)
@@ -170,6 +189,9 @@ def handle_request_is_not_json(err):
 @api_bp.before_request
 @is_json
 def before_request():
+    # Clean up expired sessions in the database
+    clean_up_expired_sessions_if_due()
+
     # Check site is in maintenance mode
     maintenance = Setting().get('maintenance')
     if (maintenance and current_user.is_authenticated and current_user.role.name not in ['Administrator', 'Operator']):
@@ -255,7 +277,7 @@ def api_login_list_zones():
 
 @api_bp.route('/pdnsadmin/zones/<string:domain_name>', methods=['DELETE'])
 @api_basic_auth
-@api_can_create_domain
+@api_can_remove_domain
 @csrf.exempt
 def api_login_delete_zone(domain_name):
     pdns_api_url = Setting().get('pdns_api_url')
@@ -267,7 +289,7 @@ def api_login_delete_zone(domain_name):
     headers = {}
     headers['X-API-Key'] = pdns_api_key
 
-    domain = Domain.query.filter(Domain.name == domain_name)
+    domain = Domain.query.filter(Domain.name == domain_name).first()
 
     if not domain:
         abort(404)
@@ -352,14 +374,16 @@ def api_generate_apikey():
 
     if role_name == 'User' and len(domains) > 0:
         domain_obj_list = Domain.query.filter(Domain.name.in_(domains)).all()
-        if len(domain_obj_list) == 0:
+        # Compare against the requested count, not zero: a partial match would
+        # otherwise silently drop the zones that do not exist.
+        if len(domain_obj_list) != len(set(domains)):
             msg = "One of supplied zones does not exist"
             current_app.logger.error(msg)
             raise DomainNotExists(message=msg)
 
     if role_name == 'User' and len(accounts) > 0:
         account_obj_list = Account.query.filter(Account.name.in_(accounts)).all()
-        if len(account_obj_list) == 0:
+        if len(account_obj_list) != len(set(accounts)):
             msg = "One of supplied accounts does not exist"
             current_app.logger.error(msg)
             raise AccountNotExists(message=msg)
@@ -479,7 +503,9 @@ def api_delete_apikey(apikey_id):
 
     if current_user.role.name not in ['Administrator', 'Operator']:
         apikeys = get_user_apikeys()
-        user_domains_obj_list = current_user.get_domain().all()
+        # ``User.get_domain()`` does not exist; use the same account-aware
+        # helper the create/list endpoints rely on.
+        user_domains_obj_list = get_user_domains()
         apikey_domains_obj_list = apikey.domains
         user_domains_list = [item.name for item in user_domains_obj_list]
         apikey_domains_list = [item.name for item in apikey_domains_obj_list]
@@ -557,7 +583,7 @@ def api_update_apikey(apikey_id):
 
         if domains is not None:
             domain_obj_list = Domain.query.filter(Domain.name.in_(domains)).all()
-            if len(domain_obj_list) != len(domains):
+            if len(domain_obj_list) != len(set(domains)):
                 msg = "One of supplied zones does not exist"
                 current_app.logger.error(msg)
                 raise DomainNotExists(message=msg)
@@ -568,7 +594,7 @@ def api_update_apikey(apikey_id):
 
         if accounts is not None:
             account_obj_list = Account.query.filter(Account.name.in_(accounts)).all()
-            if len(account_obj_list) != len(accounts):
+            if len(account_obj_list) != len(set(accounts)):
                 msg = "One of supplied accounts does not exist"
                 current_app.logger.error(msg)
                 raise AccountNotExists(message=msg)
@@ -597,7 +623,7 @@ def api_update_apikey(apikey_id):
             current_app.logger.error(msg)
             raise NotEnoughPrivileges(message=msg)
 
-        if len(accounts) > 0:
+        if accounts:
             msg = "User cannot assign accounts"
             current_app.logger.error(msg)
             raise NotEnoughPrivileges(message=msg)
@@ -605,9 +631,15 @@ def api_update_apikey(apikey_id):
         apikeys = get_user_apikeys()
         apikeys_ids = [apikey_item.id for apikey_item in apikeys]
 
-        user_domain_obj_list = current_user.get_domain().all()
+        # ``User.get_domain()`` does not exist; use the same account-aware
+        # helper the create/list endpoints rely on.
+        user_domain_obj_list = get_user_domains()
 
-        domain_list = [item.name for item in domain_obj_list]
+        # ``target_domains`` already resolves to the zones the key will end up
+        # with, whether or not the request changes them. Using it avoids
+        # dereferencing ``domain_obj_list``, which stays unbound when the
+        # payload omits "domains".
+        domain_list = target_domains
         user_domain_list = [item.name for item in user_domain_obj_list]
 
         current_app.logger.debug("Input zone list: {0}".format(domain_list))
@@ -656,7 +688,7 @@ def api_update_apikey(apikey_id):
 @api_role_can('list users', allow_self=True)
 def api_list_users(username=None):
     if username is None:
-        user_list = [] or User.query.all()
+        user_list = User.query.all()
         return jsonify(user_schema.dump(user_list)), 200
     else:
         user = User.query.filter(User.username == username).first()
@@ -710,6 +742,14 @@ def api_create_user():
         current_app.logger.debug(
             'Invalid role {}/{}'.format(role_name, role_id))
         abort(400)
+    role = db.session.get(Role, role_id)
+    authorization_error = user_update_authorization_error(
+        current_user,
+        requested_role_name=role.name,
+        role_change=True,
+    )
+    if authorization_error:
+        raise NotEnoughPrivileges(message=authorization_error)
 
     user = User(
         username=username,
@@ -767,6 +807,27 @@ def api_update_user(user_id):
     if not user:
         current_app.logger.debug("User not found for id {}".format(user_id))
         abort(404)
+    role_change = role_name is not None or role_id is not None
+    requested_role = None
+    if role_change:
+        requested_role_id = get_role_id(role_name, role_id)
+        if not requested_role_id:
+            current_app.logger.debug(
+                'Invalid role {}/{}'.format(role_name, role_id))
+            abort(400)
+        requested_role = db.session.get(Role, requested_role_id)
+
+    authorization_error = user_update_authorization_error(
+        current_user,
+        target=user,
+        requested_role_name=(
+            requested_role.name if requested_role is not None else None
+        ),
+        role_change=role_change,
+    )
+    if authorization_error:
+        raise NotEnoughPrivileges(message=authorization_error)
+
     if username:
         if username != user.username:
             current_app.logger.error(
@@ -784,6 +845,7 @@ def api_update_user(user_id):
         user.email = email
     if otp_secret is not None:
         user.otp_secret = otp_secret
+        user.otp_last_used = None
     if confirmed is not None:
         user.confirmed = confirmed
     if role_name is not None:
@@ -855,7 +917,7 @@ def api_list_accounts(account_name):
         raise NotEnoughPrivileges(message=msg)
     else:
         if account_name is None:
-            account_list = [] or Account.query.all()
+            account_list = Account.query.all()
             return jsonify(account_schema.dump(account_list)), 200
         else:
             account = Account.query.filter(
@@ -1212,6 +1274,7 @@ def api_get_zones(server_id):
 
 @api_bp.route('/servers', methods=['GET'])
 @apikey_auth
+@apikey_is_admin
 def api_server_forward():
     resp = helper.forward_request()
     response = make_response(resp.content, resp.status_code)
@@ -1221,6 +1284,7 @@ def api_server_forward():
 
 @api_bp.route('/servers/<string:server_id>', methods=['GET'])
 @apikey_auth
+@apikey_is_admin
 def api_server_config_forward(server_id):
     resp = helper.forward_request()
     response = make_response(resp.content, resp.status_code)
@@ -1232,6 +1296,14 @@ def api_server_config_forward(server_id):
 @api_bp.route('/sync_domains', methods=['GET'])
 @apikey_or_basic_auth
 def sync_domains():
+    authenticated_role = (
+        g.apikey.role.name if hasattr(g, 'apikey')
+        else current_user.role.name
+    )
+    if authenticated_role not in ['Administrator', 'Operator']:
+        raise NotEnoughPrivileges(
+            message='Only Administrator and Operator credentials may '
+                    'synchronize zones')
     domain = Domain()
     domain.update()
     return 'Finished synchronization in background', 200

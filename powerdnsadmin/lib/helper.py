@@ -18,7 +18,7 @@ def forward_request():
         current_app.logger.debug(msg)
         data = request.get_json(force=True, silent=True)
 
-    verify = False
+    verify = Setting().get('verify_ssl_connections')
 
     headers = {
         'user-agent': 'powerdns-admin/api',

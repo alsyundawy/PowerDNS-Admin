@@ -20,12 +20,6 @@ class Setting(db.Model):
         self.name = name
         self.value = value
 
-    # allow database autoincrement to do its own ID assignments
-    def __init__(self, name=None, value=None):
-        self.id = None
-        self.name = name
-        self.value = value
-
     def set_maintenance(self, mode):
         maintenance = Setting.query.filter(
             Setting.name == 'maintenance').first()
@@ -45,7 +39,7 @@ class Setting(db.Model):
         except Exception as e:
             current_app.logger.error('Cannot set maintenance to {0}. DETAIL: {1}'.format(
                 mode, e))
-            current_app.logger.debug(traceback.format_exec())
+            current_app.logger.debug(traceback.format_exc())
             db.session.rollback()
             return False
 
@@ -67,7 +61,7 @@ class Setting(db.Model):
         except Exception as e:
             current_app.logger.error('Cannot toggle setting {0}. DETAIL: {1}'.format(
                 setting, e))
-            current_app.logger.debug(traceback.format_exec())
+            current_app.logger.debug(traceback.format_exc())
             db.session.rollback()
             return False
 
@@ -90,7 +84,7 @@ class Setting(db.Model):
             return True
         except Exception as e:
             current_app.logger.error('Cannot edit setting {0}. DETAIL: {1}'.format(setting, e))
-            current_app.logger.debug(traceback.format_exec())
+            current_app.logger.debug(traceback.format_exc())
             db.session.rollback()
             return False
 
@@ -106,7 +100,23 @@ class Setting(db.Model):
                 if hasattr(result, 'value'):
                     result = result.value
 
-                return AppSettings.convert_type(setting, result)
+                result = AppSettings.convert_type(setting, result)
+                if setting in ('forward_records_allow_edit',
+                               'reverse_records_allow_edit'):
+                    if not isinstance(result, dict):
+                        # A blank or malformed stored value would otherwise
+                        # propagate and break every record type lookup.
+                        current_app.logger.warning(
+                            'Setting {0} is not a mapping, falling back to '
+                            'the defaults'.format(setting))
+                        return dict(AppSettings.defaults[setting])
+                    # Keep saved administrator choices while making record
+                    # types introduced by newer releases available to opt in.
+                    result = {
+                        **AppSettings.defaults[setting],
+                        **result,
+                    }
+                return result
             else:
                 return AppSettings.defaults[setting]
         else:

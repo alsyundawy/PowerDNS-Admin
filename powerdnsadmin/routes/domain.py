@@ -4,13 +4,13 @@ import datetime
 import traceback
 import dns.name
 import dns.reversename
-from distutils.version import StrictVersion
 from flask import Blueprint, render_template, make_response, url_for, current_app, request, redirect, abort, jsonify, g, session
 from flask_login import login_required, current_user, login_manager
 
 from ..lib.utils import pretty_domain_name
 from ..lib.utils import pretty_json
 from ..lib.utils import to_idna
+from ..lib.utils import version_tuple
 from ..decorators import can_create_domain, operator_role_required, can_access_domain, can_configure_dnssec, can_remove_domain
 from ..models.user import User, Anonymous
 from ..models.account import Account
@@ -25,6 +25,7 @@ from ..models.domain_setting import DomainSetting
 from ..models.base import db
 from ..models.domain_user import DomainUser
 from ..models.account_user import AccountUser
+from ..models.sessions import clean_up_expired_sessions_if_due
 from .admin import extract_changelogs_from_history
 from ..decorators import history_access_required
 domain_bp = Blueprint('domain',
@@ -50,6 +51,9 @@ def before_request():
     current_app.permanent_session_lifetime = datetime.timedelta(
         minutes=int(Setting().get('session_timeout')))
     session.modified = True
+
+    # Clean up expired sessions in the database
+    clean_up_expired_sessions_if_due()
 
 
 @domain_bp.route('/<path:domain_name>', methods=['GET'])
@@ -88,7 +92,7 @@ def domain(domain_name):
     # TODO:
     #   - Find a way to make it consistent, or
     #   - Only allow one comment for that case
-    if StrictVersion(Setting().get('pdns_version')) >= StrictVersion('4.0.0'):
+    if version_tuple(Setting().get('pdns_version')) >= version_tuple('4.0.0'):
         pretty_v6 = Setting().get('pretty_ipv6_ptr')
         for r in rrsets:
             if r['type'] in records_allow_to_edit:
@@ -318,7 +322,7 @@ def add():
             # Encode domain name into punycode (IDN)
             try:
                 domain_name = to_idna(domain_name, 'encode')
-            except:
+            except Exception:
                 current_app.logger.error("Cannot encode the zone name {}".format(domain_name))
                 current_app.logger.debug(traceback.format_exc())
                 return render_template(
@@ -754,9 +758,24 @@ def dnssec(domain_name):
 def dnssec_enable(domain_name):
     domain = Domain()
     dnssec = domain.enable_domain_dnssec(domain_name)
-    domain_object = Domain.query.filter(domain_name == Domain.name).first()
+    if dnssec.get('status') != 'ok':
+        return make_response(
+            jsonify({
+                'status': 'error',
+                'msg': dnssec.get('msg', 'Could not enable DNSSEC')
+            }), 502)
+    domain_object = Domain.query.filter(Domain.name == domain_name).first()
+    if domain_object:
+        domain_object.dnssec = 1
+        try:
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(
+                'Cannot update DNSSEC state for zone {0}. DETAIL: {1}'.format(
+                    domain_name, e))
+            db.session.rollback()
     history = History(
-        msg='DNSSEC was enabled for zone ' + domain_name ,
+        msg='DNSSEC was enabled for zone ' + domain_name,
         created_by=current_user.username,
         domain_id=domain_object.id)
     history.add()
@@ -771,15 +790,44 @@ def dnssec_disable(domain_name):
     domain = Domain()
     dnssec = domain.get_domain_dnssec(domain_name)
 
+    if 'dnssec' not in dnssec:
+        return make_response(
+            jsonify({
+                'status': 'error',
+                'msg': dnssec.get('msg', 'Could not retrieve DNSSEC keys')
+            }), 502)
+
+    errors = []
     for key in dnssec['dnssec']:
-        domain.delete_dnssec_key(domain_name, key['id'])
-    domain_object = Domain.query.filter(domain_name == Domain.name).first()
+        result = domain.delete_dnssec_key(domain_name, key['id'])
+        if result.get('status') != 'ok':
+            errors.append(result.get('msg', 'Unknown error'))
+
+    if errors:
+        return make_response(
+            jsonify({
+                'status': 'error',
+                'msg': '; '.join(errors)
+            }), 502)
+
+    domain_object = Domain.query.filter(Domain.name == domain_name).first()
+    if domain_object:
+        domain_object.dnssec = 0
+        try:
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(
+                'Cannot update DNSSEC state for zone {0}. DETAIL: {1}'.format(
+                    domain_name, e))
+            db.session.rollback()
+
     history = History(
-        msg='DNSSEC was disabled for zone ' + domain_name ,
+        msg='DNSSEC was disabled for zone ' + domain_name,
         created_by=current_user.username,
-        domain_id=domain_object.id)
+        domain_id=domain_object.id if domain_object else None)
     history.add()
-    return make_response(jsonify({'status': 'ok', 'msg': 'DNSSEC removed.'}))
+    return make_response(
+        jsonify({'status': 'ok', 'msg': 'DNSSEC removed.'}))
 
 
 @domain_bp.route('/<path:domain_name>/manage-setting', methods=['GET', 'POST'])

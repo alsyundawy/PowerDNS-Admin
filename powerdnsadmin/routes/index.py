@@ -7,13 +7,13 @@ import ipaddress
 import base64
 import string
 from zxcvbn import zxcvbn
-from distutils.util import strtobool
 from yaml import Loader, load
 from flask import Blueprint, render_template, make_response, url_for, current_app, g, session, request, redirect, abort
 from flask_login import login_user, logout_user, login_required, current_user
 
 from .base import captcha, csrf, login_manager
 from ..lib import utils
+from ..lib.utils import strtobool
 from ..decorators import dyndns_login_required
 from ..models.base import db
 from ..models.user import User, Anonymous
@@ -26,6 +26,7 @@ from ..models.domain_setting import DomainSetting
 from ..models.record import Record
 from ..models.setting import Setting
 from ..models.history import History
+from ..models.sessions import clean_up_expired_sessions_if_due
 from ..services.google import google_oauth
 from ..services.github import github_oauth
 from ..services.azure import azure_oauth
@@ -78,6 +79,9 @@ def before_request():
     current_app.permanent_session_lifetime = datetime.timedelta(
         minutes=int(Setting().get('session_timeout')))
     session.modified = True
+
+    # Clean up expired sessions in the database
+    clean_up_expired_sessions_if_due()
 
 
 @index_bp.route('/', methods=['GET'])
@@ -612,6 +616,7 @@ def get_azure_groups(uri):
 # but user isn't using it yet, enable OTP, get QR code and display it, logging the user out.
 def authenticate_user(user, authenticator, remember=False):
     login_user(user, remember=remember)
+    regenerate_session()
     signin_history(user.username, authenticator, True)
     if Setting().get('otp_force') and Setting().get('otp_field_enabled') and not user.otp_secret \
             and session['authentication_type'] not in ['OAuth']:
@@ -619,13 +624,50 @@ def authenticate_user(user, authenticator, remember=False):
         user_id = current_user.id
         prepare_welcome_user(user_id)
         return redirect(url_for('index.welcome'))
-    return redirect(url_for('index.login'))
+    return redirect(url_for('dashboard.dashboard'))
 
 
 # Prepare user to enter /welcome screen, otherwise they won't have permission to do so
 def prepare_welcome_user(user_id):
     logout_user()
     session['welcome_user_id'] = user_id
+
+
+def regenerate_session():
+    """
+    Rotate the session identifier after authentication.
+
+    Prevents session fixation by ensuring a freshly authenticated session uses a
+    new, unpredictable id that an attacker could not have set beforehand.
+
+    The rotation is best-effort: client-side cookie sessions carry no
+    server-side identifier to rotate, so they are simply left untouched.
+    """
+    session_interface = current_app.session_interface
+
+    regenerate = getattr(session_interface, 'regenerate', None)
+    if callable(regenerate):
+        # Flask-Session >= 0.8.0 rotates the identifier natively.
+        regenerate(session)
+        return
+
+    generate_sid = getattr(session_interface, '_generate_sid', None)
+    if not callable(generate_sid) or not hasattr(session, 'sid'):
+        return
+
+    # Emulate regenerate() by assigning a fresh sid while preserving the (now
+    # authenticated) session data. The previous record still holds the
+    # pre-login, unauthenticated payload and lingers only until it expires.
+    sid_length = current_app.config.get(
+        'SESSION_ID_LENGTH', getattr(session_interface, 'sid_length', 32))
+    try:
+        new_sid = generate_sid(sid_length)
+    except TypeError:
+        # Flask-Session < 0.6.0 generates a UUID and takes no length argument.
+        new_sid = generate_sid()
+
+    session.sid = new_sid
+    session.modified = True
 
 
 @index_bp.route('/logout')
@@ -694,28 +736,37 @@ def password_policy_check(user, password):
     def matches_policy(item, policy_fails):
         return "*" if item in policy_fails else ""
 
+    def contains_attribute(value, user_password):
+        """Whether a non-empty user attribute appears inside the password.
+
+        Attributes are optional (LDAP/OAuth accounts frequently have no first
+        or last name). An empty or missing value must not fail the policy,
+        because ``'' in password`` is always ``True``.
+        """
+        return bool(value) and value in user_password
+
     policy = []
     policy_fails = {}
 
     # If either policy is enabled check basics first ... this is obvious!
     if Setting().get('pwd_enforce_characters') or Setting().get('pwd_enforce_complexity'):
         # Cannot contain username
-        if user.username in password:
+        if contains_attribute(user.username, password):
             policy_fails["username"] = True
         policy.append(f"{matches_policy('username', policy_fails)}cannot contain username")
 
-        # Cannot contain password
-        if user.firstname in password:
+        # Cannot contain firstname
+        if contains_attribute(user.firstname, password):
             policy_fails["firstname"] = True
         policy.append(f"{matches_policy('firstname', policy_fails)}cannot contain firstname")
 
         # Cannot contain lastname
-        if user.lastname in password:
+        if contains_attribute(user.lastname, password):
             policy_fails["lastname"] = True
         policy.append(f"{matches_policy('lastname', policy_fails)}cannot contain lastname")
 
         # Cannot contain email
-        if user.email in password:
+        if contains_attribute(user.email, password):
             policy_fails["email"] = True
         policy.append(f"{matches_policy('email', policy_fails)}cannot contain email")
 
@@ -733,19 +784,19 @@ def password_policy_check(user, password):
             policy_fails["digits"] = True
         policy.append(f"{matches_policy('digits', policy_fails)}digits={pwd_digits}/{pwd_min_digits_setting}")
         # Lowercase
-        (pwd_min_lowercase_setting, pwd_lowercase) = check_policy(string.digits, password, 'pwd_min_lowercase')
+        (pwd_min_lowercase_setting, pwd_lowercase) = check_policy(string.ascii_lowercase, password, 'pwd_min_lowercase')
         if pwd_lowercase < pwd_min_lowercase_setting:
             policy_fails["lowercase"] = True
         policy.append(
             f"{matches_policy('lowercase', policy_fails)}lowercase={pwd_lowercase}/{pwd_min_lowercase_setting}")
         # Uppercase
-        (pwd_min_uppercase_setting, pwd_uppercase) = check_policy(string.digits, password, 'pwd_min_uppercase')
+        (pwd_min_uppercase_setting, pwd_uppercase) = check_policy(string.ascii_uppercase, password, 'pwd_min_uppercase')
         if pwd_uppercase < pwd_min_uppercase_setting:
             policy_fails["uppercase"] = True
         policy.append(
             f"{matches_policy('uppercase', policy_fails)}uppercase={pwd_uppercase}/{pwd_min_uppercase_setting}")
         # Special
-        (pwd_min_special_setting, pwd_special) = check_policy(string.digits, password, 'pwd_min_special')
+        (pwd_min_special_setting, pwd_special) = check_policy(string.punctuation, password, 'pwd_min_special')
         if pwd_special < pwd_min_special_setting:
             policy_fails["special"] = True
         policy.append(f"{matches_policy('special', policy_fails)}special={pwd_special}/{pwd_min_special_setting}")
@@ -753,9 +804,10 @@ def password_policy_check(user, password):
     if Setting().get('pwd_enforce_complexity'):
         # Complexity checking
         zxcvbn_inputs = []
-        for input in (user.firstname, user.lastname, user.username, user.email):
-            if len(input):
-                zxcvbn_inputs.append(input)
+        for user_input in (user.firstname, user.lastname, user.username, user.email):
+            # Attributes are optional, so guard against None as well as ''
+            if user_input:
+                zxcvbn_inputs.append(user_input)
 
         result = zxcvbn(password, user_inputs=zxcvbn_inputs)
         pwd_min_complexity_setting = int(Setting().get('pwd_min_complexity'))

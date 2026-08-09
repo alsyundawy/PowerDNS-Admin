@@ -410,7 +410,7 @@
             // Listen for clicks on navigation links
             navLinks.forEach(function(link) {
                 if (!link.classList.contains('no-prompt')) {
-                    link.addEventListener('click', function(event) {
+                    link.onclick = function(event) {
                         if (unsavedChanges) {
                             event.preventDefault();  // Prevent navigation
                             modal.style.display = "block";  // Show the modal
@@ -478,7 +478,7 @@
                             ";
                     }
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         caa_flag = modal.find('#caa_flag').val();
                         caa_tag = modal.find('#caa_tag').val();
                         caa_value = modal.find('#caa_value').val();
@@ -504,7 +504,7 @@
                             ";
                     }
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         mx_server = modal.find('#mx_server').val();
                         mx_priority = modal.find('#mx_priority').val();
                         data = mx_priority + " " + mx_server;
@@ -540,7 +540,7 @@
                 ";
                     }
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         srv_priority = modal.find('#srv_priority').val();
                         srv_weight = modal.find('#srv_weight').val();
                         srv_port = modal.find('#srv_port').val();
@@ -590,7 +590,7 @@
                 ";
                     }
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         soa_primaryns = modal.find('#soa_primaryns').val();
                         soa_adminemail = modal.find('#soa_adminemail').val();
                         soa_serial = modal.find('#soa_serial').val();
@@ -629,7 +629,7 @@
                 ";
                     }
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         tlsa_certificate_usage = modal.find('#tlsa_certificate_usage').val();
                         tlsa_selector = modal.find('#tlsa_selector').val();
                         tlsa_matching = modal.find('#tlsa_matching').val();
@@ -647,7 +647,7 @@
                             <textarea style=\"min-width: 100%;color: #333;\" placeholder=\"Your TXT record data\" rows=\"5\" id=\"txt_record\" name=\"txt_record\">" + txt_data + "</textarea> \
                        ";
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         data = modal.find('#txt_record').val();
                         if (!/^".*"$/.test(data)) {
                             data = '"' + data + '"';
@@ -666,7 +666,7 @@
                             <textarea style=\"min-width: 100%;color: #333;\" placeholder=\"Your LUA snippet\" rows=\"5\" id=\"lua_record\" name=\"lua_record\">" + lua_data + "</textarea> \
                        ";
                     modal.find('.modal-body p').html(form);
-                    modal.find('#button_save').click(function () {
+                    modal.find('#button_save').off('click').on('click', function () {
                         type = modal.find('#lua_type').val();
                         data = modal.find('#lua_record').val();
                         if (!/^".*"$/.test(data)) {

@@ -9,13 +9,9 @@ class Role(db.Model):
     apikeys = db.relationship('ApiKey', back_populates='role', lazy=True)
 
     def __init__(self, id=None, name=None, description=None):
+        # ``id`` stays optional so the database autoincrement keeps assigning
+        # it when the caller does not supply one.
         self.id = id
-        self.name = name
-        self.description = description
-
-    # allow database autoincrement to do its own ID assignments
-    def __init__(self, name=None, description=None):
-        self.id = None
         self.name = name
         self.description = description
 

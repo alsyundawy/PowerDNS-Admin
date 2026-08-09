@@ -6,8 +6,51 @@ import ipaddress
 import idna
 
 from collections.abc import Iterable
-from distutils.version import StrictVersion
 from urllib.parse import urlparse
+
+# ``distutils`` was removed from the standard library in Python 3.12 and is
+# only still importable while the setuptools shim happens to be installed.
+# These two helpers replace the pieces of it this project used.
+
+_TRUE_STRINGS = frozenset(('y', 'yes', 't', 'true', 'on', '1'))
+_FALSE_STRINGS = frozenset(('n', 'no', 'f', 'false', 'off', '0'))
+
+
+def strtobool(value):
+    """Convert a truthy/falsy string to 1 or 0.
+
+    Drop-in replacement for the removed ``distutils.util.strtobool``: the same
+    vocabulary is accepted and anything else raises ``ValueError``.
+    """
+    if isinstance(value, bool):
+        return int(value)
+
+    normalized = str(value).strip().lower()
+    if normalized in _TRUE_STRINGS:
+        return 1
+    if normalized in _FALSE_STRINGS:
+        return 0
+    raise ValueError('invalid truth value {0!r}'.format(value))
+
+
+def version_tuple(version):
+    """Return a comparable tuple of the leading numeric parts of a version.
+
+    Replaces ``distutils.version.StrictVersion`` for the simple "is the PDNS
+    API at least X" checks made here. Unlike ``StrictVersion`` it tolerates
+    pre-release or vendor suffixes (``4.9.0-alpha1``, ``4.7.3-1ubuntu2``)
+    instead of raising, and missing components compare as zero so that
+    ``4.1`` and ``4.1.0`` are equal.
+    """
+    parts = []
+    for chunk in re.split(r'[.\-_+~]', str(version).strip()):
+        match = re.match(r'^(\d+)', chunk)
+        if not match:
+            break
+        parts.append(int(match.group(1)))
+    while len(parts) < 3:
+        parts.append(0)
+    return tuple(parts[:3])
 
 
 def auth_from_url(url):
@@ -27,7 +70,7 @@ def fetch_remote(remote_url,
                  timeout=None,
                  headers=None,
                  verify=True):
-    if data is not None and type(data) != str:
+    if data is not None and not isinstance(data, str):
         data = json.dumps(data)
 
     verify = bool(verify)  # enforce type boolean
@@ -44,7 +87,7 @@ def fetch_remote(remote_url,
 
     r = requests.request(method,
                          remote_url,
-                         headers=headers,
+                         headers=our_headers,
                          verify=verify,
                          auth=auth_from_url(remote_url),
                          timeout=timeout,
@@ -121,7 +164,7 @@ def display_record_name(data):
     if record_name == domain_name:
         return '@'
     else:
-        return re.sub('\.{}$'.format(domain_name), '', record_name)
+        return re.sub(r'\.{}$'.format(domain_name), '', record_name)
 
 
 def display_master_name(data):
@@ -188,7 +231,7 @@ def pdns_api_extended_uri(version):
     """
     Check the pdns version
     """
-    if StrictVersion(version) >= StrictVersion('4.0.0'):
+    if version_tuple(version) >= version_tuple('4.0.0'):
         return "api/v1"
     else:
         return ""
@@ -228,10 +271,6 @@ def ensure_list(l):
 
 
 def pretty_domain_name(domain_name):
-    # Add a debugging statement to print out the domain name
-    print("Received zone name:", domain_name)
-
-    # Check if the domain name is encoded using Punycode
     if domain_name.endswith('.xn--'):
         try:
             # Decode the domain name using the idna library

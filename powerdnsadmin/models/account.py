@@ -60,7 +60,7 @@ class Account(db.Model):
         return sanitized_name[:Account.name.type.length]
 
     def __repr__(self):
-        return '<Account {0}r>'.format(self.name)
+        return '<Account {0}>'.format(self.name)
 
     def get_name_by_id(self, account_id):
         """

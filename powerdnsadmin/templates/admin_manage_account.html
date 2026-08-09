@@ -64,11 +64,11 @@
                                         <td>
                                             <div class="dropdown">
                                                 <button class="btn btn-primary dropdown-toggle" type="button"
-                                                        id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true"
+                                                        id="dropdownMenu-{{ account.id }}" data-toggle="dropdown" aria-haspopup="true"
                                                         aria-expanded="false">
                                                     <i class="fa-solid fa-bars"></i>
                                                 </button>
-                                                <div class="dropdown-menu" aria-labelledby="dropdownMenu">
+                                                <div class="dropdown-menu" aria-labelledby="dropdownMenu-{{ account.id }}">
                                                     <button type="button" class="dropdown-item btn-warning"
                                                             onclick="window.location.href='{{ url_for('admin.edit_account', account_name=account.name) }}'">
                                                         <i class="fa-solid fa-edit"></i>&nbsp;Edit Account

@@ -81,12 +81,12 @@
                                         <td>
                                             <div class="dropdown">
                                                 <button class="btn btn-primary dropdown-toggle" type="button"
-                                                        id="dropdownMenu" data-toggle="dropdown" aria-haspopup="true"
+                                                        id="dropdownMenu-{{ user.id }}" data-toggle="dropdown" aria-haspopup="true"
                                                         aria-expanded="false"
                                                         {% if current_user.role.name=='Operator' and user.role.name=='Administrator' %}disabled{% endif %}>
                                                     <i class="fa-solid fa-bars"></i>
                                                 </button>
-                                                <div class="dropdown-menu" aria-labelledby="dropdownMenu">
+                                                <div class="dropdown-menu" aria-labelledby="dropdownMenu-{{ user.id }}">
                                                     <button type="button" class="dropdown-item btn-warning"
                                                             onclick="window.location.href='{{ url_for('admin.edit_user', user_username=user.username) }}'">
                                                         <i class="fa-solid fa-edit"></i>&nbsp;Edit User

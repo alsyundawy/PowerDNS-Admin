@@ -5,10 +5,10 @@ import dns.inet
 import dns.name
 from flask import current_app
 from urllib.parse import urljoin,quote_plus
-from distutils.util import strtobool
 from itertools import groupby
 
 from .. import utils
+from ..lib.utils import strtobool
 from .base import db
 from .setting import Setting
 from .domain import Domain

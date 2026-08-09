@@ -60,11 +60,11 @@
                                 {% endif %}{% endfor %}</td>
                                 <td>
                                     <div class="dropdown">
-                                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu"
+                                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu-{{ key.id }}"
                                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             <i class="fa-solid fa-bars"></i>
                                         </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenu">
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenu-{{ key.id }}">
                                             <button type="button" class="dropdown-item btn-warning"
                                                     onclick="window.location.href='{{ url_for('admin.edit_key', key_id=key.id) }}'">
                                                 <i class="fa-solid fa-edit"></i>&nbsp;Edit API Key

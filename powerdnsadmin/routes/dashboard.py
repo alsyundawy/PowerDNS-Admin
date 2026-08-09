@@ -13,6 +13,7 @@ from ..models.domain_user import DomainUser
 from ..models.setting import Setting
 from ..models.history import History
 from ..models.server import Server
+from ..models.sessions import clean_up_expired_sessions_if_due
 from ..models.base import db
 
 dashboard_bp = Blueprint('dashboard',
@@ -64,6 +65,9 @@ def before_request():
     current_app.permanent_session_lifetime = datetime.timedelta(
         minutes=int(Setting().get('session_timeout')))
     session.modified = True
+
+    # Clean up expired sessions in the database
+    clean_up_expired_sessions_if_due()
 
 
 @dashboard_bp.route('/domains-custom/<path:tab_id>', methods=['GET'])

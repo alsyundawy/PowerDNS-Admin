@@ -124,9 +124,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
-  {# Session-timeout meta-refresh: |int(15) guarantees an integer before multiplication #}
-  {% set session_timeout = SETTING.get('session_timeout') | int(15) %}
-  <meta http-equiv="refresh" content="{{ (session_timeout | int(15)) * 60 }}">
+  {# Session-timeout meta-refresh removed: an automatic full-page refresh on the
+     login form would discard unsaved credentials and could resubmit a stale
+     CSRF token. Session expiry is handled server-side (see base.handle_access_forbidden). #}
   <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
 
   {% assets "css_login" -%}

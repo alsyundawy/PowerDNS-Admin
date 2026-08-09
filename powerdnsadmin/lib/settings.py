@@ -85,7 +85,9 @@ class AppSettings(object):
         'pwd_min_lowercase': 3,
         'pwd_min_uppercase': 2,
         'pwd_min_digits': 2,
-        'pwd_min_special': False,
+        # Numeric like the other character-class minimums; 0 keeps the
+        # historical behaviour of not requiring any special character.
+        'pwd_min_special': 0,
         'pwd_enforce_complexity': False,
         'pwd_min_complexity': 11,
 

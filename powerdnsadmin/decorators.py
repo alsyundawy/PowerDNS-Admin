@@ -3,10 +3,30 @@ import binascii
 from functools import wraps
 from flask import g, request, abort, current_app, Response
 from flask_login import current_user
+from werkzeug.local import LocalProxy
 
-from .models import User, ApiKey, Setting, Domain, Setting
+from .models import User, ApiKey, Setting, Domain
 from .lib.errors import RequestIsNotJSON, NotEnoughPrivileges, RecordTTLNotAllowed, RecordTypeNotAllowed
 from .lib.errors import DomainAccessForbidden, DomainOverrideForbidden
+
+
+def api_authenticated_user():
+    """
+    Return the user authenticated for the current API request.
+
+    Prefers the user established by ``api_basic_auth`` (HTTP Basic) and falls
+    back to the Flask-Login session user. Flask-Login gives the session cookie
+    precedence over its request loader, so without this the credentials that
+    were actually verified for the request could differ from the identity used
+    to authorize and perform it.
+    """
+    return getattr(g, 'basic_auth_user', None) or current_user
+
+
+#: Identity used by the ``api_*`` decorators. It must resolve exactly like the
+#: ``current_user`` proxy in ``routes/api.py`` so that a permission check and
+#: the view it guards can never act on behalf of two different users.
+api_current_user = LocalProxy(api_authenticated_user)
 
 
 def admin_role_required(f):
@@ -118,6 +138,27 @@ def can_remove_domain(f):
     return decorated_function
 
 
+def api_can_remove_domain(f):
+    """
+    Grant access if:
+        - user is in Operator role or higher, or
+        - allow_user_remove_domain is on
+    """
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if api_current_user.role.name not in [
+            'Administrator', 'Operator'
+        ] and not Setting().get('allow_user_remove_domain'):
+            msg = "User {} does not have enough privileges to remove zone".format(
+                api_current_user.username)
+            current_app.logger.error(msg)
+            raise NotEnoughPrivileges()
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 def can_create_domain(f):
     """
     Grant access if:
@@ -193,7 +234,7 @@ def api_basic_auth(f):
                 abort(401)
             else:
                 user = User.query.filter(User.username == username).first()
-                current_user = user  # lgtm [py/unused-local-variable]
+                g.basic_auth_user = user
         except Exception as e:
             current_app.logger.error('Error: {0}'.format(e))
             abort(401)
@@ -250,21 +291,21 @@ def api_role_can(action, roles=None, allow_self=False):
         def decorated_function(*args, **kwargs):
             try:
                 user_id = int(kwargs.get('user_id'))
-            except:
+            except (TypeError, ValueError):
                 user_id = None
             try:
                 username = kwargs.get('username')
-            except:
+            except TypeError:
                 username = None
             if (
-                    (current_user.role.name in roles) or
-                    (allow_self and user_id and current_user.id == user_id) or
-                    (allow_self and username and current_user.username == username)
+                    (api_current_user.role.name in roles) or
+                    (allow_self and user_id and api_current_user.id == user_id) or
+                    (allow_self and username and api_current_user.username == username)
             ):
                 return f(*args, **kwargs)
             msg = (
                 "User {} with role {} does not have enough privileges to {}"
-            ).format(current_user.username, current_user.role.name, action)
+            ).format(api_current_user.username, api_current_user.role.name, action)
             raise NotEnoughPrivileges(message=msg)
 
         return decorated_function
@@ -281,11 +322,11 @@ def api_can_create_domain(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if current_user.role.name not in [
+        if api_current_user.role.name not in [
             'Administrator', 'Operator'
         ] and not Setting().get('allow_user_create_domain'):
             msg = "User {0} does not have enough privileges to create zone"
-            current_app.logger.error(msg.format(current_user.username))
+            current_app.logger.error(msg.format(api_current_user.username))
             raise NotEnoughPrivileges()
 
         if Setting().get('deny_domain_override'):

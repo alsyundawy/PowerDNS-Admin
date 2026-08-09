@@ -4,9 +4,9 @@ import traceback
 from flask import current_app
 from flask_login import current_user
 from urllib.parse import urljoin, quote_plus
-from distutils.util import strtobool
 
 from ..lib import utils
+from ..lib.utils import strtobool
 from .base import db, domain_apikey
 from .setting import Setting
 from .user import User
@@ -482,24 +482,24 @@ class Domain(db.Model):
         if re.search('ip6.arpa', reverse_host_address):
             for i in range(1, 32, 1):
                 address = re.search(
-                    '((([a-f0-9]\.){' + str(i) + '})(?P<ipname>.+6.arpa)\.?)',
+                    r'((([a-f0-9]\.){' + str(i) + r'})(?P<ipname>.+6.arpa)\.?)',
                     reverse_host_address)
                 if None != self.get_id_by_name(address.group('ipname')):
                     c = i
                     break
             return re.search(
-                '((([a-f0-9]\.){' + str(c) + '})(?P<ipname>.+6.arpa)\.?)',
+                r'((([a-f0-9]\.){' + str(c) + r'})(?P<ipname>.+6.arpa)\.?)',
                 reverse_host_address).group('ipname')
         else:
             for i in range(1, 4, 1):
                 address = re.search(
-                    '((([0-9]+\.){' + str(i) + '})(?P<ipname>.+r.arpa)\.?)',
+                    r'((([0-9]+\.){' + str(i) + r'})(?P<ipname>.+r.arpa)\.?)',
                     reverse_host_address)
                 if None != self.get_id_by_name(address.group('ipname')):
                     c = i
                     break
             return re.search(
-                '((([0-9]+\.){' + str(c) + '})(?P<ipname>.+r.arpa)\.?)',
+                r'((([0-9]+\.){' + str(c) + r'})(?P<ipname>.+r.arpa)\.?)',
                 reverse_host_address).group('ipname')
 
     def delete(self, domain_name):
@@ -598,7 +598,7 @@ class Domain(db.Model):
             current_app.logger.error(
                 'Cannot revoke user privileges on zone {0}. DETAIL: {1}'.
                     format(self.name, e))
-            current_app.logger.debug(print(traceback.format_exc()))
+            current_app.logger.debug(traceback.format_exc())
 
         try:
             for uid in added_ids:
@@ -610,7 +610,7 @@ class Domain(db.Model):
             current_app.logger.error(
                 'Cannot grant user privileges to zone {0}. DETAIL: {1}'.
                     format(self.name, e))
-            current_app.logger.debug(print(traceback.format_exc()))
+            current_app.logger.debug(traceback.format_exc())
 
     def revoke_privileges_by_id(self, user_id):
         """
@@ -800,7 +800,9 @@ class Domain(db.Model):
                     timeout=int(Setting().get('pdns_api_timeout')),
                     method='DELETE',
                     verify=Setting().get('verify_ssl_connections'))
-                if jdata != True:
+                # ``fetch_json`` short-circuits DELETE requests and returns the
+                # boolean ``True``; only a mapping can carry an API error.
+                if isinstance(jdata, dict) and 'error' in jdata:
                     return {
                         'status':
                             'error',

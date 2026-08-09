@@ -203,6 +203,14 @@
 {% block extrascripts %}
     <script>
 
+        // Restore the last active profile tab after a full page reload
+        // (e.g. when the OTP toggle handler reloads the page).
+        var savedTab = localStorage.getItem('profile_active_tab');
+        if (savedTab) {
+            $('.nav-tabs a[href="' + savedTab + '"]').tab('show');
+            localStorage.removeItem('profile_active_tab');
+        }
+
         // initialize pretty checkboxes
         $('.otp_toggle').iCheck({
             checkboxClass: 'icheckbox_square-blue',
@@ -220,8 +228,10 @@
                 '_csrf_token': '{{ csrf_token() }}'
             };
             applyChanges(postdata, $SCRIPT_ROOT + '/user/profile', false, true, function () {
+                // Persist the target tab so it is re-activated once the page
+                // reloads; calling .tab('show') here would run on the old page.
+                localStorage.setItem('profile_active_tab', '#tabs-authentication');
                 window.location.reload();
-                $('#tabs li:eq(2) a').tab('show');
             });
         });
     </script>
