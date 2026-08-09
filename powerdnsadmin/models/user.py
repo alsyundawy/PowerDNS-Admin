@@ -158,7 +158,7 @@ class User(db.Model):
     def check_password(self, hashed_password):
         # Check hashed password. Using bcrypt, the salt is saved into the hash itself
         if hasattr(self, "plain_text_password"):
-            if self.plain_text_password != None:
+            if self.plain_text_password is not None:
                 return bcrypt.checkpw(self.plain_text_password.encode('utf-8'),
                                      hashed_password.encode('utf-8'))
         return False
@@ -488,7 +488,7 @@ class User(db.Model):
                 name='Administrator').first().id
 
         if hasattr(self, "plain_text_password"):
-            if self.plain_text_password != None:
+            if self.plain_text_password is not None:
                 self.password = self.get_hashed_password(
                     self.plain_text_password)
         else:
@@ -542,7 +542,7 @@ class User(db.Model):
 
         # store new password hash (only if changed)
         if hasattr(self, "plain_text_password"):
-            if self.plain_text_password != None:
+            if self.plain_text_password is not None:
                 user.password = self.get_hashed_password(
                     self.plain_text_password).decode("utf-8")
 
@@ -561,7 +561,7 @@ class User(db.Model):
         user.lastname = self.lastname if self.lastname else user.lastname
 
         if hasattr(self, "plain_text_password"):
-            if self.plain_text_password != None:
+            if self.plain_text_password is not None:
                 user.password = self.get_hashed_password(
                  self.plain_text_password).decode("utf-8")
 
@@ -586,7 +586,7 @@ class User(db.Model):
             # it must be cleared whenever the secret is reset or rotated.
             user.otp_last_used = None
 
-        if enable_otp == True:
+        if enable_otp:
             # generate the opt secret key
             user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
 
@@ -660,7 +660,7 @@ class User(db.Model):
             user_id = user.id
             try:
                 DomainUser.query.filter(DomainUser.user_id == user_id).delete()
-                if (update_user)==True:
+                if update_user:
                     AccountUser.query.filter(AccountUser.user_id == user_id).delete()
                 db.session.commit()
                 return True
@@ -728,9 +728,9 @@ class User(db.Model):
         current_app.logger.debug('Ldap search result: {0}'.format(ldap_result))
         entitlements=[]
         if ldap_result:
-            dict=ldap_result[0][0][1]
-            if len(dict)!=0:
-                for entitlement in dict[key]:
+            res_dict = ldap_result[0][0][1]
+            if len(res_dict) != 0:
+                for entitlement in res_dict[key]:
                     entitlements.append(entitlement.decode("utf-8"))
             else:
                 e="Not found value in the autoprovisioning attribute field "
@@ -766,7 +766,7 @@ class User(db.Model):
         user = db.session.query(User).filter(User.username == self.username).first()
         if autoprovision_domain not in current_domains:
             domain= db.session.query(Domain).filter(Domain.name == autoprovision_domain).first()
-            if domain!=None:
+            if domain is not None:
                 domain.add_user(user)
 
     def addMissingAccount(self, autoprovision_account, current_accounts):
@@ -777,7 +777,7 @@ class User(db.Model):
         user = db.session.query(User).filter(User.username == self.username).first()
         if autoprovision_account not in current_accounts:
             account= db.session.query(Account).filter(Account.name == autoprovision_account).first()
-            if account!=None:
+            if account is not None:
                 account.add_user(user)
 
 def getCorrectEntitlements(Entitlements):

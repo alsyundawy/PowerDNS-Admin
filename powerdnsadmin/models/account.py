@@ -251,7 +251,7 @@ class Account(db.Model):
                 headers=headers,
                 timeout=int(Setting().get('pdns_api_timeout')),
                 verify=Setting().get('verify_ssl_connections'))
-            list_jaccount = set(d['account'] for d in jdata if d['account'])
+            list_jaccount = {d['account'] for d in jdata if d['account']}
             current_app.logger.info("Found {} accounts in PowerDNS".format(
                 len(list_jaccount)))
 

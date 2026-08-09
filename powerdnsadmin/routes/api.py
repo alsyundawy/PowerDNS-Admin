@@ -57,9 +57,9 @@ account_single_schema = AccountSchema()
 
 def is_custom_header_api():
     custom_header_setting = Setting().get('custom_history_header')
-    if custom_header_setting != '' and custom_header_setting in request.headers: 
-        return request.headers[custom_header_setting] 
-    else: 
+    if custom_header_setting != '' and custom_header_setting in request.headers:
+        return request.headers.get(custom_header_setting)
+    else:
         return g.apikey.description 
 
 def get_user_domains():
@@ -412,7 +412,7 @@ def api_generate_apikey():
 
         inter = set(domain_list).intersection(set(user_domain_list))
 
-        if not (len(inter) == len(domain_list)):
+        if len(inter) != len(domain_list):
             msg = "You don't have access to one of zones"
             current_app.logger.error(msg)
             raise DomainAccessForbidden(message=msg)
@@ -426,7 +426,7 @@ def api_generate_apikey():
         apikey.create()
     except Exception as e:
         current_app.logger.error('Error: {0}'.format(e))
-        raise ApiKeyCreateFail(message='Api key create failed')
+        raise ApiKeyCreateFail(message='Api key create failed') from e
 
     apikey.plain_key = b64encode(apikey.plain_key.encode('utf-8')).decode('utf-8')
     return jsonify(apikey_plain_schema.dump(apikey)), 201
@@ -513,7 +513,7 @@ def api_delete_apikey(apikey_id):
 
         inter = set(apikey_domains_list).intersection(set(user_domains_list))
 
-        if not (len(inter) == len(apikey_domains_list)):
+        if len(inter) != len(apikey_domains_list):
             msg = "You don't have access to some zones apikey belongs to"
             current_app.logger.error(msg)
             raise DomainAccessForbidden(message=msg)
@@ -648,7 +648,7 @@ def api_update_apikey(apikey_id):
 
         inter = set(domain_list).intersection(set(user_domain_list))
 
-        if not (len(inter) == len(domain_list)):
+        if len(inter) != len(domain_list):
             msg = "You don't have access to one of zones"
             current_app.logger.error(msg)
             raise DomainAccessForbidden(message=msg)
@@ -767,7 +767,7 @@ def api_create_user():
     except Exception as e:
         current_app.logger.error('Create user ({}, {}) error: {}'.format(
             username, email, e))
-        raise UserCreateFail(message='User create failed')
+        raise UserCreateFail(message='User create failed') from e
     if not result['status']:
         current_app.logger.warning('Create user ({}, {}) error: {}'.format(
             username, email, result['msg']))
@@ -828,12 +828,11 @@ def api_update_user(user_id):
     if authorization_error:
         raise NotEnoughPrivileges(message=authorization_error)
 
-    if username:
-        if username != user.username:
-            current_app.logger.error(
-                'Cannot change username for {}'.format(user.username)
-            )
-            abort(400)
+    if username and username != user.username:
+        current_app.logger.error(
+            'Cannot change username for {}'.format(user.username)
+        )
+        abort(400)
     if password is not None:
         user.password = password
     user.plain_text_password = plain_text_password or ''
@@ -859,7 +858,7 @@ def api_update_user(user_id):
     except Exception as e:
         current_app.logger.error('Create user ({}, {}) error: {}'.format(
             username, email, e))
-        raise UserUpdateFail(message='User update failed')
+        raise UserUpdateFail(message='User update failed') from e
     if not result['status']:
         current_app.logger.warning('Update user ({}, {}) error: {}'.format(
             username, email, result['msg']))
@@ -961,7 +960,7 @@ def api_create_account():
         result = account.create_account()
     except Exception as e:
         current_app.logger.error('Error: {0}'.format(e))
-        raise AccountCreateFail(message='Account create failed')
+        raise AccountCreateFail(message='Account create failed') from e
     if not result['status']:
         raise AccountCreateFail(message=result['msg'])
 
@@ -1018,7 +1017,7 @@ def api_update_account(account_id):
 @api_role_can('delete accounts')
 @csrf.exempt
 def api_delete_account(account_id):
-    account_list = [] or Account.query.filter(Account.id == account_id).all()
+    account_list = Account.query.filter(Account.id == account_id).all()
     if len(account_list) == 1:
         account = account_list[0]
     else:

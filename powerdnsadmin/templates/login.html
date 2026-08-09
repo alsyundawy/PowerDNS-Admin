@@ -1,3 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Log in · {{ SITE_NAME }}</title>
+  <meta name="description" content="Log in to your account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations.">
+
 {#
 ╔══════════════════════════════════════════════════════════════╗
 ║  Template   : login.html                                     ║
@@ -41,8 +50,8 @@
 ║  [A11Y] Added explicit for="remember" binding on the         ║
 ║         remember-me label for stronger assistive support.    ║
 ║                                                              ║
-║  [A11Y] Removed redundant role="main" from <main> because    ║
-║         the element already has an implicit main landmark.   ║
+║  [A11Y] Removed redundant role="main" from main element      ║
+║         because the element has an implicit main landmark.   ║
 ║                                                              ║
 ║  [A11Y] Corrected descriptive relationship usage by moving   ║
 ║         login-desc handling away from an unsuitable form     ║
@@ -51,11 +60,11 @@
 ║  [HTML] Added missing preconnect to fonts.googleapis.com     ║
 ║         to improve font stylesheet connection setup.         ║
 ║                                                              ║
-║  [HTML] Changed subtitle wrapper from <div> to <p> for       ║
+║  [HTML] Changed subtitle wrapper from div to p element for   ║
 ║         better text semantics.                               ║
 ║                                                              ║
 ║  [HTML] Replaced generic footer container with semantic      ║
-║         <footer> while preserving structure and behavior.    ║
+║         footer element preserving structure and behavior.    ║
 ║                                                              ║
 ║  [OPT]  Removed form-level autocomplete="off" because        ║
 ║         field-level autocomplete values already provide      ║
@@ -79,16 +88,16 @@
 ║  [UI]   Increased contrast for text, borders, and input      ║
 ║         fields to improve readability.                       ║
 ║                                                              ║
-║  [OPT]  Added inline flash-prevention script in <head> to    ║
-║         eliminate dark/light theme flash (FOUC).             ║
+║  [OPT]  Added inline flash-prevention script in head tag     ║
+║         to eliminate dark/light theme flash (FOUC).          ║
 ║                                                              ║
 ║  [OPT]  Added inline script after logo to prevent dual logo  ║
 ║         fetches during initial load.                         ║
 ║                                                              ║
 ║  [A11Y] Improved semantic hierarchy by changing title div    ║
-║         to <h1> for accessibility and SEO structure.         ║
+║         to h1 heading for accessibility and SEO structure.   ║
 ║                                                              ║
-║  [SEO]  Added meta description for better indexing and page  ║
+║  [SEO]   Added meta description for better indexing and page ║
 ║         context in search results.                           ║
 ║                                                              ║
 ║  [BUG]  Removed username input regex pattern to prevent      ║
@@ -108,14 +117,6 @@
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 #}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Log in · {{ SITE_NAME }}</title>
-  <meta name="description" content="Log in to your account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations." />
 
   <meta name="referrer" content="no-referrer-when-downgrade">
 
@@ -214,7 +215,7 @@ html, body {
   transition: background-color 0.3s ease;
 }
 
-/* FIX: selector must be on <html> itself, not a child combinator */
+/* FIX: selector must be on html element itself, not a child combinator */
 body {
   background:
     radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15), transparent 50%),
@@ -591,7 +592,7 @@ form {
 <body>
   <div class="page" id="pageRoot">
 
-    <header class="site-header" role="banner">
+    <header class="site-header">
       <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
         <!--
           Always load the bright/light logo (dark_src) in both modes so the white subtitle
@@ -604,7 +605,7 @@ form {
              data-dark-src="{{ dark_src }}"
              alt="{{ SETTING.get('site_name') or SITE_NAME }} logo"
              width="auto"
-             height="72" />
+             height="72">
       </a>
     </header>
 
@@ -622,11 +623,11 @@ form {
       </svg>
     </button>
 
-    {# FIX: aria-describedby moved from <form> to <main> and points to oauth section id below #}
+    {# FIX: aria-describedby moved from form to main and points to oauth section id below #}
     <main class="card" aria-labelledby="login-title">
       <div class="brand">
         <h1 id="login-title" class="title">{{ SETTING.get('site_name') or SITE_NAME }}</h1>
-        {# FIX: <p> is semantically correct for subtitle text #}
+        {# FIX: p element is semantically correct for subtitle text #}
         <p class="subtitle">Sign in to continue</p>
       </div>
 
@@ -650,7 +651,7 @@ form {
           <input id="username" name="username" type="text" class="input"
                  placeholder="Username" required autofocus maxlength="64"
                  autocomplete="username"
-                 {% if username %}value="{{ username }}"{% endif %}
+                 value="{{ username or '' }}"
                  aria-label="Username">
         </div>
 
@@ -673,7 +674,11 @@ form {
         <div class="field">
           <select class="input" name="auth_method" aria-label="Authentication method">
             <option value="LOCAL">Local Authentication</option>
-            <option value="LDAP" {% if SETTING.get('login_ldap_first') %}selected{% endif %}>LDAP Authentication</option>
+            {% if SETTING.get('login_ldap_first') %}
+            <option value="LDAP" selected>LDAP Authentication</option>
+            {% else %}
+            <option value="LDAP">LDAP Authentication</option>
+            {% endif %}
           </select>
         </div>
         {% elif SETTING.get('ldap_enabled') and not SETTING.get('local_db_enabled') %}

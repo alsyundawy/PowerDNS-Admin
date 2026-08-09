@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class>
+<html lang="en">
 <head>
     {% block head %}
         <meta charset="utf-8">
@@ -10,7 +10,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/source_sans_pro.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/roboto_mono.css') }}">
         <!-- Tell the browser to be responsive to screen width -->
-        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- Tell Safari to not recognise telephone numbers -->
         <meta name="format-detection" content="telephone=no">
         {% assets "css_main" -%}
@@ -31,16 +31,16 @@
             <!-- Sidebar toggle button-->
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link no-prompt" data-widget="pushmenu" href="#" role="button">
+                    <button type="button" class="btn btn-link nav-link no-prompt" data-widget="pushmenu" aria-label="Toggle menu">
                         <i class="fa-solid fa-bars"></i>
-                    </a>
+                    </button>
                 </li>
             </ul>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <a class="nav-link no-prompt" data-widget="fullscreen" href="#" role="button">
+                    <button type="button" class="btn btn-link nav-link no-prompt" data-widget="fullscreen" aria-label="Toggle fullscreen">
                         <i class="fa-solid fa-expand-arrows-alt"></i>
-                    </a>
+                    </button>
                 </li>
             </ul>
         </nav>
@@ -51,7 +51,7 @@
         <!-- Logo -->
         <a href="{{ url_for('index.index') }}" class="brand-link">
             <img src="{{ url_for('static', filename='img/favicon.png') }}" alt="PowerDNS-Admin FavIcon"
-                 class="brand-image img-circle elevation-3" style="opacity: .8">
+                 class="brand-image img-circle elevation-3">
             <span class="brand-text font-weight-light">
         {% if SETTING.get('site_name') %}
             <b>{{ SITE_NAME }}</b>
@@ -65,7 +65,7 @@
             {% if current_user.id is defined %}
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
-                        <img src="{{ user_image_url }}" class="img-circle elevation-2" alt="User Image">
+                        <img src="{{ user_image_url }}" class="img-circle elevation-2" alt="User profile picture">
                     </div>
                     <div class="info">
                         <p>{{ current_user.firstname }} {{ current_user.lastname }}</p>
@@ -79,14 +79,14 @@
                 <!-- sidebar menu: : style can be found in sidebar.less -->
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
                     <li class="nav-header">Zone Management</li>
-                    <li class="{{ 'nav-item active' if active_page == 'nav-item dashboard' else 'nav-item' }}">
+                    <li class="nav-item {{ 'active' if active_page in ['dashboard', 'nav-item dashboard'] else '' }}">
                         <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link">
                             <i class="nav-icon fa-solid fa-tachometer-alt"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
                     {% if SETTING.get('allow_user_create_domain') or current_user.role.name in ['Administrator', 'Operator'] %}
-                        <li class="{{ 'nav-item active' if active_page == 'nav-item new_domain' else 'nav-item' }}">
+                        <li class="nav-item {{ 'active' if active_page in ['new_domain', 'nav-item new_domain'] else '' }}">
                             <a href="{{ url_for('domain.add') }}" class="nav-link">
                                 <i class="nav-icon fa-solid fa-plus"></i>
                                 <p>Create Zone</p>
@@ -94,66 +94,52 @@
                         </li>
                     {% endif %}
                     {% if SETTING.get('allow_user_remove_domain') or current_user.role.name in ['Administrator', 'Operator'] %}
-                        <li class="{{ 'nav-item active' if active_page == 'remove_domain' else 'nav-item' }}">
+                        <li class="nav-item {{ 'active' if active_page == 'remove_domain' else '' }}">
                             <a href="{{ url_for('domain.remove') }}" class="nav-link">
                                 <i class="nav-icon fa-solid fa-trash-alt"></i>
                                 <p>Remove Zone</p>
                             </a>
                         </li>
                     {% endif %}
-                    <li class="nav-header">Administration</li>
-                    <li class="{{ 'nav-item active' if active_page == 'admin_global_search' else 'nav-item' }}">
-                        <a href="{{ url_for('admin.global_search') }}" class="nav-link">
-                            <i class="nav-icon fa-solid fa-search"></i>
-                            <p>Global Search</p>
-                        </a>
-                    </li>
-                    {% if current_user.role.name in ['Administrator', 'Operator'] or SETTING.get('allow_user_view_history') %}
-                        <li class="{{ 'nav-item active' if active_page == 'admin_history' else 'nav-item' }}">
-                            <a href="{{ url_for('admin.history') }}" class="nav-link">
-                                <i class="nav-icon fa-solid fa-timeline"></i>
-                                <p>Activity</p>
-                            </a>
-                        </li>
-                    {% endif %}
                     {% if current_user.role.name in ['Administrator', 'Operator'] %}
-                        <li class="{{ 'nav-item active' if active_page == 'server_statistics' else 'nav-item' }}">
-                            <a href="{{ url_for('admin.server_statistics') }}" class="nav-link">
-                                <i class="nav-icon fa-solid fa-chart-simple"></i>
-                                <p>Server Statistics</p>
-                            </a>
-                        </li>
-                        <li class="{{ 'nav-item active' if active_page == 'server_configuration' else 'nav-item' }}">
-                            <a href="{{ url_for('admin.server_configuration') }}" class="nav-link">
-                                <i class="nav-icon fa-solid fa-cog"></i>
-                                <p>Server Configuration</p>
-                            </a>
-                        </li>
-                        <li class="{{ 'nav-item active' if active_page == 'admin_domain_template' else 'nav-item' }}">
-                            <a href="{{ url_for('admin.templates') }}" class="nav-link">
-                                <i class="nav-icon fa-solid fa-clone"></i>
-                                <p>Zone Templates</p>
-                            </a>
-                        </li>
-                        <li class="{{ 'nav-item active' if active_page == 'admin_accounts' else 'nav-item' }}">
-                            <a href="{{ url_for('admin.manage_account') }}" class="nav-link">
-                                <i class="nav-icon fa-solid fa-users-rectangle"></i>
-                                <p>Accounts</p>
-                            </a>
-                        </li>
-                        <li class="{{ 'nav-item active' if active_page == 'admin_users' else 'nav-item' }}">
+                        <li class="nav-header">Administration</li>
+                        <li class="nav-item {{ 'active' if active_page == 'admin_users' else '' }}">
                             <a href="{{ url_for('admin.manage_user') }}" class="nav-link">
                                 <i class="nav-icon fa-solid fa-users"></i>
                                 <p>Users</p>
                             </a>
                         </li>
-                        <li class="{{ 'nav-item active' if active_page == 'admin_keys' else 'nav-item' }}">
+                        <li class="nav-item {{ 'active' if active_page == 'admin_accounts' else '' }}">
+                            <a href="{{ url_for('admin.manage_account') }}" class="nav-link">
+                                <i class="nav-icon fa-solid fa-building"></i>
+                                <p>Accounts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ 'active' if active_page == 'admin_history' else '' }}">
+                            <a href="{{ url_for('admin.history') }}" class="nav-link">
+                                <i class="nav-icon fa-solid fa-history"></i>
+                                <p>History</p>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ 'active' if active_page == 'admin_domain_template' else '' }}">
+                            <a href="{{ url_for('admin.templates') }}" class="nav-link">
+                                <i class="nav-icon fa-solid fa-clone"></i>
+                                <p>Zone Templates</p>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ 'active' if active_page == 'global_search' else '' }}">
+                            <a href="{{ url_for('admin.global_search') }}" class="nav-link">
+                                <i class="nav-icon fa-solid fa-search"></i>
+                                <p>Global Search</p>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ 'active' if active_page == 'admin_keys' else '' }}">
                             <a href="{{ url_for('admin.manage_keys') }}" class="nav-link">
                                 <i class="nav-icon fa-solid fa-key"></i>
                                 <p>API Keys</p>
                             </a>
                         </li>
-                        <li class="{{ 'nav-item active' if active_page == 'admin_settings' else 'nav-item' }}">
+                        <li class="nav-item {{ 'active' if active_page == 'admin_settings' else '' }}">
                             <a href="#" class="nav-link no-prompt">
                                 <i class="nav-icon fa-solid fa-cog"></i>
                                 <p>
@@ -161,8 +147,11 @@
                                     <i class="right fa-solid fa-angle-left"></i>
                                 </p>
                             </a>
-                            <ul class="nav nav-treeview"
-                                {% if active_page == 'admin_settings' %}style="display: block;"{% endif %}>
+                            {% if active_page == 'admin_settings' %}
+                                <ul class="nav nav-treeview" style="display: block;">
+                            {% else %}
+                                <ul class="nav nav-treeview">
+                            {% endif %}
                                 <li class="nav-item">
                                     <a href="{{ url_for('admin.setting_basic') }}" class="nav-link">
                                         <i class="nav-icon fa-solid fa-gears"></i>
@@ -220,21 +209,23 @@
                     </div>
                 </div>
             </div>
+            <!-- /.content-header -->
         {% endblock %}
         {% block content %}
         {% endblock %}
     </div>
     <!-- /.content-wrapper -->
     <footer class="main-footer">
-        <strong><a href="https://github.com/alsyundawy/PowerDNS-Admin">PowerDNS-Admin Modified By Alsyundawy</a></strong> - A PowerDNS web
+        <strong>Copyright &copy; <a href="https://github.com/PowerDNS-Admin/PowerDNS-Admin">PowerDNS-Admin</a>.</strong>
+        A web-based PowerDNS administration
         interface with advanced features.
         <span class="float-right">Version 0.4.2 Modified By Alsyundawy</span>
     </footer>
 </div>
 <!-- ./wrapper -->
 <script type="text/javascript">
-    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-    var PDNS_VERSION = '{{ pdns_version }}';
+    $SCRIPT_ROOT = {{ request.script_root|tojson }};
+    var PDNS_VERSION = {{ pdns_version|tojson }};
 </script>
 {% block scripts %}
     {% assets "js_main" -%}
@@ -264,7 +255,7 @@
 
                 // Sign Out button click event
                 $(document.body).on("click", ".button_sign_out", function (e) {
-                    window.location.replace("{{ url_for('index.logout') }}");
+                    window.location.replace(logoutUrl);
                 });
 
                 // Things happen when session warning popup shown
@@ -282,19 +273,24 @@
 
                 // jTimeout definition
                 $(function () {
+                    const sessionTimeoutSec = Number({{ (SETTING.get('session_timeout')|int * 60)|tojson }});
+                    const pingUrl = {{ url_for("index.ping")|tojson }};
+                    const logoutUrl = {{ url_for("index.logout")|tojson }};
+                    const loginUrl = {{ url_for("index.login")|tojson }};
+
                     $.jTimeout({
                         flashTitle: true,
                         flashTitleSpeed: 500,
                         flashingTitleText: '**WARNING**',
                         originalTitle: document.title,
-                        timeoutAfter: {{ SETTING.get('session_timeout')|int * 60 }},
+                        timeoutAfter: sessionTimeoutSec,
                         secondsPrior: 60,
                         heartbeat: 1,
                         extendOnMouseMove: true,
                         mouseDebounce: 30,
-                        extendUrl: '{{ url_for("index.ping") }}',
-                        logoutUrl: '{{ url_for("index.logout") }}',
-                        loginUrl: '{{ url_for("index.login") }}',
+                        extendUrl: pingUrl,
+                        logoutUrl: logoutUrl,
+                        loginUrl: loginUrl,
 
                         onClickExtend: function () {
                             // broadcast a message to tell other tabes
@@ -318,12 +314,11 @@
                         },
 
                         onTimeout: function (jTimeout) {
-                            window.location.replace("{{ url_for('index.logout') }}");
+                            window.location.replace(logoutUrl);
                         },
 
                         onPriorCallback: function (jTimeout) {
                             $("#modal_session_warning").modal('show');
-                            ;
                         },
 
                         onSessionExtended: function (jTimeout) {
@@ -349,10 +344,10 @@
 {% endblock %}
 {% block extrascripts %}
 {% endblock %}
-{% block defaultmodals %}
-    <div class="modal fade modal-danger" id="modal_error">
+{% block modals %}
+    <div class="modal fade" id="modal_error">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content bg-danger">
                 <div class="modal-header">
                     <h4 class="modal-title">Error</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -363,17 +358,16 @@
                     <p></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary float-right" data-dismiss="modal">
+                    <button type="button" class="btn btn-outline-light float-right" data-dismiss="modal">
                         Close
                     </button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- /.modal -->
-    <div class="modal fade modal-success" id="modal_success">
+    <div class="modal fade" id="modal_success">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content bg-success">
                 <div class="modal-header">
                     <h4 class="modal-title">Success</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -384,7 +378,7 @@
                     <p></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary float-right" data-dismiss="modal">
+                    <button type="button" class="btn btn-outline-light float-right" data-dismiss="modal">
                         Close
                     </button>
                 </div>
@@ -399,7 +393,7 @@
                 </div>
                 <div class="modal-body">
                     <p>Your session is about to expire. You will be automatically signed out in</p>
-                    <h3><span id="modal-time"></span></h3>
+                    <h3 aria-live="polite"><span id="modal-time"></span></h3>
                     <p>To coninue your ssession, select <strong>Stay Signed In</strong></p>
                 </div>
                 <div class="modal-footer">
@@ -414,8 +408,6 @@
             </div>
         </div>
     </div>
-{% endblock %}
-{% block modals %}
 {% endblock %}
 </body>
 </html>

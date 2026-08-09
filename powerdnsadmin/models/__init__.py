@@ -18,6 +18,27 @@ from .domain_template_record import DomainTemplateRecord
 from .record import Record
 from .record_entry import RecordEntry
 
+__all__ = [
+    "db",
+    "User",
+    "Role",
+    "Account",
+    "AccountUser",
+    "Server",
+    "History",
+    "ApiKey",
+    "ApiKeyAccount",
+    "Setting",
+    "Domain",
+    "DomainSetting",
+    "DomainUser",
+    "DomainTemplate",
+    "DomainTemplateRecord",
+    "Record",
+    "RecordEntry",
+    "init_app",
+]
+
 
 def init_app(app):
     db.init_app(app)

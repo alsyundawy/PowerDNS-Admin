@@ -70,7 +70,7 @@ class Record(object):
 
             while len(r['comments'])<len(r['records']):
                 r['comments'].append({"content": "", "account": ""})
-            r['records'], r['comments'] = (list(t) for t in zip(*sorted(zip(r['records'], r['comments']), key=by_record_content_pair)))
+            r['records'], r['comments'] = (list(t) for t in zip(*sorted(zip(r['records'], r['comments'], strict=False), key=by_record_content_pair), strict=False))
             rrsets.append(r)
 
         return rrsets
@@ -145,8 +145,8 @@ class Record(object):
                 rrset['comments'] = rrset['comments'] + r['comments']
             while len(rrset['comments']) < len(rrset['records']):
                 rrset['comments'].append({"content": "", "account": ""})
-            zipped_list = zip(rrset['records'], rrset['comments'])
-            tuples = zip(*sorted(zipped_list, key=by_record_content_pair))
+            zipped_list = zip(rrset['records'], rrset['comments'], strict=False)
+            tuples = zip(*sorted(zipped_list, key=by_record_content_pair), strict=False)
             rrset['records'], rrset['comments'] = [list(t) for t in tuples]
             return rrset
 

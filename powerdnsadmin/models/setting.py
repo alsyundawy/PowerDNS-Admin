@@ -128,7 +128,7 @@ class Setting(db.Model):
 
         result = {}
 
-        for var_name, default_value in AppSettings.defaults.items():
+        for var_name in AppSettings.defaults:
             if var_name in group:
                 result[var_name] = self.get(var_name)
 

@@ -230,14 +230,17 @@ class Domain(db.Model):
             domain_name,
             domain_type,
             soa_edit_api,
-            domain_ns=[],
-            domain_master_ips=[],
+            domain_ns=None,
+            domain_master_ips=None,
             account_name=None):
         """
         Add a zone to power dns
         """
 
         headers = {'X-API-Key': self.PDNS_API_KEY, 'Content-Type': 'application/json'}
+
+        domain_ns = domain_ns if domain_ns is not None else []
+        domain_master_ips = domain_master_ips if domain_master_ips is not None else []
 
         domain_name = domain_name + '.'
         domain_ns = [ns + '.' for ns in domain_ns]
@@ -382,10 +385,11 @@ class Domain(db.Model):
                 'msg': 'Cannot change soa-edit-api for this zone.'
             }
 
-    def update_kind(self, domain_name, kind, masters=[]):
+    def update_kind(self, domain_name, kind, masters=None):
         """
         Update zone kind: Native / Master / Slave
         """
+        masters = masters if masters is not None else []
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if not domain:
             return {'status': 'error', 'msg': 'Znoe does not exist.'}
@@ -484,7 +488,7 @@ class Domain(db.Model):
                 address = re.search(
                     r'((([a-f0-9]\.){' + str(i) + r'})(?P<ipname>.+6.arpa)\.?)',
                     reverse_host_address)
-                if None != self.get_id_by_name(address.group('ipname')):
+                if self.get_id_by_name(address.group('ipname')) is not None:
                     c = i
                     break
             return re.search(
@@ -495,7 +499,7 @@ class Domain(db.Model):
                 address = re.search(
                     r'((([0-9]+\.){' + str(i) + r'})(?P<ipname>.+r.arpa)\.?)',
                     reverse_host_address)
-                if None != self.get_id_by_name(address.group('ipname')):
+                if self.get_id_by_name(address.group('ipname')) is not None:
                     c = i
                     break
             return re.search(
@@ -933,7 +937,7 @@ class Domain(db.Model):
     def is_overriding(self, domain_name):
         upper_domain_name = '.'.join(domain_name.split('.')[1:])
         while upper_domain_name != '':
-            if self.get_id_by_name(upper_domain_name.rstrip('.')) != None:
+            if self.get_id_by_name(upper_domain_name.rstrip('.')) is not None:
                     upper_domain = self.get_domain_info(upper_domain_name)
                     if 'rrsets' in upper_domain:
                         for r in upper_domain['rrsets']:

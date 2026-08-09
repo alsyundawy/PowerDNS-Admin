@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Register - {{ SITE_NAME }}</title>
+
 {#
 ╔══════════════════════════════════════════════════════════════╗
 ║  Template   : register.html                                  ║
@@ -9,8 +15,8 @@
 ║                                                              ║
 ║  v1.1.0 — 2026-07-11                                         ║
 ║  ─────────────────────────────────────────────────────────── ║
-║  [BUG]  Unclosed </div> on .form-group inside CAPTCHA block  ║
-║         causing DOM layout break in all browsers.            ║
+║  [BUG]  Unclosed div element on .form-group inside CAPTCHA   ║
+║         block causing DOM layout break in all browsers.      ║
 ║                                                              ║
 ║  [SEC]  Moved url_for('index.login') out of JS string into   ║
 ║         data-href attribute to eliminate XSS vector.         ║
@@ -29,7 +35,7 @@
 ║                                                              ║
 ║  [A11Y] Removed user-scalable=no — violates WCAG 1.4.4.      ║
 ║                                                              ║
-║  [A11Y] Added sr-only <label> for every input — WCAG 1.3.1.  ║
+║  [A11Y] Added sr-only label element for input - WCAG 1.3.1.  ║
 ║                                                              ║
 ║  [A11Y] Added autocomplete attributes per WCAG 1.3.5.        ║
 ║                                                              ║
@@ -37,9 +43,9 @@
 ║                                                              ║
 ║  [HTML] Removed obsolete X-UA-Compatible meta (IE is EOL).   ║
 ║                                                              ║
-║  [HTML] Added lang="en" on <html> element.                   ║
+║  [HTML] Added lang="en" on html element.                     ║
 ║                                                              ║
-║  [HTML] Added type="image/png" on favicon <link>.            ║
+║  [HTML] Added type="image/png" on favicon link element.      ║
 ║                                                              ║
 ║  [HTML] Added noindex meta — register pages not indexable.   ║
 ║                                                              ║
@@ -58,12 +64,6 @@
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 #}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    {#- IE=edge removed: Internet Explorer is end-of-life since 2022 #}
-    <title>Register - {{ SITE_NAME }}</title>
 
     {#- Security: registration pages must not be indexed #}
     <meta name="robots" content="noindex, nofollow">
@@ -287,7 +287,7 @@
                         {{ captcha() }}
                         {#-
                             FIX: closed this .form-group properly — original code was
-                            missing the closing </div> tag, causing DOM layout corruption.
+                            missing the closing div tag, causing DOM layout corruption.
                         #}
                         <div class="input-group mt-2">
                             <div class="input-group-prepend">
@@ -317,7 +317,7 @@
                         {#-
                             OPT: Back URL stored in data-href attribute.
                             This eliminates the Jinja expression being embedded
-                            directly inside a JS string context in the <script> block,
+                            directly inside a JS string context in the script block,
                             preventing any potential XSS vector.
                         #}
                         <button type="button"

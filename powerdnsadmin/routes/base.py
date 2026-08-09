@@ -72,7 +72,7 @@ def handle_internal_server_error(e):
 def load_if_valid(user, method, src_ip, trust_user = False):
     try:
         auth = user.is_validate(method, src_ip, trust_user)
-        if auth == False:
+        if not auth:
             return None
         else:
             # login_user(user, remember=False)
@@ -96,7 +96,7 @@ def login_via_authorization_header_or_remote_user(request):
     auth_header = request.headers.get('Authorization')
     if auth_header:
 
-        if auth_header[:6] != "Basic ":
+        if not auth_header.startswith("Basic "):
             return None
 
         auth_method = request.args.get('auth_method', 'LOCAL')

@@ -22,12 +22,12 @@ class ApiKey(db.Model):
                                secondary="apikey_account",
                                back_populates="apikeys")
 
-    def __init__(self, key=None, desc=None, role_name=None, domains=[], accounts=[]):
+    def __init__(self, key=None, desc=None, role_name=None, domains=None, accounts=None):
         self.id = None
         self.description = desc
         self.role_name = role_name
-        self.domains[:] = domains
-        self.accounts[:] = accounts
+        self.domains[:] = domains if domains is not None else []
+        self.accounts[:] = accounts if accounts is not None else []
         if not key:
             rand_key = ''.join(
                 secrets.choice(string.ascii_letters + string.digits)

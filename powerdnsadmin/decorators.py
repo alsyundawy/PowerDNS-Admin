@@ -255,11 +255,13 @@ def is_json(f):
     return decorated_function
 
 
-def callback_if_request_body_contains_key(callback, http_methods=[], keys=[]):
+def callback_if_request_body_contains_key(callback, http_methods=None, keys=None):
     """
     If request body contains one or more of specified keys, call
     :param callback
     """
+    http_methods = http_methods if http_methods is not None else []
+    keys = keys if keys is not None else []
 
     def decorator(f):
         @wraps(f)
@@ -370,12 +372,13 @@ def apikey_can_create_domain(f):
     return decorated_function
 
 
-def apikey_can_remove_domain(http_methods=[]):
+def apikey_can_remove_domain(http_methods=None):
     """
     Grant access if:
         - user is in Operator role or higher, or
         - allow_user_remove_domain is on
     """
+    http_methods = http_methods if http_methods is not None else []
 
     def decorator(f):
         @wraps(f)
@@ -437,12 +440,13 @@ def apikey_can_access_domain(f):
     return decorated_function
 
 
-def apikey_can_configure_dnssec(http_methods=[]):
+def apikey_can_configure_dnssec(http_methods=None):
     """
     Grant access if:
         - user is in Operator role or higher, or
         - dnssec_admins_only is off
     """
+    http_methods = http_methods if http_methods is not None else []
 
     def decorator(f=None):
         @wraps(f)
