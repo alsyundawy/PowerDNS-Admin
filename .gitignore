@@ -44,3 +44,6 @@ venv*
 .pytest_cache
 .DS_Store
 yarn-error.log
+megalinter-reports/IDE-config.txt
+.mega-linter.yml
+megalinter-reports/megalinter.log
