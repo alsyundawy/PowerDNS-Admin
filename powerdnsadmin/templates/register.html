@@ -358,12 +358,24 @@
     If jQuery is guaranteed available via js_login assets, the jQuery form is
     equally valid — the native form removes the implicit jQuery dependency.
 #}
-<script>
+<script nonce="{{ CSP_NONCE|default('') }}">
     document.addEventListener('DOMContentLoaded', function () {
         var btn = document.getElementById('button_back');
         if (btn) {
             btn.addEventListener('click', function () {
-                window.location.href = btn.getAttribute('data-href');
+                var raw = btn.getAttribute('data-href');
+                var dest = '';
+                if (raw) {
+                    raw = String(raw);
+                    // Allow only relative paths or http/https URLs; block
+                    // javascript:, data:, and other non-navigation schemes.
+                    if (/^https?:\/\//i.test(raw) || /^[?#\/]/.test(raw)) {
+                        dest = raw;
+                    }
+                }
+                if (dest) {
+                    window.location.href = dest;
+                }
             });
         }
     });
