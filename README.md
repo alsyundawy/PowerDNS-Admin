@@ -1,20 +1,24 @@
-# ⚡ PowerDNS-Admin Modified By Alsyundawy
+# ⚡ PowerDNS-Admin — Modified by Alsyundawy
 
-[![Version](https://img.shields.io/badge/version-0.4.3--alsyundawy-brightgreen.svg)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
-![Python](https://img.shields.io/badge/python-%3E%3D3.10-3776ab.svg?logo=python&logoColor=white)
-[![Latest Release](https://img.shields.io/github/v/release/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
-[![Maintenance Status](https://img.shields.io/maintenance/yes/9999)](https://github.com/alsyundawy/PowerDNS-Admin/)
-[![License](https://img.shields.io/github/license/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/blob/master/LICENSE)
-[![GitHub Issues](https://img.shields.io/github/issues/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/pulls)
-[![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-orange?logo=paypal&logoColor=white)](https://www.paypal.me/alsyundawy)
-[![Donate with Ko-fi](https://img.shields.io/badge/Ko--fi-donate-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/alsyundawy)
-[![Sponsor with GitHub](https://img.shields.io/badge/GitHub-sponsor-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/alsyundawy)
-[![GitHub Stars](https://img.shields.io/github/stars/alsyundawy/PowerDNS-Admin?style=social)](https://github.com/alsyundawy/PowerDNS-Admin/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/alsyundawy/PowerDNS-Admin?style=social)](https://github.com/alsyundawy/PowerDNS-Admin/network/members)
-[![GitHub Contributors](https://img.shields.io/github/contributors/alsyundawy/PowerDNS-Admin?style=social)](https://github.com/alsyundawy/PowerDNS-Admin/graphs/contributors)
+[![Version](https://img.shields.io/badge/version-0.4.3--alsyundawy-brightgreen?style=for-the-badge)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.10-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Latest Release](https://img.shields.io/github/v/release/alsyundawy/PowerDNS-Admin?style=for-the-badge&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
+[![License](https://img.shields.io/github/license/alsyundawy/PowerDNS-Admin?style=for-the-badge)](LICENSE)
+[![Maintenance](https://img.shields.io/maintenance/yes/9999?style=for-the-badge)](https://github.com/alsyundawy/PowerDNS-Admin/)
 
-A modern, secure, and feature-rich Web Management Interface for **PowerDNS** with advanced Role-Based Access Control (RBAC), multi-backend authentication, dynamic zone templating, and automated database migration idempotency.
+[![GitHub Issues](https://img.shields.io/github/issues/alsyundawy/PowerDNS-Admin?style=flat-square&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/alsyundawy/PowerDNS-Admin?style=flat-square&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/pulls)
+[![GitHub Stars](https://img.shields.io/github/stars/alsyundawy/PowerDNS-Admin?style=flat-square&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/alsyundawy/PowerDNS-Admin?style=flat-square&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/network/members)
+[![Contributors](https://img.shields.io/github/contributors/alsyundawy/PowerDNS-Admin?style=flat-square&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/graphs/contributors)
+
+[![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-003087?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.me/alsyundawy)
+[![Donate Ko-fi](https://img.shields.io/badge/Donate-Ko--fi-ff5e5b?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/alsyundawy)
+[![GitHub Sponsor](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=flat-square&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/alsyundawy)
+
+---
+
+A **modern, secure, and feature-rich** Web Management Interface for [PowerDNS](https://www.powerdns.com/), enhanced with advanced security hardening, Role-Based Access Control (RBAC), multi-backend authentication, dynamic zone templating, Python 3.12+/3.13 compatibility, and automated database migration idempotency — maintained by **[@alsyundawy](https://github.com/alsyundawy)**.
 
 ---
 
@@ -22,19 +26,18 @@ A modern, secure, and feature-rich Web Management Interface for **PowerDNS** wit
 
 | Category | Features |
 | :--- | :--- |
-| 🌐 **Zone Management** | Forward & Reverse DNS (IPv4 / IPv6 PTR), Zone Templating, IDN / Punycode support, DNSSEC management |
-| 🔐 **Authentication** | Local Auth, SAML 2.0, LDAP (OpenLDAP / Active Directory), OAuth2 (Google, GitHub, Azure, OpenID Connect) |
-| 🛡️ **Security** | Two-Factor Authentication (TOTP with replay protection), Role-Based Access Control (RBAC), API Key Isolation, CSRF protection |
-| 📊 **Monitoring & Logs** | Real-time PowerDNS stats, Activity & Audit Logging, Zone Change Log tracking |
-| ⚡ **Automation** | Full RESTful API for zone/record automation, DynDNS2 protocol support, Docker & Compose ready |
+| 🌐 **Zone Management** | Forward & Reverse DNS (IPv4/IPv6 PTR), Zone Templating, IDN/Punycode, DNSSEC Management |
+| 🔐 **Authentication** | Local, SAML 2.0, LDAP (OpenLDAP/Active Directory), OAuth2 (Google, GitHub, Azure, OpenID) |
+| 🛡️ **Security** | TOTP 2FA with Replay Protection, RBAC, API Key Isolation, CSRF Protection, SSRF Prevention |
+| 📊 **Monitoring** | Real-time PowerDNS Stats, Activity Logging, Audit Trail, Zone Change History |
+| ⚡ **Automation** | RESTful API for Zone/Record Automation, DynDNS2 Protocol, Docker & Compose Ready |
+| 🐍 **Compatibility** | Python 3.10–3.13, Flask 3.x, SQLAlchemy 1.4+, PostgreSQL / MySQL / SQLite |
 
 ---
 
-## 🛠️ Quick Start
+## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
-
-Run the application instantly using Docker:
+### Option 1 — Docker *(Recommended)*
 
 ```bash
 docker run -d \
@@ -45,36 +48,29 @@ docker run -d \
   alsyundawy/powerdns-admin:latest
 ```
 
-Access the interface by navigating to `http://localhost:9191`.
+Access the interface at `http://localhost:9191`.
 
-### Option 2: Docker Compose
+### Option 2 — Docker Compose
 
-1. Clone the repository and configure your environment:
-
-   ```bash
-   git clone https://github.com/alsyundawy/PowerDNS-Admin.git
-   cd PowerDNS-Admin
-   ```
-
-2. Start the services:
-
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+git clone https://github.com/alsyundawy/PowerDNS-Admin.git
+cd PowerDNS-Admin
+docker-compose up -d
+```
 
 ---
 
-## ⚙️ Configuration & Environment
+## ⚙️ Configuration & Environment Variables
 
-PowerDNS-Admin supports configuration via environment variables or custom configuration files (`docker_config.py` / `config.py`):
+PowerDNS-Admin supports configuration via environment variables or custom config files (`docker_config.py` / `config.py`):
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `SECRET_KEY` | Secret key for session encryption | *(Required)* |
-| `SQLALCHEMY_DATABASE_URI` | Database connection string | `sqlite:////data/pdns.db` |
+| `SQLALCHEMY_DATABASE_URI` | Database connection URI | `sqlite:////data/pdns.db` |
 | `PDNS_STATS_URL` | PowerDNS API endpoint URL | `http://127.0.0.1:8081` |
 | `PDNS_API_KEY` | PowerDNS API Key | `""` |
-| `CAPTCHA_ENABLE` | Enable CAPTCHA on user registration | `True` |
+| `CAPTCHA_ENABLE` | Enable CAPTCHA on registration page | `True` |
 
 ---
 
@@ -84,132 +80,88 @@ PowerDNS-Admin supports configuration via environment variables or custom config
 
 ---
 
-## 📋 Full Changelog
+## 📋 Changelog Summary
 
-### 🚀 [0.4.3-alsyundawy] - 2026-08-11
+### 🚀 [0.4.3-alsyundawy] — 2026-08-11
 
-Comprehensive maintenance, security hardening, database migration idempotency, and UI stability release built on top of `0.4.2-alsyundawy-fix`.
+> Comprehensive maintenance, security hardening, database migration idempotency, UI/UX redesign, and Python 3.12+/3.13 compatibility — built on top of `0.4.2-alsyundawy-fix`.
 
 #### 🛡️ Security Enhancements
 
-- **Dynamic PowerDNS API SSL Verification** (`lib/helper.py`)
-  - Converted hardcoded `verify = False` to dynamic database setting `Setting().get('verify_ssl_connections')`.
-- **TOTP Replay Protection** (`models/user.py` & Migration `d2e3f4a5b6c7`)
-  - Added atomic single-step TOTP consumption with `otp_last_used` tracking to prevent token replay attacks within validity windows.
-- **API Identity & Basic Auth Isolation** (`decorators.py` / `routes/api.py`)
-  - Introduced `api_current_user` (`LocalProxy`) resolving strictly to request-scoped credentials, preventing session cookies from overriding API Basic Auth identity.
-- **Stale CSRF Session Protection** (`routes/index.py` & `routes/base.py`)
-  - Gracefully invalidates sessions and logs users out on CSRF failures, displaying friendly form expiration notices instead of raw `403` errors.
-- **DNSSEC State Hardening** (`routes/domain.py`)
-  - Surfaced PowerDNS API errors (`HTTP 502`) and ensured DNSSEC status flags only mutate after successful API operations.
-- **Zone Template Mutation Protection** (`routes/admin.py`)
-  - Added `@operator_role_required` guard to `/template/<template>/apply` to prevent unauthorized template record modifications.
+- **Dynamic SSL Verification** — Replaced hardcoded `verify = False` with `Setting().get('verify_ssl_connections')` in `lib/helper.py`.
+- **TOTP Replay Protection** — Atomic token consumption via `otp_last_used`; prevents replay attacks.
+- **API Identity Isolation** — `api_current_user` (`LocalProxy`) ensures session cookies cannot override API Basic Auth.
+- **Stale CSRF Handling** — Graceful session invalidation on CSRF failures with user-friendly notices (no raw `403`).
+- **DNSSEC State Hardening** — DNSSEC flags only mutate after confirmed API success (`HTTP 502` surfaced).
+- **Zone Template Authorization** — `@operator_role_required` guard on `/template/<template>/apply`.
 
 #### ⚡ Database & Migration Idempotency
 
-- **Defensive Role Allocation** (`models/role.py` & `models/user.py`)
-  - Added `Role.get_id_by_name(name)` class method to auto-seed default roles (`User`, `Administrator`, `Operator`) if missing, eliminating `AttributeError: 'NoneType' object has no attribute 'id'` on registration or external auth.
-- **Idempotent DB Migrations & Auto-Stamping** (`migrations/env.py` & `versions/787bdba9e147_init_db.py`)
-  - Initial migration `787bdba9e147_init_db.py` inspects table existence before attempting `CREATE TABLE account`.
-  - `migrations/env.py` automatically detects pre-created database schemas and stamps `alembic_version` to head (`d2e3f4a5b6c7`), eliminating deployment `table ... already exists` errors.
-- **Flask-Session 0.6+ & Sessions Model Compatibility** (`powerdnsadmin/__init__.py` & `models/sessions.py`)
-  - Bound `SESSION_SQLALCHEMY = models.db` before `Session(app)` and added `__table_args__ = {'extend_existing': True}` to `Sessions` model.
+- **Defensive Role Seeding** — `Role.get_id_by_name(name)` auto-seeds default roles on empty databases.
+- **Idempotent Migrations** — `787bdba9e147_init_db.py` checks table existence before `CREATE TABLE`; `env.py` auto-stamps `alembic_version` to `head`.
+- **Flask-Session 0.6+ Compatibility** — `SESSION_SQLALCHEMY = models.db` bound before `Session(app)`; `Sessions` uses `extend_existing = True`.
 
 #### 🐛 Bug Fixes & UI Stability
 
-- **Login Redirect Correction** (`routes/index.py`)
-  - Fixed `authenticate_user()` redirecting back to `/login` instead of `dashboard.dashboard` upon successful authentication.
-- **Conditional CAPTCHA Validation** (`routes/index.py`)
-  - Updated `register()` route to evaluate `if CAPTCHA_ENABLE and not captcha.validate():`, allowing registration when CAPTCHA is disabled.
-- **Global Context Processor `inject_pdns_version`** (`powerdnsadmin/__init__.py` & `base.html`)
-  - Registered `inject_pdns_version` globally to prevent `TypeError: Object of type Undefined is not JSON serializable` across all dashboard sub-menus.
-- **Footer Version String** (`base.html` & `1base.html`)
-  - Updated footer display string to `Version 0.4.3 Modified By Alsyundawy`.
-- **Custom Headers Preservation** (`lib/utils.py`)
-  - Fixed `fetch_remote` dropping custom caller headers (`X-API-Key`).
-- **DELETE Endpoint Type Check** (`models/domain.py`)
-  - Added `isinstance(jdata, dict)` check on `delete_dnssec_key` responses.
-- **Password Policy Character Classes** (`routes/index.py`)
-  - Corrected policy checks to use `ascii_lowercase`, `ascii_uppercase`, and `punctuation` instead of digits.
+- **Login Redirect** — Fixed `authenticate_user()` to redirect to `dashboard.dashboard` on success.
+- **CAPTCHA Toggle** — Registration skips CAPTCHA validation when `CAPTCHA_ENABLE = False`.
+- **Context Processor** — `inject_pdns_version` registered globally; prevents `TypeError` on dashboard sub-menus.
+- **Footer Version String** — Updated to `Version 0.4.3 Modified By Alsyundawy`.
+- **Custom Headers** — `fetch_remote` no longer drops caller-supplied headers (e.g., `X-API-Key`).
+- **DNSSEC Key Deletion** — `isinstance(jdata, dict)` guard added in `models/domain.py`.
+- **Password Policy** — Fixed character class checks to use `ascii_lowercase`, `ascii_uppercase`, and `punctuation`.
 
-#### 🔧 Code Quality & Dependencies
+#### 🎨 UI/UX Redesign (login.html & register.html)
 
-- **Python 3.12+ / 3.13 Compatibility**: Replaced removed `distutils` with local helpers (`version_tuple`, `strtobool`) and replaced deprecated `imghdr` with magic-byte image type signatures.
-- **Linter Cleanup**: Resolved dead code, unhandled exception bindings, and raw escape sequences.
+- **Registration Page** — Fully redesigned with modern glassmorphism card, animated gradient background, real-time password strength meter, and dark/light theme toggle.
+- **Duplicate Form Control** — Single `<input type="hidden" id="auth_method_hidden">` replaces duplicate controls; JS syncs the dropdown.
+- **WCAG 2.1 AA Alert Contrast** — Alert text `#ffffff` with `rgba(239,68,68,0.20)` background (contrast ≥ 4.5:1).
+- **`safeSrc()` Linter Compliance** — `void urlErr;` added in `catch` block; screen-reader labels and honeypot field included.
 
-#### 🎨 Template Linter Fixes (login.html & register.html)
+#### 🔧 Code Quality & CI/CD
 
-- **Duplicate `auth_method` Form Control** (`login.html`)
-  - Removed `name="auth_method"` from `<select>` and all Jinja2 conditional hidden inputs. Replaced with a single `<input type="hidden" id="auth_method_hidden" name="auth_method">` always present in the DOM. A small JS block syncs the select dropdown value into the hidden field on page-load and on `change` events — fully transparent to the backend.
-- **Alert Text Contrast** (`login.html` & `register.html`)
-  - Changed `.alert` text color from `#ff9999` / `#fca5a5` to `#ffffff` with stronger background `rgba(239,68,68,0.20)` to meet WCAG 2.1 AA contrast ratio (≥ 4.5:1).
-- **Exception Handler (`safeSrc`)** (`login.html` & `register.html`)
-  - Added `void urlErr;` inside the `catch (urlErr)` block of `safeSrc()` to explicitly acknowledge the caught exception and satisfy linter "Handle this exception or don't catch it at all" rule.
+- **Python 3.12+/3.13** — Replaced `distutils` and deprecated `imghdr` with modern alternatives.
+- **Jekyll CI/CD** — Added `.github/workflows/jekyll-gh-pages.yml` for automated GitHub Pages deployment.
+- **Linter Cleanup** — Resolved dead code, unhandled exception bindings, and raw escape sequences.
 
 ---
 
-### 🛠️ [0.4.2-alsyundawy-fix] - 2026-08-09
+### 🛠️ [0.4.2-alsyundawy-fix] — 2026-08-09
 
-Frontend security and template hardening release by **@alsyundawy**.
+Frontend security and template hardening. Commit: `bcbb766`.
 
-- **Commit:** `bcbb766`
-- **Full Changelog:** `0.4.2-alsyundawy...0.4.2-alsyundawy-fix`
-
-#### 🎨 Frontend & Template Security
-
-- **6login.html, 7login.html, 8login.html**
-  - Improved `safeSrc` logo handling function to validate light-theme logo URLs and prevent invalid source attributes.
-- **register.html**
-  - Added `nonce="{{ CSP_NONCE|default('') }}"` to script tags.
-  - Added URL scheme validation for redirect parameters to block `javascript:` / `data:` URI injection.
+- `safeSrc` logo URL validation improvements; CSP nonce on `register.html`; redirect URL scheme validation.
 
 ---
 
-### 🔒 [0.4.2-alsyundawy] - 2026-08-09
+### 🔒 [0.4.2-alsyundawy] — 2026-08-09
 
-Comprehensive security release, CodeQL scanning alert remediations, and RFC2317 compliance by **@alsyundawy**.
+Comprehensive security & CodeQL remediation release. Commit: `789c185`.
 
-- **Commit:** `789c185`
-- **Full Changelog:** `0.4.2...0.4.2-alsyundawy`
-
-#### 🛡️ Security Fixes & CodeQL Remediations
-
-- **RFC2317 Zone Name Escaping**: Fully escaped zone names in zones API URLs (#1).
-- **OIDC Endpoint Fix**: Resolved issues with the OIDC userinfo endpoint (#2).
-- **LDAP Query Injection**: Sanitized LDAP queries built from user-controlled sources (CodeQL Alert #17 / PR #9).
-- **Full SSRF Prevention**: Hardened server-side request forgery protections (CodeQL Alert #13 / PR #8).
-- **XSS & DOM Hardening**: Prevented reflected XSS and DOM text reinterpretation as HTML (CodeQL Alerts #1, #15, #18, #19, #20, #27, #29 / PRs #10, #11, #13, #14, #15, #16, #18).
-- **Production Debug Mode**: Disabled Flask debug mode in production defaults (CodeQL Alert #16 / PR #12).
-
-#### 📦 Dependency Updates
-
-- `cryptography`: `45.0.5` → `46.0.5` → `48.0.1` → `50.0.0` (#19, #25, #28)
-- `pyasn1`: `0.6.2` → `0.6.4` (#26)
-- `setuptools`: `80.9.0` → `83.0.0` (#27)
+- RFC2317, OIDC, LDAP injection, SSRF, XSS/DOM hardening, production debug mode disabled.
+- Dependencies: `cryptography` → `50.0.0`, `pyasn1` → `0.6.4`, `setuptools` → `83.0.0`.
 
 ---
 
-### 📦 [0.4.2] - 2022-01-31
+### 📦 [0.4.2] — 2022-01-31 *(Upstream)*
 
-Official upstream release from **PowerDNS-Admin**.
-
-#### 📌 Upstream Highlights
-
-- **SQLAlchemy 1.4 Upgrade**: Requires database connection strings to use `postgresql://` instead of `postgres://`.
-- OAuth provider auto-configuration enhancements.
-- Case-insensitive local user lookup fixes.
+SQLAlchemy 1.4 upgrade (`postgresql://` URI required), OAuth auto-config, case-insensitive user lookup.
 
 ---
 
-## 📖 Documentation & Support
+## 📖 Documentation & Resources
 
-- **API Documentation**: See [docs/API.md](docs/API.md)
-- **OAuth Setup Guide**: See [docs/oauth.md](docs/oauth.md)
-- **Changelog Files**: See [CHANGELOG.md](CHANGELOG.md) & [docnote/changelog.md](docnote/changelog.md)
-- **Contribution Guide**: See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+| Resource | Link |
+| :--- | :--- |
+| 📄 API Reference | [docs/API.md](docs/API.md) |
+| 🔑 OAuth Setup Guide | [docs/oauth.md](docs/oauth.md) |
+| 📋 Full Changelog | [CHANGELOG.md](CHANGELOG.md) |
+| 📝 Technical Notes | [docnote/changelog.md](docnote/changelog.md) |
+| 🤝 Contribution Guide | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 
 ---
 
 ## 📜 License
 
 This project is licensed under the [MIT License](LICENSE).
+Maintained with ❤️ by **[@alsyundawy](https://github.com/alsyundawy)**.
