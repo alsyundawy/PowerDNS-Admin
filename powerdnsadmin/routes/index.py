@@ -869,7 +869,7 @@ def register():
                 error_messages['password'] = 'Password confirmation does not match'
                 error_messages['rpassword'] = 'Password confirmation does not match'
 
-            if not captcha.validate():
+            if CAPTCHA_ENABLE and not captcha.validate():
                 return render_template(
                     'register.html', error='Invalid CAPTCHA answer', error_messages=error_messages,
                     captcha_enable=CAPTCHA_ENABLE)
