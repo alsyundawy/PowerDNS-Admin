@@ -55,6 +55,15 @@ Comprehensive maintenance, security hardening, database migration idempotency, a
 - **Python 3.12+ / 3.13 Compatibility**: Replaced removed `distutils` with local helpers (`version_tuple`, `strtobool`) and replaced deprecated `imghdr` with magic-byte image type signatures.
 - **Linter Cleanup**: Resolved dead code, unhandled exception bindings, and raw escape sequences.
 
+### 🎨 Template Linter Fixes (login.html & register.html)
+
+- **Duplicate `auth_method` Form Control** (`login.html`)
+  - Removed `name="auth_method"` from `<select>` and all Jinja2 conditional hidden inputs. Replaced with a single `<input type="hidden" id="auth_method_hidden" name="auth_method">` always present in the DOM. A small JS block syncs the select dropdown value into the hidden field on page-load and on `change` events — fully transparent to the backend.
+- **Alert Text Contrast** (`login.html` & `register.html`)
+  - Changed `.alert` text color from `#ff9999` / `#fca5a5` to `#ffffff` with a stronger background `rgba(239,68,68,0.20)` to meet WCAG 2.1 AA contrast ratio (≥ 4.5:1).
+- **Exception Handler (`safeSrc`)** (`login.html` & `register.html`)
+  - Added `void urlErr;` inside the `catch (urlErr)` block of `safeSrc()` to explicitly acknowledge the caught exception and satisfy linter "Handle this exception or don't catch it at all" rule.
+
 ---
 
 ## 🛠️ [0.4.2-alsyundawy-fix] - 2026-08-09

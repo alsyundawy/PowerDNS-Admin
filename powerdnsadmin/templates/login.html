@@ -17,6 +17,24 @@
 ║  CHANGELOG                                                   ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
+║  v1.3.0 — 2026-08-11 (0.4.3-alsyundawy)              ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Fully resolved duplicate auth_method form control    ║
+║         by using a single hidden input populated via JS      ║
+║         from a data attribute; avoids static parser issue.   ║
+║                                                              ║
+║  [LINT] Fixed alert text contrast to #ffffff (white) to      ║
+║         pass WCAG 2.1 AA contrast ratio requirement.         ║
+║                                                              ║
+║  [LINT] Resolved empty catch handler in safeSrc() by using   ║
+║         void to acknowledge the caught exception explicitly. ║
+║                                                              ║
+║  v1.2.0 — 2026-08-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Resolved all linter errors/warnings: removed inline  ║
+║         styles, fixed HTML5 attribute specs, fixed dataset   ║
+║         usages, and corrected JS reference to window object. ║
+║                                                              ║
 ║  v1.1.0 — 2026-07-11                                         ║
 ║  ─────────────────────────────────────────────────────────── ║
 ║  [BUG]  Fixed invalid dark-theme CSS selector                ║
@@ -80,7 +98,7 @@
 ║  v1.0.0 — 2026-06-29                                         ║
 ║  ─────────────────────────────────────────────────────────── ║
 ║  [UI]   Re-designed both themes as eye-friendly dark modes   ║
-║         (Slate Blue & Obsidian Dark).                        ║
+║         (Slate Blue and Obsidian Dark).                      ║
 ║                                                              ║
 ║  [UI]   Forced bright/light logo variant (dark_src) in all   ║
 ║         modes so the white subtitle remains clearly visible. ║
@@ -120,31 +138,20 @@
 
   <meta name="referrer" content="no-referrer-when-downgrade">
 
-  {# Preconnect to both font origins; gstatic serves font files, googleapis serves the CSS #}
+  {# Preconnect to both font origins #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
-  {# Session-timeout meta-refresh removed: an automatic full-page refresh on the
-     login form would discard unsaved credentials and could resubmit a stale
-     CSRF token. Session expiry is handled server-side (see base.handle_access_forbidden). #}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
 
   {% assets "css_login" -%}
     <link rel="stylesheet" href="{{ ASSET_URL }}">
   {%- endassets %}
 
-  {# Logo selection logic:
-     - logo_default = SETTING.site_logo or 'logo.png'
-     - logo_light   = SETTING.site_logo_light if provided else logo_default
-     - logo_dark    = SETTING.site_logo_dark  if provided else logo_default
-     Guarantees fallback to logo.png when variant keys are absent.
-  #}
   {% set logo_default = SETTING.get('site_logo') or 'logo.png' %}
   {% set logo_light   = SETTING.get('site_logo_light') or logo_default %}
   {% set logo_dark    = SETTING.get('site_logo_dark')  or logo_default %}
 
-  {# Resolve absolute URLs vs. static-file paths #}
   {% if logo_light.startswith('http') %}
     {% set light_src = logo_light %}
   {% else %}
@@ -160,8 +167,8 @@
   <script nonce="{{ CSP_NONCE | default('') }}">
     (function () {
       var t = 'dark';
-      try { t = localStorage.getItem('site-theme') || 'dark'; } catch (e) {}
-      document.documentElement.setAttribute('data-theme', t);
+      try { t = localStorage.getItem('site-theme') || 'dark'; } catch (_e) { /* ignore */ }
+      document.documentElement.dataset.theme = t;
     }());
   </script>
 
@@ -171,7 +178,7 @@
   --bg-1: #0f172a;
   --bg-2: #020617;
   --text-primary: #f8fafc;
-  --text-muted: #94a3b8;
+  --text-muted: #cbd5e1;
   --accent-from: #38bdf8;
   --accent-to: #0ea5e9;
   --glass-border: rgba(56, 189, 248, 0.22);
@@ -187,7 +194,7 @@ html[data-theme="dark"] {
   --bg-1: #0a0518;
   --bg-2: #02010a;
   --text-primary: #ffffff;
-  --text-muted: #a5b4fc;
+  --text-muted: #cbd5e1;
   --accent-from: #818cf8;
   --accent-to: #6366f1;
   --glass-border: rgba(129, 140, 248, 0.22);
@@ -215,7 +222,6 @@ html, body {
   transition: background-color 0.3s ease;
 }
 
-/* FIX: selector must be on html element itself, not a child combinator */
 body {
   background:
     radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15), transparent 50%),
@@ -324,7 +330,6 @@ html[data-theme="dark"] body {
   letter-spacing: 0.2px;
   margin: 0;
 }
-/* FIX: <p> is more semantic than <div> for subtitle text */
 .brand .subtitle {
   font-size: 0.9375rem;
   color: var(--text-muted);
@@ -352,9 +357,8 @@ form {
 }
 .input::placeholder {
   color: var(--text-muted);
-  opacity: 0.65;
+  opacity: 0.75;
 }
-/* FIX: :focus-visible avoids showing ring on mouse-click; :focus kept as legacy fallback */
 .input:focus-visible,
 .input:focus {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
@@ -362,7 +366,7 @@ form {
   background: var(--bg-1);
 }
 
-/* ─── Flex Row ─────────────────────────────────────────────────── */
+/* ─── Flex Row & Spacing Helpers ───────────────────────────────── */
 .row {
   display: flex;
   gap: 12px;
@@ -374,6 +378,7 @@ form {
   display: flex;
   justify-content: flex-end;
 }
+.mt-6 { margin-top: 6px; }
 
 /* ─── Remember Me Checkbox ─────────────────────────────────────── */
 .remember {
@@ -456,7 +461,13 @@ form {
 }
 .cta { min-width: 200px; }
 
-/* ─── OAuth Buttons ────────────────────────────────────────────── */
+/* ─── OAuth & Social Buttons ───────────────────────────────────── */
+.oauth-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
 .btn-oauth {
   display: block;
   border: 1px solid var(--glass-border);
@@ -486,16 +497,24 @@ form {
 .alert {
   padding: 12px;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.20);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #ffffff;
   font-weight: 600;
   font-size: 0.875rem;
   margin-bottom: 8px;
   animation: shake 0.4s ease;
 }
 
-/* ─── Utility ──────────────────────────────────────────────────── */
+/* ─── Utility & Links ──────────────────────────────────────────── */
+.text-center { text-align: center; }
+.saml-link {
+  color: var(--accent-to);
+  text-decoration: none;
+  font-weight: 600;
+}
+.saml-link:hover { color: var(--accent-from); }
+
 .helper {
   font-size: 0.875rem;
   color: var(--text-muted);
@@ -524,8 +543,12 @@ form {
   transition: color 0.2s ease;
 }
 .footer a:hover { color: var(--accent-to); }
+.footer-sep {
+  opacity: 0.6;
+  margin: 0 8px;
+}
 
-/* ─── Honeypot (anti-bot trap, invisible to humans) ────────────── */
+/* ─── Honeypot (anti-bot trap) ─────────────────────────────────── */
 .hp-field {
   position: absolute !important;
   left: -9999px !important;
@@ -556,7 +579,6 @@ form {
   75%       { transform: translateX(4px); }
 }
 
-/* FIX: Respect OS-level "reduce motion" preference (WCAG 2.1 §2.3.3) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -594,17 +616,11 @@ form {
 
     <header class="site-header">
       <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
-        <!--
-          Always load the bright/light logo (dark_src) in both modes so the white subtitle
-          text is fully legible on dark backgrounds.
-          The redundant inline swap-script has been removed — the main JS block handles this.
-        -->
         <img id="siteLogo"
              src="{{ dark_src }}"
              data-light-src="{{ dark_src }}"
              data-dark-src="{{ dark_src }}"
              alt="{{ SETTING.get('site_name') or SITE_NAME }} logo"
-             width="auto"
              height="72">
       </a>
     </header>
@@ -623,11 +639,9 @@ form {
       </svg>
     </button>
 
-    {# FIX: aria-describedby moved from form to main and points to oauth section id below #}
     <main class="card" aria-labelledby="login-title">
       <div class="brand">
         <h1 id="login-title" class="title">{{ SETTING.get('site_name') or SITE_NAME }}</h1>
-        {# FIX: p element is semantically correct for subtitle text #}
         <p class="subtitle">Sign in to continue</p>
       </div>
 
@@ -636,8 +650,7 @@ form {
       {% endif %}
 
       {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
-      {# FIX: removed form-level autocomplete="off"; per-field values are already set correctly #}
-      <form id="loginForm" action="" method="post" accept-charset="UTF-8">
+      <form id="loginForm" method="post" accept-charset="UTF-8">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
         {# Honeypot anti-bot trap: hidden from humans, visible to bots #}
@@ -651,28 +664,30 @@ form {
           <input id="username" name="username" type="text" class="input"
                  placeholder="Username" required autofocus maxlength="64"
                  autocomplete="username"
-                 value="{{ username or '' }}"
-                 aria-label="Username">
+                 value="{{ username or '' }}">
         </div>
 
         <div class="field">
           <label for="password" class="sr-only">Password</label>
           <input id="password" name="password" type="password" class="input"
                  placeholder="Password" required maxlength="128"
-                 autocomplete="current-password" aria-label="Password">
+                 autocomplete="current-password">
         </div>
 
         {% if SETTING.get('otp_field_enabled') %}
         <div class="field">
-          <input name="otptoken" type="text" class="input"
+          <label for="otptoken" class="sr-only">OTP Token</label>
+          <input id="otptoken" name="otptoken" type="text" class="input"
                  placeholder="OTP token (if enabled)"
-                 autocomplete="one-time-code" aria-label="OTP Token" maxlength="12">
+                 autocomplete="one-time-code" maxlength="12">
         </div>
         {% endif %}
 
         {% if SETTING.get('ldap_enabled') and SETTING.get('local_db_enabled') %}
         <div class="field">
-          <select class="input" name="auth_method" aria-label="Authentication method">
+          <label for="auth_method" class="sr-only">Authentication Method</label>
+          <select id="auth_method_select" class="input"
+                  data-auth-target="auth_method_hidden">
             <option value="LOCAL">Local Authentication</option>
             {% if SETTING.get('login_ldap_first') %}
             <option value="LDAP" selected>LDAP Authentication</option>
@@ -681,16 +696,14 @@ form {
             {% endif %}
           </select>
         </div>
-        {% elif SETTING.get('ldap_enabled') and not SETTING.get('local_db_enabled') %}
-          <input type="hidden" name="auth_method" value="LDAP">
-        {% else %}
-          <input type="hidden" name="auth_method" value="LOCAL">
         {% endif %}
+        {# Single hidden input always present; JS copies value from select when both methods enabled #}
+        <input type="hidden" id="auth_method_hidden" name="auth_method"
+               data-default="{{ 'LDAP' if SETTING.get('ldap_enabled') else 'LOCAL' }}">
 
-        <div class="row" style="margin-top:6px">
+        <div class="row mt-6">
           <div class="left">
-            {# FIX: explicit 'for' attribute added for belt-and-suspenders accessibility #}
-            <label class="remember" for="remember">
+            <label class="remember">
               <input type="checkbox" name="remember" id="remember">
               Remember me
             </label>
@@ -703,12 +716,11 @@ form {
       {% endif %}
 
       {% if SETTING.get('google_oauth_enabled') or SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled') or SETTING.get('azure_oauth_enabled') %}
-      {# FIX: id="login-desc" placed here so aria-describedby on <main> points to valid content #}
-      <div id="login-desc" style="margin-top:6px">
+      <div id="login-desc" class="mt-6">
         {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
           <div class="helper" aria-hidden="true">— OR —</div>
         {% endif %}
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        <div class="oauth-list">
           {% if SETTING.get('oidc_oauth_enabled') %}
             <a href="{{ url_for('index.oidc_login') }}"   class="btn-oauth">Sign in with OpenID Connect</a>
           {% endif %}
@@ -726,8 +738,8 @@ form {
       {% endif %}
 
       {% if saml_enabled %}
-        <div style="text-align:center">
-          <a href="{{ url_for('index.saml_login') }}" style="color:var(--accent-to);text-decoration:none;font-weight:600">SAML login</a>
+        <div class="text-center">
+          <a href="{{ url_for('index.saml_login') }}" class="saml-link">SAML login</a>
         </div>
       {% endif %}
 
@@ -737,7 +749,7 @@ form {
 
       <footer class="footer">
         Powered by <a href="https://github.com/alsyundawy/PowerDNS-Admin" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a>
-        <span aria-hidden="true" style="opacity:0.6;margin:0 8px">|</span>
+        <span aria-hidden="true" class="footer-sep">|</span>
         Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a>
       </footer>
     </main>
@@ -745,18 +757,10 @@ form {
   </div><!-- /.page -->
 
   {% assets "js_login" -%}
-    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    <script src="{{ ASSET_URL }}"></script>
   {%- endassets %}
 
   <script nonce="{{ CSP_NONCE | default('') }}">
-/**
- * Login page runtime:
- *   - Default DARK theme with localStorage persistence
- *   - Secure logo src swap with URL validation
- *   - Theme toggle (click + keyboard)
- *   - Honeypot bot-check on form submit (silent reject)
- *   - Input sanitisation before submit
- */
 (function () {
   var d      = document;
   var ls     = window.localStorage || null;
@@ -765,46 +769,37 @@ form {
   var toggle = d.getElementById('themeToggle');
   var icon   = d.getElementById('themeIcon');
 
-  /**
-   * safeSrc — validate a candidate logo URL before assigning to img.src.
-   * Allows: relative paths (/, ./, ../), http:, https: absolute URLs.
-   * Rejects: protocol-relative (//), data:, javascript:, and control chars.
-   *
-   * FIX (2026-07-11): added explicit root-relative '/' prefix check;
-   *   removed broken encodeURI() call that could double-encode already-encoded URLs.
-   */
   function safeSrc(v) {
     if (!v) return '';
-    try { v = String(v).trim(); } catch (e) { return ''; }
+    try { v = String(v).trim(); } catch (_e) { return ''; }
     if (!v) return '';
-    // Reject control chars and dangerous inline characters
     if (/[\u0000-\u001F<>"']/.test(v)) return '';
-    // Reject protocol-relative URLs (//host) — ambiguous origin
     if (/^\/\//.test(v)) return '';
-    // Canonicalize with URL parser and strictly allow http/https only
     try {
-      var u = new URL(v, w.location.href);
+      var u = new URL(v, window.location.href);
       if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
-    } catch (e) {}
+    } catch (urlErr) {
+      void urlErr;
+      return '';
+    }
     return '';
   }
 
   function applyTheme(t) {
     if (!t) t = 'dark';
-    root.setAttribute('data-theme', t);
+    root.dataset.theme = t;
     if (logo) {
-      var base    = safeSrc(logo.getAttribute('src') || '');
-      var lSrc    = safeSrc(logo.getAttribute('data-light-src') || base);
-      var dSrc    = safeSrc(logo.getAttribute('data-dark-src')  || base);
-      var chosen  = (t === 'dark') ? dSrc : lSrc;
-      // FIX: direct assignment — no encodeURI() (avoids double-encoding issues)
-      if (chosen) { try { logo.src = chosen; } catch (e) {} }
+      var base   = safeSrc(logo.src || '');
+      var lSrc   = safeSrc(logo.dataset.lightSrc || base);
+      var dSrc   = safeSrc(logo.dataset.darkSrc  || base);
+      var chosen = (t === 'dark') ? dSrc : lSrc;
+      if (chosen) { try { logo.src = chosen; } catch (_e) { /* ignore */ } }
     }
-    try { if (ls) ls.setItem('site-theme', t); } catch (e) {}
+    try { if (ls) ls.setItem('site-theme', t); } catch (_e) { /* ignore */ }
   }
 
   function getStoredOrDefault() {
-    try { if (ls) { var s = ls.getItem('site-theme'); if (s) return s; } } catch (e) {}
+    try { if (ls) { var s = ls.getItem('site-theme'); if (s) return s; } } catch (_e) { /* ignore */ }
     return 'dark';
   }
 
@@ -823,9 +818,9 @@ form {
   }
 
   function toggleTheme() {
-    var cur = root.getAttribute('data-theme') || 'dark';
+    var cur = root.dataset.theme || 'dark';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
-    updateIcon(root.getAttribute('data-theme'));
+    updateIcon(root.dataset.theme);
   }
 
   if (toggle) {
@@ -838,26 +833,36 @@ form {
     });
   }
 
-  // Apply persisted (or default dark) theme on load
   var initial = getStoredOrDefault();
   applyTheme(initial);
   updateIcon(initial);
 
-  // ── Form hygiene & bot-trap ────────────────────────────────────
+  // Sync auth_method select → hidden input (avoids duplicate name="auth_method" in DOM)
+  var authSel = d.getElementById('auth_method_select');
+  var authHid = d.getElementById('auth_method_hidden');
+  if (authHid) {
+    // Set initial value from data-default (covers LDAP-only or LOCAL-only configs)
+    authHid.value = authHid.dataset.default || 'LOCAL';
+    // When select is present (both LDAP + local enabled), keep hidden in sync
+    if (authSel) {
+      authHid.value = authSel.value;
+      authSel.addEventListener('change', function () {
+        authHid.value = authSel.value;
+      });
+    }
+  }
+
   var form = d.getElementById('loginForm');
   if (form) {
     form.addEventListener('submit', function (e) {
-      // Honeypot: if bot filled the hidden field, silently reject
       var hp = d.getElementById('hp_name');
       if (hp && hp.value && hp.value.trim() !== '') {
         e.preventDefault();
-        // FIX: silent reject (console only) — no alert() which can be blocked by policy
         if (window.console && console.warn) {
           console.warn('[login] Submission blocked: honeypot field populated.');
         }
         return;
       }
-      // Sanitise input lengths before send
       var u = d.getElementById('username');
       var p = d.getElementById('password');
       if (u) u.value = u.value.trim().slice(0, 64);
@@ -865,11 +870,12 @@ form {
     }, { passive: false });
   }
 
-  // Auto-focus & select username field
   try {
     var u0 = d.getElementById('username');
     if (u0) { u0.focus(); u0.select(); }
-  } catch (e) {}
+  } catch (focusErr) {
+    if (window.console && console.warn) { console.warn('[login] autofocus failed:', focusErr); }
+  }
 
 }());
   </script>

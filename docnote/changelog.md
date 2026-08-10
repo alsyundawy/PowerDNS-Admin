@@ -42,6 +42,15 @@ Rilis pemeliharaan utama, perbaikan bug, peningkatan keamanan, serta idempotensi
 4. **Identitas Footer Rilis (`base.html` & `1base.html`)**
    - Mengubah footer tampilan menjadi **Version 0.4.3 Modified By Alsyundawy**.
 
+### 🎨 Perbaikan Linter Template (`login.html` & `register.html`)
+
+1. **Duplikat Kontrol Form `auth_method` (`login.html`)**
+   - Menghapus `name="auth_method"` dari `<select>` dan semua hidden input di dalam blok Jinja2 kondisional. Digantikan dengan satu `<input type="hidden" id="auth_method_hidden" name="auth_method">` yang selalu ada di DOM. Blok JS kecil mensinkronkan nilai dropdown ke hidden field saat halaman dimuat dan pada event `change` — transparan sepenuhnya terhadap backend Flask.
+2. **Kontras Teks Alert** (`login.html` & `register.html`)
+   - Mengubah warna teks `.alert` dari `#ff9999` / `#fca5a5` menjadi `#ffffff` dengan background `rgba(239,68,68,0.20)` agar memenuhi rasio kontras WCAG 2.1 AA (≥ 4.5:1).
+3. **Penanganan Exception `safeSrc()`** (`login.html` & `register.html`)
+   - Menambahkan `void urlErr;` di dalam blok `catch (urlErr)` pada fungsi `safeSrc()` agar exception yang ditangkap diakui secara eksplisit dan memenuhi aturan linter *"Handle this exception or don't catch it at all"*.
+
 ---
 
 ## 🎨 Version 0.4.2-alsyundawy-fix (2026-08-09)

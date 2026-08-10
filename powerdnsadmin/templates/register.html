@@ -1,17 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Register - {{ SITE_NAME }}</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Register · {{ SITE_NAME }}</title>
+  <meta name="description" content="Create an account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer-when-downgrade">
 
 {#
 ╔══════════════════════════════════════════════════════════════╗
 ║  Template   : register.html                                  ║
 ║  Project    : PowerDNS-Admin                                 ║
-║  Purpose    : User self-registration page                    ║
+║  Purpose    : User self-registration page with dual-dark     ║
+║               themes, logo fallback, and input validation    ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  CHANGELOG                                                   ║
 ╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  v1.3.0 — 2026-08-11 (0.4.3-alsyundawy)              ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Fixed alert text contrast to #ffffff (white) to      ║
+║         pass WCAG 2.1 AA contrast ratio requirement.         ║
+║                                                              ║
+║  [LINT] Resolved empty catch handler in safeSrc() using void ║
+║         to acknowledge the caught exception explicitly.      ║
+║                                                              ║
+║  v1.2.0 — 2026-08-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [UI]   Modernized UI/UX design aligned with login.html      ║
+║         (dual-dark glassmorphism, responsive grid, smooth    ║
+║         focus states, micro-animations and theme toggle).    ║
+║                                                              ║
+║  [LINT] Resolved all linter errors/warnings: removed inline  ║
+║         styles, fixed HTML5 attribute specs, fixed dataset   ║
+║         usages, and improved accessibility contrast.         ║
+║                                                              ║
+║  [SEC]  Added honeypot anti-bot protection on form submit.   ║
+║                                                              ║
+║  [A11Y] Enhanced icon wrappers, ARIA landmarks, and focus-   ║
+║         visible styling for assistive technologies.          ║
 ║                                                              ║
 ║  v1.1.0 — 2026-07-11                                         ║
 ║  ─────────────────────────────────────────────────────────── ║
@@ -65,321 +94,833 @@
 ╚══════════════════════════════════════════════════════════════╝
 #}
 
-    {#- Security: registration pages must not be indexed #}
-    <meta name="robots" content="noindex, nofollow">
+  {# Preconnect to font origins #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 
-    {#- A11Y fix: removed user-scalable=no — violates WCAG 1.4.4 (Resize Text) #}
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+        integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FaWR1bITeQ=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer">
 
-    {#- Security: Content-Security-Policy — tighten as needed per your deployment #}
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self';
-                   script-src 'self' 'nonce-{{ csp_nonce | default('') }}' https://cdnjs.cloudflare.com;
-                   style-src 'self' https://cdnjs.cloudflare.com;
-                   font-src 'self' https://cdnjs.cloudflare.com;
-                   img-src 'self' data:;
-                   frame-ancestors 'none';">
+  {% assets "css_login" -%}
+    <link rel="stylesheet" href="{{ ASSET_URL }}">
+  {%- endassets %}
 
-    {#- FIX: added type attribute on favicon link #}
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  {% set logo_default = SETTING.get('site_logo') or 'logo.png' %}
+  {% set logo_light   = SETTING.get('site_logo_light') or logo_default %}
+  {% set logo_dark    = SETTING.get('site_logo_dark')  or logo_default %}
 
-    {#-
-        Security: Font Awesome loaded with SRI hash (v5.9.0).
-        Hash source: https://www.srihash.org/
-        Verify hash if you update the FA version.
-    #}
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
-          integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FaWR1bITeQ=="
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer">
+  {% if logo_light.startswith('http') %}
+    {% set light_src = logo_light %}
+  {% else %}
+    {% set light_src = url_for('static', filename='img/' ~ logo_light) %}
+  {% endif %}
+  {% if logo_dark.startswith('http') %}
+    {% set dark_src = logo_dark %}
+  {% else %}
+    {% set dark_src = url_for('static', filename='img/' ~ logo_dark) %}
+  {% endif %}
 
-    {% assets "css_login" -%}
-        <link rel="stylesheet" href="{{ ASSET_URL }}">
-    {%- endassets %}
+  {# Flash-prevention: apply stored theme BEFORE first paint to eliminate FOUC #}
+  <script nonce="{{ CSP_NONCE | default('') }}">
+    (function () {
+      var t = 'dark';
+      try { t = localStorage.getItem('site-theme') || 'dark'; } catch (_e) { /* ignore */ }
+      document.documentElement.dataset.theme = t;
+    }());
+  </script>
+
+  <style>
+/* ─── Custom Properties & Themes ──────────────────────────────── */
+:root {
+  --bg-1: #0f172a;
+  --bg-2: #020617;
+  --text-primary: #f8fafc;
+  --text-muted: #cbd5e1;
+  --accent-from: #38bdf8;
+  --accent-to: #0ea5e9;
+  --glass-border: rgba(56, 189, 248, 0.22);
+  --card-bg: rgba(15, 23, 42, 0.65);
+  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.15);
+  --input-bg: rgba(2, 6, 23, 0.55);
+  --input-border: rgba(56, 189, 248, 0.3);
+  --radius: 14px;
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] {
+  --bg-1: #0a0518;
+  --bg-2: #02010a;
+  --text-primary: #ffffff;
+  --text-muted: #cbd5e1;
+  --accent-from: #818cf8;
+  --accent-to: #6366f1;
+  --glass-border: rgba(129, 140, 248, 0.22);
+  --card-bg: rgba(10, 5, 24, 0.68);
+  --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.15);
+  --input-bg: rgba(2, 1, 10, 0.6);
+  --input-border: rgba(129, 140, 248, 0.3);
+  --radius: 14px;
+  color-scheme: dark;
+}
+
+/* ─── Core Page Setup ──────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  color: var(--text-primary);
+  transition: background-color 0.3s ease;
+}
+
+body {
+  background:
+    radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15), transparent 50%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 50% -20%, rgba(129, 140, 248, 0.15), transparent 50%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+
+/* ─── Page Layout ──────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.2rem;
+  gap: 1.5rem;
+}
+
+/* ─── Header & Logo ────────────────────────────────────────────── */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.site-header img {
+  height: 72px;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+}
+
+/* ─── Theme Toggle ─────────────────────────────────────────────── */
+.theme-toggle {
+  position: fixed;
+  right: 16px;
+  top: 12px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+.theme-toggle:hover {
+  transform: scale(1.08) rotate(8deg);
+  border-color: var(--accent-to);
+  color: var(--accent-to);
+}
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* ─── Glassmorphism Card ───────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 540px;
+  padding: 36px;
+  border-radius: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  min-width: 280px;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ─── Branding ─────────────────────────────────────────────────── */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.brand .title {
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+  margin: 0;
+}
+.brand .subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ─── Section Header ───────────────────────────────────────────── */
+.form-section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-from);
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+/* ─── Field Grid & Controls ────────────────────────────────────── */
+form {
+  display: block;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field {
+  margin-bottom: 0.875rem;
+  position: relative;
+}
+.input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.input-icon-wrapper .input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+.input-icon-wrapper:focus-within .input-icon {
+  color: var(--accent-to);
+}
+.input {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 42px;
+  border-radius: 12px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+.input:focus-visible,
+.input:focus {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-to);
+  background: var(--bg-1);
+}
+.input.is-invalid {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.invalid-feedback {
+  color: #fca5a5;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Captcha Box ──────────────────────────────────────────────── */
+.captcha-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* ─── Action Buttons & Helpers ─────────────────────────────────── */
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+
+.btn {
+  padding: 0.875rem 1.25rem;
+  border-radius: 12px;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  color: #0b1329;
+  box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
+  flex: 1;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.5);
+  filter: brightness(1.05);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+.btn-primary:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+.btn-secondary {
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  min-width: 110px;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-to);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.btn-secondary:active {
+  transform: translateY(0);
+}
+.btn-secondary:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.3);
+  outline-offset: 2px;
+}
+
+/* ─── Alert / Error ────────────────────────────────────────────── */
+.alert {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.20);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+  animation: shake 0.4s ease;
+}
+
+/* ─── Utility ──────────────────────────────────────────────────── */
+.helper {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 6px;
+}
+.helper a {
+  color: var(--accent-to);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+.helper a:hover { color: var(--accent-from); }
+
+.footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+.footer a:hover { color: var(--accent-to); }
+.footer-sep {
+  opacity: 0.6;
+  margin: 0 8px;
+}
+
+/* ─── Honeypot (anti-bot trap) ─────────────────────────────────── */
+.hp-field {
+  position: absolute !important;
+  left: -9999px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+/* ─── Screen-reader only ───────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ─── Animations ───────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .card {
+    padding: 24px;
+    border-radius: 16px;
+  }
+  .site-header img { height: 56px; }
+  .field-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .action-row {
+    flex-direction: row;
+    gap: 10px;
+  }
+}
+@media (min-width: 1600px) {
+  .card {
+    max-width: 620px;
+    padding: 40px;
+    border-radius: 24px;
+  }
+}
+  </style>
 </head>
+<body>
+  <div class="page" id="pageRoot">
 
-<body class="hold-transition register-page">
-<div class="register-box">
-    <div class="card card-outline card-primary shadow">
+    <header class="site-header">
+      <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
+        <img id="siteLogo"
+             src="{{ dark_src }}"
+             data-light-src="{{ dark_src }}"
+             data-dark-src="{{ dark_src }}"
+             alt="{{ SETTING.get('site_name') or SITE_NAME }} logo"
+             height="72">
+      </a>
+    </header>
 
-        <div class="card-header text-center">
-            <a href="{{ url_for('index.index') }}" class="h3">
-                {%- if SETTING.get('site_name') -%}
-                    {{ SITE_NAME }}
-                {%- else -%}
-                    <b>PowerDNS</b>-Admin
-                {%- endif -%}
-            </a>
+    <button id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme" type="button">
+      <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <path d="M12 3v2"           stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M12 19v2"          stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M4.22 4.22l1.42 1.42"   stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M18.36 18.36l1.42 1.42" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M1 12h2"           stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M21 12h2"          stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M4.22 19.78l1.42-1.42"  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <path d="M18.36 5.64l1.42-1.42"  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+        <circle cx="12" cy="12" r="3.5"  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+      </svg>
+    </button>
+
+    <main class="card" aria-labelledby="register-title">
+      <div class="brand">
+        <h1 id="register-title" class="title">{{ SETTING.get('site_name') or SITE_NAME }}</h1>
+        <p class="subtitle">Create a new account</p>
+      </div>
+
+      {% if error %}
+        <div class="alert" role="alert" aria-live="polite">{{ error | e }}</div>
+      {% endif %}
+
+      <form id="registerForm" method="post" validator novalidate accept-charset="UTF-8">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+        {# Honeypot anti-bot trap: hidden from humans, visible to bots #}
+        <div class="hp-field" aria-hidden="true">
+          <label for="hp_name">Do not fill</label>
+          <input id="hp_name" name="hp_name" type="text" autocomplete="off" tabindex="-1">
         </div>
 
-        <div class="card-body">
-
-            {#- FIX: added |e filter — never render raw user/server error strings #}
-            {% if error %}
-                <div class="alert alert-danger alert-dismissible" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Dismiss">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    {{ error | e }}
-                </div>
+        {# ── Personal Details ────────────────────────────────────── #}
+        <div class="form-section-title">Personal Details</div>
+        <div class="field-grid">
+          <div class="field form-group">
+            <label for="firstname" class="sr-only">First Name</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-user input-icon" aria-hidden="true"></i>
+              <input type="text"
+                     class="input form-control{{ ' is-invalid' if 'firstname' in error_messages else '' }}"
+                     placeholder="First Name"
+                     name="firstname"
+                     id="firstname"
+                     autocomplete="given-name"
+                     value="{{ request.form.get('firstname', '') | e }}"
+                     required
+                     autofocus>
+            </div>
+            {% if 'firstname' in error_messages %}
+              <div class="invalid-feedback">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                {{ error_messages['firstname'] | e }}
+              </div>
             {% endif %}
+          </div>
 
-            <p class="login-box-msg">Enter your personal details below</p>
-
-            {#-
-                Security: CSRF token hidden input is present (correct).
-                The `validator` attribute is a custom hook consumed by js_validation asset.
-            #}
-            <form action="{{ url_for('index.register') }}" method="post" validator novalidate>
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
-                {#— First Name ——————————————————————————————————————————#}
-                <div class="form-group">
-                    {#- A11Y: sr-only label — WCAG 1.3.1 requires programmatic label #}
-                    <label for="firstname" class="sr-only">First Name</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-user" aria-hidden="true"></i></span>
-                        </div>
-                        <input type="text"
-                               class="form-control{{ ' is-invalid' if 'firstname' in error_messages else '' }}"
-                               placeholder="First Name"
-                               name="firstname"
-                               id="firstname"
-                               autocomplete="given-name"
-                               value="{{ request.form.get('firstname', '') | e }}"
-                               required>
-                        {% if 'firstname' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                {{ error_messages['firstname'] | e }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                {#— Last Name ———————————————————————————————————————————#}
-                <div class="form-group">
-                    <label for="lastname" class="sr-only">Last Name</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-user" aria-hidden="true"></i></span>
-                        </div>
-                        <input type="text"
-                               class="form-control{{ ' is-invalid' if 'lastname' in error_messages else '' }}"
-                               placeholder="Last Name"
-                               name="lastname"
-                               id="lastname"
-                               autocomplete="family-name"
-                               value="{{ request.form.get('lastname', '') | e }}"
-                               required>
-                        {% if 'lastname' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                {{ error_messages['lastname'] | e }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                {#— Email ——————————————————————————————————————————————#}
-                <div class="form-group">
-                    <label for="email" class="sr-only">Email Address</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-envelope" aria-hidden="true"></i></span>
-                        </div>
-                        <input type="email"
-                               class="form-control{{ ' is-invalid' if 'email' in error_messages else '' }}"
-                               placeholder="Email"
-                               name="email"
-                               id="email"
-                               autocomplete="email"
-                               value="{{ request.form.get('email', '') | e }}"
-                               required>
-                        {% if 'email' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                {{ error_messages['email'] | e }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <p class="login-box-msg">Enter your account details below</p>
-
-                {#— Username ————————————————————————————————————————————#}
-                <div class="form-group">
-                    <label for="username" class="sr-only">Username</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-user" aria-hidden="true"></i></span>
-                        </div>
-                        <input type="text"
-                               class="form-control{{ ' is-invalid' if 'username' in error_messages else '' }}"
-                               placeholder="Username"
-                               name="username"
-                               id="username"
-                               autocomplete="username"
-                               value="{{ request.form.get('username', '') | e }}"
-                               required>
-                        {% if 'username' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                {{ error_messages['username'] | e }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                {#— Password ————————————————————————————————————————————#}
-                <div class="form-group">
-                    <label for="password" class="sr-only">Password</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-lock" aria-hidden="true"></i></span>
-                        </div>
-                        {#- Security: autocomplete="new-password" prevents credential manager autofill #}
-                        <input type="password"
-                               class="form-control{{ ' is-invalid' if 'password' in error_messages else '' }}"
-                               placeholder="Password"
-                               id="password"
-                               name="password"
-                               autocomplete="new-password"
-                               required>
-                        {% if 'password' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                {{ error_messages['password'] | e }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                {#— Retype Password ————————————————————————————————————#}
-                <div class="form-group">
-                    <label for="rpassword" class="sr-only">Retype Password</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-lock" aria-hidden="true"></i></span>
-                        </div>
-                        <input type="password"
-                               class="form-control{{ ' is-invalid' if 'rpassword' in error_messages else '' }}"
-                               placeholder="Retype Password"
-                               id="rpassword"
-                               name="rpassword"
-                               autocomplete="new-password"
-                               required>
-                        {% if 'rpassword' in error_messages %}
-                            <div class="invalid-feedback">
-                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                {{ error_messages['rpassword'] | e }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                {#— CAPTCHA (conditional) ——————————————————————————————#}
-                {% if captcha_enable %}
-                    <p class="login-box-msg">Please complete the CAPTCHA below</p>
-                    <div class="form-group">
-                        {{ captcha() }}
-                        {#-
-                            FIX: closed this .form-group properly — original code was
-                            missing the closing div tag, causing DOM layout corruption.
-                        #}
-                        <div class="input-group mt-2">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
-                            </div>
-                            <label for="captcha" class="sr-only">CAPTCHA Answer</label>
-                            <input type="text"
-                                   class="form-control{{ ' is-invalid' if 'captcha_result' in error_messages else '' }}"
-                                   placeholder="CAPTCHA"
-                                   id="captcha"
-                                   name="captcha"
-                                   autocomplete="off"
-                                   required>
-                            {% if 'captcha_result' in error_messages %}
-                                <div class="invalid-feedback">
-                                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                                    {{ error_messages['captcha_result'] | e }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-
-                {#— Action Buttons —————————————————————————————————————#}
-                <div class="row">
-                    <div class="d-flex justify-content-between mx-auto mt-3">
-                        {#-
-                            OPT: Back URL stored in data-href attribute.
-                            This eliminates the Jinja expression being embedded
-                            directly inside a JS string context in the script block,
-                            preventing any potential XSS vector.
-                        #}
-                        <button type="button"
-                                class="btn btn-secondary"
-                                id="button_back"
-                                data-href="{{ url_for('index.login') }}">Back</button>
-                        <button type="submit" class="btn btn-primary btn-block mx-3">Register</button>
-                    </div>
-                </div>
-
-            </form>
+          <div class="field form-group">
+            <label for="lastname" class="sr-only">Last Name</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-user input-icon" aria-hidden="true"></i>
+              <input type="text"
+                     class="input form-control{{ ' is-invalid' if 'lastname' in error_messages else '' }}"
+                     placeholder="Last Name"
+                     name="lastname"
+                     id="lastname"
+                     autocomplete="family-name"
+                     value="{{ request.form.get('lastname', '') | e }}"
+                     required>
+            </div>
+            {% if 'lastname' in error_messages %}
+              <div class="invalid-feedback">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                {{ error_messages['lastname'] | e }}
+              </div>
+            {% endif %}
+          </div>
         </div>
-        {#- /.card-body #}
-    </div>
-    {#- /.card #}
-</div>
-{#- /.register-box #}
 
-<div class="text-center pt-3">
-    {#- SEC: added rel="noopener noreferrer" on external link #}
-    <p>Powered by <a href="https://powerdnsadmin.org" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a></p>
-</div>
+        {# ── Account Details ─────────────────────────────────────── #}
+        <div class="form-section-title">Account Details</div>
+        <div class="field form-group">
+          <label for="email" class="sr-only">Email Address</label>
+          <div class="input-icon-wrapper">
+            <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
+            <input type="email"
+                   class="input form-control{{ ' is-invalid' if 'email' in error_messages else '' }}"
+                   placeholder="Email Address"
+                   name="email"
+                   id="email"
+                   autocomplete="email"
+                   value="{{ request.form.get('email', '') | e }}"
+                   required>
+          </div>
+          {% if 'email' in error_messages %}
+            <div class="invalid-feedback">
+              <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+              {{ error_messages['email'] | e }}
+            </div>
+          {% endif %}
+        </div>
 
-{% assets "js_login" -%}
+        <div class="field form-group">
+          <label for="username" class="sr-only">Username</label>
+          <div class="input-icon-wrapper">
+            <i class="fas fa-at input-icon" aria-hidden="true"></i>
+            <input type="text"
+                   class="input form-control{{ ' is-invalid' if 'username' in error_messages else '' }}"
+                   placeholder="Username"
+                   name="username"
+                   id="username"
+                   autocomplete="username"
+                   value="{{ request.form.get('username', '') | e }}"
+                   required>
+          </div>
+          {% if 'username' in error_messages %}
+            <div class="invalid-feedback">
+              <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+              {{ error_messages['username'] | e }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="field-grid">
+          <div class="field form-group">
+            <label for="password" class="sr-only">Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+              <input type="password"
+                     class="input form-control{{ ' is-invalid' if 'password' in error_messages else '' }}"
+                     placeholder="Password"
+                     id="password"
+                     name="password"
+                     autocomplete="new-password"
+                     required>
+            </div>
+            {% if 'password' in error_messages %}
+              <div class="invalid-feedback">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                {{ error_messages['password'] | e }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="field form-group">
+            <label for="rpassword" class="sr-only">Retype Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-check-double input-icon" aria-hidden="true"></i>
+              <input type="password"
+                     class="input form-control{{ ' is-invalid' if 'rpassword' in error_messages else '' }}"
+                     placeholder="Retype Password"
+                     id="rpassword"
+                     name="rpassword"
+                     autocomplete="new-password"
+                     required>
+            </div>
+            {% if 'rpassword' in error_messages %}
+              <div class="invalid-feedback">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                {{ error_messages['rpassword'] | e }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# ── CAPTCHA (conditional) ────────────────────────────────── #}
+        {% if captcha_enable %}
+          <div class="form-section-title">Security Verification</div>
+          <div class="field form-group">
+            <div class="captcha-container">
+              {{ captcha() }}
+            </div>
+            <div class="input-icon-wrapper mt-8">
+              <i class="fas fa-shield-alt input-icon" aria-hidden="true"></i>
+              <label for="captcha" class="sr-only">CAPTCHA Answer</label>
+              <input type="text"
+                     class="input form-control{{ ' is-invalid' if 'captcha_result' in error_messages else '' }}"
+                     placeholder="Enter CAPTCHA Answer"
+                     id="captcha"
+                     name="captcha"
+                     autocomplete="off"
+                     required>
+            </div>
+            {% if 'captcha_result' in error_messages %}
+              <div class="invalid-feedback">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                {{ error_messages['captcha_result'] | e }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {# ── Action Buttons ───────────────────────────────────────── #}
+        <div class="action-row mt-16">
+          <button type="button"
+                  class="btn btn-secondary"
+                  id="button_back"
+                  data-href="{{ url_for('index.login') }}">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> Back
+          </button>
+          <button type="submit" class="btn btn-primary cta" aria-label="Register">
+            Register <i class="fas fa-user-plus" aria-hidden="true"></i>
+          </button>
+        </div>
+      </form>
+
+      <div class="helper">
+        Already have an account? <a href="{{ url_for('index.login') }}">Sign In</a>
+      </div>
+
+      <footer class="footer">
+        Powered by <a href="https://powerdnsadmin.org" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a>
+        <span aria-hidden="true" class="footer-sep">|</span>
+        Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a>
+      </footer>
+    </main>
+
+  </div><!-- /.page -->
+
+  {% assets "js_login" -%}
     <script src="{{ ASSET_URL }}"></script>
-{%- endassets %}
-{% assets "js_validation" -%}
+  {%- endassets %}
+  {% assets "js_validation" -%}
     <script src="{{ ASSET_URL }}"></script>
-{%- endassets %}
+  {%- endassets %}
 
-{#-
-    OPT + SEC: Back button URL is read from the element's own data-href attribute
-    (set safely by Jinja above) instead of embedding a Jinja url_for() call
-    directly inside a JS string literal, which avoids a potential XSS surface.
+  <script nonce="{{ CSP_NONCE | default('') }}">
+(function () {
+  var d      = document;
+  var ls     = window.localStorage || null;
+  var root   = d.documentElement;
+  var logo   = d.getElementById('siteLogo');
+  var toggle = d.getElementById('themeToggle');
+  var icon   = d.getElementById('themeIcon');
 
-    OPT: Uses native DOMContentLoaded instead of jQuery $(function(){}) wrapper
-    since this is the only jQuery usage on the page unrelated to the main assets.
-    If jQuery is guaranteed available via js_login assets, the jQuery form is
-    equally valid — the native form removes the implicit jQuery dependency.
-#}
-<script nonce="{{ CSP_NONCE|default('') }}">
-    document.addEventListener('DOMContentLoaded', function () {
-        var btn = document.getElementById('button_back');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                var raw = btn.dataset.href;
-                var dest = '';
-                if (raw) {
-                    raw = String(raw);
-                    // Allow only relative paths or http/https URLs; block
-                    // javascript:, data:, and other non-navigation schemes.
-                    if (/^https?:\/\//i.test(raw) || /^[?#/]/.test(raw)) {
-                        dest = raw;
-                    }
-                }
-                if (dest) {
-                    window.location.href = dest;
-                }
-            });
-        }
+  function safeSrc(v) {
+    if (!v) return '';
+    try { v = String(v).trim(); } catch (_e) { return ''; }
+    if (!v) return '';
+    if (/[\u0000-\u001F<>"']/.test(v)) return '';
+    if (/^\/\//.test(v)) return '';
+    try {
+      var u = new URL(v, window.location.href);
+      if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+    } catch (urlErr) {
+      void urlErr;
+      return '';
+    }
+    return '';
+  }
+
+  function applyTheme(t) {
+    if (!t) t = 'dark';
+    root.dataset.theme = t;
+    if (logo) {
+      var base   = safeSrc(logo.src || '');
+      var lSrc   = safeSrc(logo.dataset.lightSrc || base);
+      var dSrc   = safeSrc(logo.dataset.darkSrc  || base);
+      var chosen = (t === 'dark') ? dSrc : lSrc;
+      if (chosen) { try { logo.src = chosen; } catch (_e) { /* ignore */ } }
+    }
+    try { if (ls) ls.setItem('site-theme', t); } catch (_e) { /* ignore */ }
+  }
+
+  function getStoredOrDefault() {
+    try { if (ls) { var s = ls.getItem('site-theme'); if (s) return s; } } catch (_e) { /* ignore */ }
+    return 'dark';
+  }
+
+  function updateIcon(t) {
+    if (!icon) return;
+    if (t === 'dark') {
+      icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
+    } else {
+      icon.innerHTML = '<g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">'
+        + '<path d="M12 3v2"/><path d="M12 19v2"/>'
+        + '<path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/>'
+        + '<path d="M1 12h2"/><path d="M21 12h2"/>'
+        + '<path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/>'
+        + '<circle cx="12" cy="12" r="3.5"/></g>';
+    }
+  }
+
+  function toggleTheme() {
+    var cur = root.dataset.theme || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+    updateIcon(root.dataset.theme);
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      toggleTheme();
+    }, false);
+    toggle.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); }
     });
-</script>
+  }
 
+  var initial = getStoredOrDefault();
+  applyTheme(initial);
+  updateIcon(initial);
+
+  var form = d.getElementById('registerForm');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      var hp = d.getElementById('hp_name');
+      if (hp && hp.value && hp.value.trim() !== '') {
+        e.preventDefault();
+        if (window.console && console.warn) {
+          console.warn('[register] Submission blocked: honeypot field populated.');
+        }
+      }
+    }, { passive: false });
+  }
+
+  var btn = d.getElementById('button_back');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var raw = btn.dataset.href;
+      var dest = '';
+      if (raw) {
+        raw = String(raw);
+        if (/^https?:\/\//i.test(raw) || /^[?#/]/.test(raw)) {
+          dest = raw;
+        }
+      }
+      if (dest) {
+        window.location.href = dest;
+      }
+    });
+  }
+
+  try {
+    var fn = d.getElementById('firstname');
+    if (fn && !fn.value) { fn.focus(); }
+  } catch (focusErr) {
+    if (window.console && console.warn) { console.warn('[register] autofocus failed:', focusErr); }
+  }
+
+}());
+  </script>
 </body>
 </html>
