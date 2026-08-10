@@ -14,11 +14,11 @@ def create_app(config=None):
     app = Flask(__name__)
 
     # Read log level from environment variable
-    log_level_name = os.environ.get('PDNS_ADMIN_LOG_LEVEL', 'WARNING')
-    log_level = logging.getLevelName(log_level_name.upper())
+    log_level_name = os.environ.get('PDNS_ADMIN_LOG_LEVEL', 'WARNING').upper()
+    log_level = getattr(logging, log_level_name, logging.WARNING)
     # Setting logger
     logging.basicConfig(
-       level=log_level,
+        level=log_level,
         format=
         "[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s - %(message)s")
 
@@ -93,19 +93,20 @@ def create_app(config=None):
 
                 return Session
 
-            fss_sqla.create_session_model = safe_create_session_model
+            fss_sqla.create_session_model = safe_create_session_model  # type: ignore
         except (ImportError, AttributeError):
             pass
 
-    sess = Session(app)
+    Session(app)
 
     # create sessions table if using sqlalchemy backend
     if app.config.get('SESSION_TYPE') == 'sqlalchemy':
         with app.app_context():
-            models.db.create_all()
+            if hasattr(models, 'Sessions'):
+                models.Sessions.__table__.create(bind=models.db.engine, checkfirst=True)
 
     # SMTP
-    app.mail = Mail(app)
+    app.mail = Mail(app)  # type: ignore
 
     # Load app's components
     assets.init_app(app)
@@ -127,16 +128,16 @@ def create_app(config=None):
     @app.context_processor
     def inject_sitename():
         setting = Setting().get('site_name')
-        return dict(SITE_NAME=setting)
+        return {'SITE_NAME': setting}
 
     @app.context_processor
     def inject_setting():
         setting = Setting()
-        return dict(SETTING=setting)
+        return {'SETTING': setting}
 
     @app.context_processor
     def inject_pdns_version():
         setting = Setting().get('pdns_version')
-        return dict(pdns_version=setting)
+        return {'pdns_version': setting}
 
     return app
