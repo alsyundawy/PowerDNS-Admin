@@ -14,11 +14,11 @@ def create_app(config=None):
     app = Flask(__name__)
 
     # Read log level from environment variable
-    log_level_name = os.environ.get('PDNS_ADMIN_LOG_LEVEL', 'WARNING').upper()
-    log_level = getattr(logging, log_level_name, logging.WARNING)
+    log_level_name = os.environ.get('PDNS_ADMIN_LOG_LEVEL', 'WARNING')
+    log_level = logging.getLevelName(log_level_name.upper())
     # Setting logger
     logging.basicConfig(
-        level=log_level,
+       level=log_level,
         format=
         "[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s - %(message)s")
 
@@ -100,7 +100,7 @@ def create_app(config=None):
     Session(app)
 
     # create sessions table if using sqlalchemy backend
-    if app.config.get('SESSION_TYPE') == 'sqlalchemy':
+    if os.environ.get('SESSION_TYPE') == 'sqlalchemy':
         with app.app_context():
             if hasattr(models, 'Sessions'):
                 models.Sessions.__table__.create(bind=models.db.engine, checkfirst=True)
@@ -128,16 +128,16 @@ def create_app(config=None):
     @app.context_processor
     def inject_sitename():
         setting = Setting().get('site_name')
-        return {'SITE_NAME': setting}
+        return dict(SITE_NAME=setting)
 
     @app.context_processor
     def inject_setting():
         setting = Setting()
-        return {'SETTING': setting}
+        return dict(SETTING=setting)
 
     @app.context_processor
     def inject_pdns_version():
         setting = Setting().get('pdns_version')
-        return {'pdns_version': setting}
+        return dict(pdns_version=setting)
 
     return app

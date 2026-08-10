@@ -10,8 +10,7 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name:
-    fileConfig(config.config_file_name)
+fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
 # add your model's MetaData object here
@@ -19,45 +18,14 @@ logger = logging.getLogger('alembic.env')
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from flask import current_app
-db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI') or ''
-config.set_main_option('sqlalchemy.url', db_uri.replace("%", "%%"))
+config.set_main_option('sqlalchemy.url',
+                       current_app.config.get('SQLALCHEMY_DATABASE_URI').replace("%","%%"))
 target_metadata = current_app.extensions['migrate'].db.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-import sqlalchemy as sa
-from alembic.operations import Operations
-from alembic.operations.batch import ApplyBatchImpl
-from alembic.ddl.impl import DefaultImpl
-
-_orig_impl_exec = DefaultImpl._exec
-_orig_batch_drop_column = ApplyBatchImpl.drop_column
-
-
-def _safe_impl_exec(self, construct, execution_options=None, multiparams=None, params=None):
-    try:
-        return _orig_impl_exec(self, construct, execution_options=execution_options, multiparams=multiparams, params=params)
-    except Exception as ex:
-        err_msg = str(ex).lower()
-        if any(ign in err_msg for ign in ["already exists", "duplicate", "no such column"]):
-            logger.info("Ignoring safe DDL error: %s", ex)
-            return
-        raise
-
-
-def _safe_batch_drop_column(self, column, *args, **kwargs):
-    col_name = getattr(column, 'name', column)
-    if col_name not in self.columns:
-        logger.info("Column '%s' not present in batch columns, skipping batch drop_column.", col_name)
-        return
-    return _orig_batch_drop_column(self, column, *args, **kwargs)
-
-
-DefaultImpl._exec = _safe_impl_exec
-ApplyBatchImpl.drop_column = _safe_batch_drop_column
 
 
 def run_migrations_offline():
@@ -97,8 +65,7 @@ def run_migrations_online():
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
-    section = config.get_section(config.config_ini_section) or {}
-    engine = engine_from_config(section,
+    engine = engine_from_config(config.get_section(config.config_ini_section),
                                 prefix='sqlalchemy.',
                                 poolclass=pool.NullPool)
 
@@ -107,6 +74,30 @@ def run_migrations_online():
     if 'render_as_batch' not in configure_opts:
         sql_url = config.get_main_option('sqlalchemy.url') or ''
         configure_opts['render_as_batch'] = sql_url.startswith('sqlite:')
+
+    import sqlalchemy as sa
+    from alembic.script import ScriptDirectory
+
+    inspector = sa.inspect(connection)
+    tables = inspector.get_table_names()
+    if 'account' in tables:
+        has_version = False
+        if 'alembic_version' in tables:
+            res = connection.execute(sa.text("SELECT version_num FROM alembic_version")).fetchall()
+            if len(res) > 0:
+                has_version = True
+        if not has_version:
+            script = ScriptDirectory.from_config(config)
+            head_revision = script.get_current_head()
+            if head_revision:
+                logger.info("Database tables already exist. Stamping alembic_version to head (%s).", head_revision)
+                connection.execute(sa.text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))"))
+                connection.execute(sa.text("DELETE FROM alembic_version"))
+                connection.execute(sa.text("INSERT INTO alembic_version (version_num) VALUES (:ver)"), {"ver": head_revision})
+                if hasattr(connection, 'commit'):
+                    connection.commit()
+                connection.close()
+                return
 
     context.configure(connection=connection,
                       target_metadata=target_metadata,
