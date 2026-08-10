@@ -1,4 +1,18 @@
-# ⚡ PowerDNS-Admin (v0.4.3 Modified By Alsyundawy)
+# ⚡ PowerDNS-Admin Modified By Alsyundawy
+
+[![Version](https://img.shields.io/badge/version-0.4.3--alsyundawy-brightgreen.svg)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
+![Python](https://img.shields.io/badge/python-%3E%3D3.10-3776ab.svg?logo=python&logoColor=white)
+[![Latest Release](https://img.shields.io/github/v/release/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
+[![Maintenance Status](https://img.shields.io/maintenance/yes/9999)](https://github.com/alsyundawy/PowerDNS-Admin/)
+[![License](https://img.shields.io/github/license/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/blob/master/LICENSE)
+[![GitHub Issues](https://img.shields.io/github/issues/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/alsyundawy/PowerDNS-Admin)](https://github.com/alsyundawy/PowerDNS-Admin/pulls)
+[![Donate with PayPal](https://img.shields.io/badge/PayPal-donate-orange?logo=paypal&logoColor=white)](https://www.paypal.me/alsyundawy)
+[![Donate with Ko-fi](https://img.shields.io/badge/Ko--fi-donate-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/alsyundawy)
+[![Sponsor with GitHub](https://img.shields.io/badge/GitHub-sponsor-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/alsyundawy)
+[![GitHub Stars](https://img.shields.io/github/stars/alsyundawy/PowerDNS-Admin?style=social)](https://github.com/alsyundawy/PowerDNS-Admin/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/alsyundawy/PowerDNS-Admin?style=social)](https://github.com/alsyundawy/PowerDNS-Admin/network/members)
+[![GitHub Contributors](https://img.shields.io/github/contributors/alsyundawy/PowerDNS-Admin?style=social)](https://github.com/alsyundawy/PowerDNS-Admin/graphs/contributors)
 
 A modern, secure, and feature-rich Web Management Interface for **PowerDNS** with advanced Role-Based Access Control (RBAC), multi-backend authentication, dynamic zone templating, and automated database migration idempotency.
 
