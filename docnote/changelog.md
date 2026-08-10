@@ -45,6 +45,22 @@ Perubahan signifikan dari versi 0.4.2-alsyundawy-fix meliputi:
      `index.login` sehingga pengguna tidak dapat masuk ke aplikasi
    - Solusi: redirect ke `dashboard.dashboard`
 
+6. **models/role.py & models/user.py (`Role.get_id_by_name`)** - Error `NoneType` ID
+   - Masalah: `Role.query.filter_by(...).first().id` melempar `AttributeError: 'NoneType' object has no attribute 'id'` saat tabel `role` kosong
+   - Solusi: Menambahkan class method `Role.get_id_by_name(name)` yang otomatis membuat role (`User`, `Administrator`, `Operator`) jika belum ada di database
+
+7. **routes/index.py (`register`)** - Validasi CAPTCHA gagal saat CAPTCHA dinonaktifkan
+   - Masalah: `captcha.validate()` dipanggil langsung walau `CAPTCHA_ENABLE` dinonaktifkan
+   - Solusi: `if CAPTCHA_ENABLE and not captcha.validate():`
+
+8. **migrations/env.py & versions/787bdba9e147_init_db.py** - Idempotensi Migrasi & Auto-stamp
+   - Masalah: `flask db upgrade` gagal dengan `table account already exists` pada database eksisting
+   - Solusi: Pengecekan tabel pada `787bdba9e147_init_db.py` dan auto-stamping berbasis SQL di `migrations/env.py`
+
+9. **powerdnsadmin/__init__.py & base.html** - Context Processor `pdns_version` & Sub-menu Error 500
+   - Masalah: `{{ (pdns_version or '')|tojson }}` melempar `TypeError` pada sub-menu dashboard
+   - Solusi: Mendaftarkan `@app.context_processor` `inject_pdns_version` di `__init__.py` dan mengikat versi footer ke `Version 0.4.3 Modified By Alsyundawy`
+
 ##### Code Quality Improvements (Perbaikan Kualitas Kode)
 - Menghapus debug print statement dari kode produksi
 - Memperbaiki typo di method `__repr__` Account model

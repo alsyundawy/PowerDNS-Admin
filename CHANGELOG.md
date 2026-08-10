@@ -121,6 +121,20 @@ restructuring or removing any working functionality.
     although the template only defines `{0}` and `{1}`. Removed the unused argument
     (resolves F523 / mypy `str-format`).
 
+- **models/role.py & models/user.py (`Role.get_id_by_name`)** - Safe role ID allocation
+  - Direct `.id` calls on `Role.query.filter_by(...).first()` raised `AttributeError: 'NoneType' object has no attribute 'id'` if the `role` table had no seeded rows. Added `Role.get_id_by_name(name)` class method to auto-seed default roles (`User`, `Administrator`, `Operator`) if missing, guaranteeing a valid integer ID.
+
+- **routes/index.py (`register`)** - Conditional CAPTCHA check
+  - `captcha.validate()` was called unconditionally even when `CAPTCHA_ENABLE` was disabled, causing registration to fail with `Invalid CAPTCHA answer`. Updated guard to `if CAPTCHA_ENABLE and not captcha.validate():`.
+
+- **migrations/env.py & versions/787bdba9e147_init_db.py** - Idempotent DB migrations & Auto-stamping
+  - Initial migration `787bdba9e147_init_db.py` checks table existence via SQLAlchemy inspector before creating `account` table.
+  - `migrations/env.py` automatically detects pre-created databases without revision metadata and stamps `alembic_version` to head (`d2e3f4a5b6c7`), preventing `table ... already exists` errors during deployment.
+
+- **powerdnsadmin/__init__.py & models/sessions.py** - Flask-Session 0.6+ & Context Processor
+  - Bound `SESSION_SQLALCHEMY = models.db` before `Session(app)` and added `__table_args__ = {'extend_existing': True}` to `Sessions` model.
+  - Added `@app.context_processor` `inject_pdns_version` so `{{ (pdns_version or '')|tojson }}` in `base.html` never throws `TypeError` / HTTP 500 across all dashboard pages.
+
 - **models/user.py (LDAP group membership)** - Incorrect membership test
   - `not ldap_group in ldap_user_groups` rewritten as `ldap_group not in ldap_user_groups`.
 
