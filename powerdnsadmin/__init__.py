@@ -68,31 +68,34 @@ def create_app(config=None):
 
     if app.config.get('SESSION_TYPE') == 'sqlalchemy':
         app.config['SESSION_SQLALCHEMY'] = models.db
-        import flask_session.sqlalchemy.sqlalchemy as fss_sqla
+        try:
+            import flask_session.sqlalchemy.sqlalchemy as fss_sqla
 
-        def safe_create_session_model(db, table_name, schema=None, bind_key=None, sequence=None):
-            table_args = {'extend_existing': True}
-            if schema:
-                table_args['schema'] = schema
+            def safe_create_session_model(db, table_name, schema=None, bind_key=None, sequence=None):
+                table_args = {'extend_existing': True}
+                if schema:
+                    table_args['schema'] = schema
 
-            class Session(db.Model):
-                __tablename__ = table_name
-                __table_args__ = table_args
-                __bind_key__ = bind_key
+                class Session(db.Model):
+                    __tablename__ = table_name
+                    __table_args__ = table_args
+                    __bind_key__ = bind_key
 
-                id = db.Column(db.Integer, primary_key=True)
-                session_id = db.Column(db.String(255), unique=True)
-                data = db.Column(db.BLOB)
-                expiry = db.Column(db.DateTime)
+                    id = db.Column(db.Integer, primary_key=True)
+                    session_id = db.Column(db.String(255), unique=True)
+                    data = db.Column(db.BLOB)
+                    expiry = db.Column(db.DateTime)
 
-                def __init__(self, session_id, data, expiry):
-                    self.session_id = session_id
-                    self.data = data
-                    self.expiry = expiry
+                    def __init__(self, session_id, data, expiry):
+                        self.session_id = session_id
+                        self.data = data
+                        self.expiry = expiry
 
-            return Session
+                return Session
 
-        fss_sqla.create_session_model = safe_create_session_model
+            fss_sqla.create_session_model = safe_create_session_model
+        except (ImportError, AttributeError):
+            pass
 
     sess = Session(app)
 
