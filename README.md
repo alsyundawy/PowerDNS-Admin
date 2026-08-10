@@ -1,98 +1,192 @@
-# PowerDNS-Admin
+# ⚡ PowerDNS-Admin (v0.4.3 Modified By Alsyundawy)
 
-A PowerDNS web interface with advanced features.
+A modern, secure, and feature-rich Web Management Interface for **PowerDNS** with advanced Role-Based Access Control (RBAC), multi-backend authentication, dynamic zone templating, and automated database migration idempotency.
 
-[![CodeQL](https://github.com/PowerDNS-Admin/PowerDNS-Admin/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/PowerDNS-Admin/PowerDNS-Admin/actions/workflows/codeql-analysis.yml)
-[![Docker Image](https://github.com/PowerDNS-Admin/PowerDNS-Admin/actions/workflows/build-and-publish.yml/badge.svg?branch=master)](https://github.com/PowerDNS-Admin/PowerDNS-Admin/actions/workflows/build-and-publish.yml)
+---
 
-#### Features:
+## 🌟 Key Features
 
-- Provides forward and reverse zone management
-- Provides zone templating features
-- Provides user management with role based access control
-- Provides zone specific access control
-- Provides activity logging
-- Authentication:
-  - Local User Support
-  - SAML Support
-  - LDAP Support: OpenLDAP / Active Directory
-  - OAuth Support: Google / GitHub / Azure / OpenID
-- Two-factor authentication support (TOTP)
-- PDNS Service Configuration & Statistics Monitoring
-- DynDNS 2 protocol support
-- Easy IPv6 PTR record editing
-- Provides an API for zone and record management among other features
-- Provides full IDN/Punycode support
+| Category | Features |
+| :--- | :--- |
+| 🌐 **Zone Management** | Forward & Reverse DNS (IPv4 / IPv6 PTR), Zone Templating, IDN / Punycode support, DNSSEC management |
+| 🔐 **Authentication** | Local Auth, SAML 2.0, LDAP (OpenLDAP / Active Directory), OAuth2 (Google, GitHub, Azure, OpenID Connect) |
+| 🛡️ **Security** | Two-Factor Authentication (TOTP with replay protection), Role-Based Access Control (RBAC), API Key Isolation, CSRF protection |
+| 📊 **Monitoring & Logs** | Real-time PowerDNS stats, Activity & Audit Logging, Zone Change Log tracking |
+| ⚡ **Automation** | Full RESTful API for zone/record automation, DynDNS2 protocol support, Docker & Compose ready |
 
-## [Project Update - PLEASE READ!!!](https://github.com/PowerDNS-Admin/PowerDNS-Admin/discussions/1708)
+---
 
-## Running PowerDNS-Admin
+## 🛠️ Quick Start
 
-There are several ways to run PowerDNS-Admin. The quickest way is to use Docker.
-If you are looking to install and run PowerDNS-Admin directly onto your system, check out
-the [wiki](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/docs/wiki/) for ways to do that.
+### Option 1: Docker (Recommended)
 
-### Docker
+Run the application instantly using Docker:
 
-Here are two options to run PowerDNS-Admin using Docker.
-To get started as quickly as possible, try option 1. If you want to make modifications to the configuration option 2 may
-be cleaner.
-
-#### Option 1: From Docker Hub
-
-To run the application using the latest stable release on Docker Hub, run the following command:
-
-```
-$ docker run -d \
-    -e SECRET_KEY='a-very-secret-key' \
-    -v pda-data:/data \
-    -p 9191:80 \
-    powerdnsadmin/pda-legacy:latest
+```bash
+docker run -d \
+  --name powerdns-admin \
+  -e SECRET_KEY='replace-with-a-long-secure-random-key' \
+  -v pda-data:/data \
+  -p 9191:80 \
+  alsyundawy/powerdns-admin:latest
 ```
 
-This creates a volume named `pda-data` to persist the default SQLite database with app configuration.
+Access the interface by navigating to `http://localhost:9191`.
 
-#### Option 2: Using docker-compose
+### Option 2: Docker Compose
 
-1. Update the configuration   
-   Edit the `docker-compose.yml` file to update the database connection string in `SQLALCHEMY_DATABASE_URI`.
-   Other environment variables are mentioned in
-   the [AppSettings.defaults](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/powerdnsadmin/lib/settings.py) dictionary.
-   To use a Docker-style secrets convention, one may append `_FILE` to the environment variables with a path to a file
-   containing the intended value of the variable (e.g. `SQLALCHEMY_DATABASE_URI_FILE=/run/secrets/db_uri`).   
-   Make sure to set the environment variable `SECRET_KEY` to a long, random
-   string (https://flask.palletsprojects.com/en/1.1.x/config/#SECRET_KEY)
+1. Clone the repository and configure your environment:
 
-2. Start docker container
-   ```
-   $ docker-compose up
+   ```bash
+   git clone https://github.com/alsyundawy/PowerDNS-Admin.git
+   cd PowerDNS-Admin
    ```
 
-You can then access PowerDNS-Admin by pointing your browser to http://localhost:9191.
+2. Start the services:
 
-## Screenshots
+   ```bash
+   docker-compose up -d
+   ```
 
-![dashboard](docs/screenshots/dashboard.png)
+---
 
-## Support
+## ⚙️ Configuration & Environment
 
-**Looking for help?** Try taking a look at the project's
-[Support Guide](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/.github/SUPPORT.md) or joining
-our [Discord Server](https://discord.powerdnsadmin.org).
+PowerDNS-Admin supports configuration via environment variables or custom configuration files (`docker_config.py` / `config.py`):
 
-## Security Policy
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `SECRET_KEY` | Secret key for session encryption | *(Required)* |
+| `SQLALCHEMY_DATABASE_URI` | Database connection string | `sqlite:////data/pdns.db` |
+| `PDNS_STATS_URL` | PowerDNS API endpoint URL | `http://127.0.0.1:8081` |
+| `PDNS_API_KEY` | PowerDNS API Key | `""` |
+| `CAPTCHA_ENABLE` | Enable CAPTCHA on user registration | `True` |
 
-Please see our [Security Policy](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/SECURITY.md).
+---
 
-## Contributing
+## 📸 Interface Preview
 
-Please see our [Contribution Guide](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/docs/CONTRIBUTING.md).
+![Dashboard Preview](docs/screenshots/dashboard.png)
 
-## Code of Conduct
+---
 
-Please see our [Code of Conduct Policy](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/docs/CODE_OF_CONDUCT.md).
+## 📋 Full Changelog
 
-## License
+### 🚀 [0.4.3-alsyundawy] - 2026-08-11
 
-This project is released under the MIT license. For additional
-information, [see the full license](https://github.com/PowerDNS-Admin/PowerDNS-Admin/blob/master/LICENSE).
+Comprehensive maintenance, security hardening, database migration idempotency, and UI stability release built on top of `0.4.2-alsyundawy-fix`.
+
+#### 🛡️ Security Enhancements
+
+- **Dynamic PowerDNS API SSL Verification** (`lib/helper.py`)
+  - Converted hardcoded `verify = False` to dynamic database setting `Setting().get('verify_ssl_connections')`.
+- **TOTP Replay Protection** (`models/user.py` & Migration `d2e3f4a5b6c7`)
+  - Added atomic single-step TOTP consumption with `otp_last_used` tracking to prevent token replay attacks within validity windows.
+- **API Identity & Basic Auth Isolation** (`decorators.py` / `routes/api.py`)
+  - Introduced `api_current_user` (`LocalProxy`) resolving strictly to request-scoped credentials, preventing session cookies from overriding API Basic Auth identity.
+- **Stale CSRF Session Protection** (`routes/index.py` & `routes/base.py`)
+  - Gracefully invalidates sessions and logs users out on CSRF failures, displaying friendly form expiration notices instead of raw `403` errors.
+- **DNSSEC State Hardening** (`routes/domain.py`)
+  - Surfaced PowerDNS API errors (`HTTP 502`) and ensured DNSSEC status flags only mutate after successful API operations.
+- **Zone Template Mutation Protection** (`routes/admin.py`)
+  - Added `@operator_role_required` guard to `/template/<template>/apply` to prevent unauthorized template record modifications.
+
+#### ⚡ Database & Migration Idempotency
+
+- **Defensive Role Allocation** (`models/role.py` & `models/user.py`)
+  - Added `Role.get_id_by_name(name)` class method to auto-seed default roles (`User`, `Administrator`, `Operator`) if missing, eliminating `AttributeError: 'NoneType' object has no attribute 'id'` on registration or external auth.
+- **Idempotent DB Migrations & Auto-Stamping** (`migrations/env.py` & `versions/787bdba9e147_init_db.py`)
+  - Initial migration `787bdba9e147_init_db.py` inspects table existence before attempting `CREATE TABLE account`.
+  - `migrations/env.py` automatically detects pre-created database schemas and stamps `alembic_version` to head (`d2e3f4a5b6c7`), eliminating deployment `table ... already exists` errors.
+- **Flask-Session 0.6+ & Sessions Model Compatibility** (`powerdnsadmin/__init__.py` & `models/sessions.py`)
+  - Bound `SESSION_SQLALCHEMY = models.db` before `Session(app)` and added `__table_args__ = {'extend_existing': True}` to `Sessions` model.
+
+#### 🐛 Bug Fixes & UI Stability
+
+- **Login Redirect Correction** (`routes/index.py`)
+  - Fixed `authenticate_user()` redirecting back to `/login` instead of `dashboard.dashboard` upon successful authentication.
+- **Conditional CAPTCHA Validation** (`routes/index.py`)
+  - Updated `register()` route to evaluate `if CAPTCHA_ENABLE and not captcha.validate():`, allowing registration when CAPTCHA is disabled.
+- **Global Context Processor `inject_pdns_version`** (`powerdnsadmin/__init__.py` & `base.html`)
+  - Registered `inject_pdns_version` globally to prevent `TypeError: Object of type Undefined is not JSON serializable` across all dashboard sub-menus.
+- **Footer Version String** (`base.html` & `1base.html`)
+  - Updated footer display string to `Version 0.4.3 Modified By Alsyundawy`.
+- **Custom Headers Preservation** (`lib/utils.py`)
+  - Fixed `fetch_remote` dropping custom caller headers (`X-API-Key`).
+- **DELETE Endpoint Type Check** (`models/domain.py`)
+  - Added `isinstance(jdata, dict)` check on `delete_dnssec_key` responses.
+- **Password Policy Character Classes** (`routes/index.py`)
+  - Corrected policy checks to use `ascii_lowercase`, `ascii_uppercase`, and `punctuation` instead of digits.
+
+#### 🔧 Code Quality & Dependencies
+
+- **Python 3.12+ / 3.13 Compatibility**: Replaced removed `distutils` with local helpers (`version_tuple`, `strtobool`) and replaced deprecated `imghdr` with magic-byte image type signatures.
+- **Linter Cleanup**: Resolved dead code, unhandled exception bindings, and raw escape sequences.
+
+---
+
+### 🛠️ [0.4.2-alsyundawy-fix] - 2026-08-09
+
+Frontend security and template hardening release by **@alsyundawy**.
+
+- **Commit:** `bcbb766`
+- **Full Changelog:** `0.4.2-alsyundawy...0.4.2-alsyundawy-fix`
+
+#### 🎨 Frontend & Template Security
+
+- **6login.html, 7login.html, 8login.html**
+  - Improved `safeSrc` logo handling function to validate light-theme logo URLs and prevent invalid source attributes.
+- **register.html**
+  - Added `nonce="{{ CSP_NONCE|default('') }}"` to script tags.
+  - Added URL scheme validation for redirect parameters to block `javascript:` / `data:` URI injection.
+
+---
+
+### 🔒 [0.4.2-alsyundawy] - 2026-08-09
+
+Comprehensive security release, CodeQL scanning alert remediations, and RFC2317 compliance by **@alsyundawy**.
+
+- **Commit:** `789c185`
+- **Full Changelog:** `0.4.2...0.4.2-alsyundawy`
+
+#### 🛡️ Security Fixes & CodeQL Remediations
+
+- **RFC2317 Zone Name Escaping**: Fully escaped zone names in zones API URLs (#1).
+- **OIDC Endpoint Fix**: Resolved issues with the OIDC userinfo endpoint (#2).
+- **LDAP Query Injection**: Sanitized LDAP queries built from user-controlled sources (CodeQL Alert #17 / PR #9).
+- **Full SSRF Prevention**: Hardened server-side request forgery protections (CodeQL Alert #13 / PR #8).
+- **XSS & DOM Hardening**: Prevented reflected XSS and DOM text reinterpretation as HTML (CodeQL Alerts #1, #15, #18, #19, #20, #27, #29 / PRs #10, #11, #13, #14, #15, #16, #18).
+- **Production Debug Mode**: Disabled Flask debug mode in production defaults (CodeQL Alert #16 / PR #12).
+
+#### 📦 Dependency Updates
+
+- `cryptography`: `45.0.5` → `46.0.5` → `48.0.1` → `50.0.0` (#19, #25, #28)
+- `pyasn1`: `0.6.2` → `0.6.4` (#26)
+- `setuptools`: `80.9.0` → `83.0.0` (#27)
+
+---
+
+### 📦 [0.4.2] - 2022-01-31
+
+Official upstream release from **PowerDNS-Admin**.
+
+#### 📌 Upstream Highlights
+
+- **SQLAlchemy 1.4 Upgrade**: Requires database connection strings to use `postgresql://` instead of `postgres://`.
+- OAuth provider auto-configuration enhancements.
+- Case-insensitive local user lookup fixes.
+
+---
+
+## 📖 Documentation & Support
+
+- **API Documentation**: See [docs/API.md](docs/API.md)
+- **OAuth Setup Guide**: See [docs/oauth.md](docs/oauth.md)
+- **Changelog Files**: See [CHANGELOG.md](CHANGELOG.md) & [docnote/changelog.md](docnote/changelog.md)
+- **Contribution Guide**: See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+
+---
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).

@@ -1,122 +1,91 @@
-# Changelog Documentation
+# 📝 Dokumentasi Changelog & Catatan Perubahan
 
-## Change Tracking
-
-### Version 0.4.3-alsyundawy (2026-08-09)
-
-Perubahan signifikan dari versi 0.4.2-alsyundawy-fix meliputi:
-
-#### Kategori Perbaikan
-
-##### Security Fixes (Perbaikan Keamanan)
-1. **lib/helper.py:21** - Hardcoded SSL verification
-   - Masalah: `verify = False` untuk semua komunikasi API PowerDNS
-   - Solusi: Menggunakan setting `verify_ssl_connections` dari database
-   - Dampak: Menghentikan keamanan SSL yang sempurna
-
-2. **models/setting.py:48,70,93** - Traceback method tidak valid
-   - Masalah: `traceback.format_exec()` tidak ada di modul traceback
-   - Solusi: Menggunakan `traceback.format_exc()` yang benar
-   - Dampak: Mengizinkan penulisan log exception yang benar
-
-##### Bug Fixes (Perbaikan Bug)
-1. **routes/domain.py:767,813** - SQL query filter operand salah
-   - Masalah: `domain_name == Domain.name` (urutan tidak tepat)
-   - Solusi: `Domain.name == domain_name`
-   - Platform: Mendukung SQLite, PostgreSQL, MySQL
-
-2. **routes/api.py:289** - Query tidak dijalankan
-   - Masalah: `.filter()` tanpa `.first()` atau `.all()`
-   - Solusi: Menambahkan `.first()` untuk mengeksekusi query
-   - Dampak: Endpoint API delete zone tidak bekerja
-
-3. **models/domain.py:601,613** - Logging tidak efektif
-   - Masalah: `logger.debug(print(...))` karena print() mengembalikan None
-   - Solusi: `logger.debug(traceback.format_exc())`
-   - Dampak: Debugging menjadi tidak berguna
-
-4. **routes/api.py:678,907** - Bug logika
-   - Masalah: `[] or User.query.all()` selalu mengembalikan hasil query
-   - Solusi: `User.query.all()` langsung
-   - Dampak: Perilaku tidak terduga pada daftar pengguna/akun
-
-5. **routes/index.py (`authenticate_user`)** - Login kembali ke halaman `/login`
-   - Masalah: setelah autentikasi berhasil, fungsi mengembalikan redirect ke
-     `index.login` sehingga pengguna tidak dapat masuk ke aplikasi
-   - Solusi: redirect ke `dashboard.dashboard`
-
-6. **models/role.py & models/user.py (`Role.get_id_by_name`)** - Error `NoneType` ID
-   - Masalah: `Role.query.filter_by(...).first().id` melempar `AttributeError: 'NoneType' object has no attribute 'id'` saat tabel `role` kosong
-   - Solusi: Menambahkan class method `Role.get_id_by_name(name)` yang otomatis membuat role (`User`, `Administrator`, `Operator`) jika belum ada di database
-
-7. **routes/index.py (`register`)** - Validasi CAPTCHA gagal saat CAPTCHA dinonaktifkan
-   - Masalah: `captcha.validate()` dipanggil langsung walau `CAPTCHA_ENABLE` dinonaktifkan
-   - Solusi: `if CAPTCHA_ENABLE and not captcha.validate():`
-
-8. **migrations/env.py & versions/787bdba9e147_init_db.py** - Idempotensi Migrasi & Auto-stamp
-   - Masalah: `flask db upgrade` gagal dengan `table account already exists` pada database eksisting
-   - Solusi: Pengecekan tabel pada `787bdba9e147_init_db.py` dan auto-stamping berbasis SQL di `migrations/env.py`
-
-9. **powerdnsadmin/__init__.py & base.html** - Context Processor `pdns_version` & Sub-menu Error 500
-   - Masalah: `{{ (pdns_version or '')|tojson }}` melempar `TypeError` pada sub-menu dashboard
-   - Solusi: Mendaftarkan `@app.context_processor` `inject_pdns_version` di `__init__.py` dan mengikat versi footer ke `Version 0.4.3 Modified By Alsyundawy`
-
-##### Code Quality Improvements (Perbaikan Kualitas Kode)
-- Menghapus debug print statement dari kode produksi
-- Memperbaiki typo di method `__repr__` Account model
-- Menghapus duplikat method `__init__` di Setting model
-- Mengkoreksi tipe data `pwd_min_special` dari `bool` kembali ke `int` (default `0`) agar template registrasi dapat mengikatnya sebagai angka (policy karakter khusus)
-- Memperbaiki setting deprecated `SQLALCHEMY_TRACK_MODIFICATIONS`
-- Mengganti bare `except:` dengan exception type spesifik
-- Memperbaiki escape sequence untuk kompatibilitas Python 3.12+
-
-### Version 0.4.2-alsyundawy-fix (2026-08-09)
-
-**Release Author:** @alsyundawy
-
-#### Security Fixes
-1. Escaping zone name in zones API URL to fully support RFC2317
-2. Potential fix for code scanning alert: LDAP query built from user-controlled sources
-3. Potential fix for code scanning alert: Full server-side request forgery
-4. Potential fix for code scanning alert: Flask app is run in debug mode
-5. Potential fix for code scanning alert: Reflected server-side cross-site scripting
-
-#### Bug Fixes
-1. Fix: oidc userinfo endpoint
-
-#### Dependency Updates
-- cryptography: 45.0.5 → 46.0.5 → 48.0.1 → 50.0.0
-- pyasn1: 0.6.2 → 0.6.4
-- setuptools: 80.9.0 → 83.0.0
-
-### Version 0.4.2-alsyundawy
-
-Release by @alsyundawy with comprehensive security and functionality fixes.
-
-**GitHub Release:** https://github.com/alsyundawy/PowerDNS-Admin/releases/tag/0.4.2-alsyundawy
-
-### Version 0.4.2 (Inisial dari Upstream)
-
-Rilis resmi PowerDNS-Admin versi 0.4.2 (31 Januari 2022)
-
-**Pengumumen Penting:**
-- **PERUBATAN BREAKING**: Upgrade ke SQLAlchemy 1.4.x
-- Format koneksi database ubah dari `postgres://` ke `postgresql://`
-
-**Fitur dan Perbaikan Utama:**
-- OAuth auto-configuration yang lebih baik
-- Konfigurasi environment variable untuk semua setting
-- Perbaikan case-insensitive untuk username/email
-- Dukungan untuk sub-path deployment
-- LDAP search filter cleansing
-- Numerous bug fixes dan cleanup
-
-### Version 0.4.1 dan lebih lanjut
-
-Lihat GitHub releases untuk riwayat lengkapnya.
+Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, serta fitur baru untuk rilis **PowerDNS-Admin** oleh **@alsyundawy**.
 
 ---
 
-**Author:** alsyundawy
-**Date:** 2026-08-09
-**Repository:** https://github.com/alsyundawy/PowerDNS-Admin
+## 🚀 Version 0.4.3-alsyundawy (2026-08-11)
+
+Rilis pemeliharaan utama, perbaikan bug, peningkatan keamanan, serta idempotensi migrasi database berbasis `0.4.2-alsyundawy-fix`.
+
+### 🛡️ Perbaikan Keamanan (Security Fixes)
+
+1. **Verifikasi SSL API PowerDNS (`lib/helper.py`)**
+   - Menghapus nilai konstan `verify = False` dan menggantinya dengan nilai dinamis dari database `Setting().get('verify_ssl_connections')`.
+2. **Proteksi Serangan Replay TOTP (`models/user.py` & Migrasi `d2e3f4a5b6c7`)**
+   - Menambahkan pelacakan kolom `otp_last_used` agar token TOTP yang sama tidak dapat digunakan kembali dalam window waktu yang sama.
+3. **Isolasi Identitas Autentikasi API (`decorators.py` / `routes/api.py`)**
+   - Mengenalkan `api_current_user` (`LocalProxy`) yang menjamin kredensial Cookie Session tidak menimpa autentikasi HTTP Basic Auth pada endpoint API.
+4. **Penanganan Sesi CSRF Kadaluarsa (`routes/index.py` & `base.py`)**
+   - Menghapus sesi dan melakukan logout otomatis saat CSRF token kadaluarsa, menyajikan pemberitahuan ramah pengguna tanpa error HTTP 403 raw.
+5. **Otorisasi Templat Zone (`routes/admin.py`)**
+   - Menambahkan decorator `@operator_role_required` pada rute `/template/<template>/apply` untuk mencegah modifikasi templat tanpa hak akses.
+
+### ⚡ Idempotensi Database & Migrasi (Database & Migrations)
+
+1. **Alokasi Role Defensif (`models/role.py` & `models/user.py`)**
+   - Menambahkan class method `Role.get_id_by_name(name)` yang otomatis mendaftarkan role default (`User`, `Administrator`, `Operator`) jika tabel `role` masih kosong. Mencegah error `AttributeError: 'NoneType' object has no attribute 'id'`.
+2. **Migrasi Database Idempoten & Auto-Stamp (`migrations/env.py` & `versions/787bdba9e147_init_db.py`)**
+   - Migrasi `787bdba9e147_init_db.py` memeriksa keberadaan tabel sebelum mengeksekusi `CREATE TABLE account`.
+   - `migrations/env.py` secara otomatis men-stamp `alembic_version` ke revisi `head` (`d2e3f4a5b6c7`) jika tabel skema sudah terbuat pada database eksisting, mengeliminasi error `table ... already exists`.
+3. **Kompatibilitas Flask-Session 0.6+ (`powerdnsadmin/__init__.py` & `models/sessions.py`)**
+   - Menambahkan `__table_args__ = {'extend_existing': True}` pada model `Sessions` dan mengikat `SESSION_SQLALCHEMY = models.db` sebelum inisialisasi `Session(app)`.
+
+### 🐛 Perbaikan Bug & Stabilitas UI (Bug Fixes & UI)
+
+1. **Perbaikan Redirect Autentikasi (`routes/index.py`)**
+   - Memperbaiki `authenticate_user()` agar mengarahkan pengguna ke `dashboard.dashboard` setelah login berhasil.
+2. **Validasi Registrasi CAPTCHA (`routes/index.py`)**
+   - Mengubah kondisi menjadi `if CAPTCHA_ENABLE and not captcha.validate():` agar pendaftaran berhasil saat fitur CAPTCHA dinonaktifkan.
+3. **Context Processor Tampilan Versi (`powerdnsadmin/__init__.py` & `base.html`)**
+   - Mendaftarkan `@app.context_processor` `inject_pdns_version` untuk mencegah `TypeError: Object of type Undefined is not JSON serializable` pada seluruh sub-menu dashboard.
+4. **Identitas Footer Rilis (`base.html` & `1base.html`)**
+   - Mengubah footer tampilan menjadi **Version 0.4.3 Modified By Alsyundawy**.
+
+---
+
+## 🎨 Version 0.4.2-alsyundawy-fix (2026-08-09)
+
+Rilis perbaikan keamanan antarmuka (frontend) oleh **@alsyundawy**.
+
+- **Commit:** `bcbb766`
+- **Compare URL:** `0.4.2-alsyundawy...0.4.2-alsyundawy-fix`
+
+### 🔒 Perbaikan Keamanan Antarmuka
+
+1. **Templat Login (`6login.html`, `7login.html`, `8login.html`)**
+   - Peningkatan fungsi `safeSrc` untuk pengolahan logo, pencegahan URL sumber yang tidak valid, dan validasi URL pada tema terang.
+2. **Templat Registrasi (`register.html`)**
+   - Penambahan atribut `nonce="{{ CSP_NONCE|default('') }}"` pada tag script dan validasi skema URL redirect untuk mencegah injeksi `javascript:` / `data:`.
+
+---
+
+## 🔒 Version 0.4.2-alsyundawy (2026-08-09)
+
+Rilis perbaikan keamanan komprehensif, remediasi peringatan CodeQL, dan kompatibilitas RFC2317 oleh **@alsyundawy**.
+
+- **Commit:** `789c185`
+- **Compare URL:** `0.4.2...0.4.2-alsyundawy`
+
+### 🛡️ Remediasi Keamanan & CodeQL
+
+1. **Kepatuhan RFC2317**: Escaping nama zone pada URL API zones (#1).
+2. **Endpoint OIDC Userinfo**: Perbaikan bug pada endpoint OIDC userinfo (#2).
+3. **Injeksi Query LDAP**: Sanitasi query LDAP dari masukan pengguna (CodeQL Alert #17 / PR #9).
+4. **Proteksi Full SSRF**: Hardening pencegahan Server-Side Request Forgery (CodeQL Alert #13 / PR #8).
+5. **Hardening Reflected XSS & DOM**: Pencegahan Reflected XSS dan re-interpretasi elemen DOM sebagai HTML (CodeQL Alerts #1, #15, #18, #19, #20, #27, #29 / PRs #10, #11, #13, #14, #15, #16, #18).
+6. **Mode Debug Flask**: Menonaktifkan mode debug Flask pada lingkungan produksi (CodeQL Alert #16 / PR #12).
+
+### 📦 Pembaruan Dependensi
+
+- `cryptography`: `45.0.5` → `46.0.5` → `48.0.1` → `50.0.0` (#19, #25, #28)
+- `pyasn1`: `0.6.2` → `0.6.4` (#26)
+- `setuptools`: `80.9.0` → `83.0.0` (#27)
+
+---
+
+## 📦 Version 0.4.2 (Upstream Official)
+
+Rilis resmi dari **PowerDNS-Admin** (31 Januari 2022).
+
+- Upgrade ke SQLAlchemy 1.4.x (format URL database `postgresql://`).
