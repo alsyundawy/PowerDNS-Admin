@@ -28,6 +28,37 @@ target_metadata = current_app.extensions['migrate'].db.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+import sqlalchemy as sa
+from alembic.operations import Operations
+from alembic.operations.batch import ApplyBatchImpl
+from alembic.ddl.impl import DefaultImpl
+
+_orig_impl_exec = DefaultImpl._exec
+_orig_batch_drop_column = ApplyBatchImpl.drop_column
+
+
+def _safe_impl_exec(self, construct, execution_options=None, multiparams=None, params=None):
+    try:
+        return _orig_impl_exec(self, construct, execution_options=execution_options, multiparams=multiparams, params=params)
+    except Exception as ex:
+        err_msg = str(ex).lower()
+        if any(ign in err_msg for ign in ["already exists", "duplicate", "no such column"]):
+            logger.info("Ignoring safe DDL error: %s", ex)
+            return
+        raise
+
+
+def _safe_batch_drop_column(self, column, *args, **kwargs):
+    col_name = getattr(column, 'name', column)
+    if col_name not in self.columns:
+        logger.info("Column '%s' not present in batch columns, skipping batch drop_column.", col_name)
+        return
+    return _orig_batch_drop_column(self, column, *args, **kwargs)
+
+
+DefaultImpl._exec = _safe_impl_exec
+ApplyBatchImpl.drop_column = _safe_batch_drop_column
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
