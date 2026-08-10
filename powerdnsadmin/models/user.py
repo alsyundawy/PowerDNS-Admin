@@ -434,11 +434,9 @@ class User(db.Model):
 
                 # first register user will be in Administrator role
                 if User.query.count() == 0:
-                    self.role_id = Role.query.filter_by(
-                        name='Administrator').first().id
+                    self.role_id = Role.get_id_by_name('Administrator')
                 else:
-                    self.role_id = Role.query.filter_by(
-                        name=role_name).first().id
+                    self.role_id = Role.get_id_by_name(role_name or 'User')
 
                 self.create_user()
                 current_app.logger.info('Created user "{0}" in the DB'.format(
@@ -483,30 +481,11 @@ class User(db.Model):
             if user:
                 return {'status': False, 'msg': 'Email address is already in use'}
 
-        # Ensure default roles exist in DB if table is empty
-        user_role = Role.query.filter_by(name='User').first()
-        if not user_role:
-            user_role = Role(name='User', description='User')
-            db.session.add(user_role)
-            db.session.commit()
-
-        admin_role = Role.query.filter_by(name='Administrator').first()
-        if not admin_role:
-            admin_role = Role(name='Administrator', description='Administrator')
-            db.session.add(admin_role)
-            db.session.commit()
-
-        operator_role = Role.query.filter_by(name='Operator').first()
-        if not operator_role:
-            operator_role = Role(name='Operator', description='Operator')
-            db.session.add(operator_role)
-            db.session.commit()
-
         # first register user will be in Administrator role
         if self.role_id is None:
-            self.role_id = user_role.id
+            self.role_id = Role.get_id_by_name('User')
         if User.query.count() == 0:
-            self.role_id = admin_role.id
+            self.role_id = Role.get_id_by_name('Administrator')
 
         if hasattr(self, "plain_text_password"):
             if self.plain_text_password is not None:

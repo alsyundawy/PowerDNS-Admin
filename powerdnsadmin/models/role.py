@@ -17,3 +17,12 @@ class Role(db.Model):
 
     def __repr__(self):
         return '<Role {0}>'.format(self.name)
+
+    @classmethod
+    def get_id_by_name(cls, name):
+        role = cls.query.filter_by(name=name).first()
+        if not role:
+            role = cls(name=name, description=name)
+            db.session.add(role)
+            db.session.commit()
+        return role.id

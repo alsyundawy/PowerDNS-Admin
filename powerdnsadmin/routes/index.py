@@ -1286,7 +1286,7 @@ def saml_authorized():
             uplift_to_operator(user)
         elif admin_attribute_name or group_attribute_name:
             if user.role.name != 'User':
-                user.role_id = Role.query.filter_by(name='User').first().id
+                user.role_id = Role.get_id_by_name('User')
                 history = History(msg='Demoting {0} to user'.format(
                     user.username),
                     created_by='SAML Assertion')
@@ -1330,7 +1330,7 @@ def handle_account(account_name, account_description=""):
 
 def uplift_to_admin(user):
     if user.role.name != 'Administrator':
-        user.role_id = Role.query.filter_by(name='Administrator').first().id
+        user.role_id = Role.get_id_by_name('Administrator')
         history = History(msg='Promoting {0} to administrator'.format(
             user.username),
             created_by='SAML Assertion')
@@ -1339,7 +1339,7 @@ def uplift_to_admin(user):
 
 def uplift_to_operator(user):
     if user.role.name != 'Operator':
-        user.role_id = Role.query.filter_by(name='Operator').first().id
+        user.role_id = Role.get_id_by_name('Operator')
         history = History(msg='Promoting {0} to operator'.format(
             user.username),
             created_by='SAML Assertion')
