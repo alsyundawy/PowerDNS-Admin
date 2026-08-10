@@ -219,19 +219,24 @@
         <strong>Copyright &copy; <a href="https://github.com/PowerDNS-Admin/PowerDNS-Admin">PowerDNS-Admin</a>.</strong>
         A web-based PowerDNS administration
         interface with advanced features.
-        <span class="float-right">Version 0.4.2 Modified By Alsyundawy</span>
+        <span class="float-right">Version 0.4.3 Modified By Alsyundawy</span>
     </footer>
 </div>
 <!-- ./wrapper -->
 <script type="text/javascript">
     $SCRIPT_ROOT = {{ request.script_root|tojson }};
-    var PDNS_VERSION = {{ pdns_version|tojson }};
+    var PDNS_VERSION = {{ (pdns_version or '')|tojson }};
 </script>
 {% block scripts %}
     {% assets "js_main" -%}
         <script type="text/javascript" src="{{ ASSET_URL }}"></script>
         {% if SETTING.get('warn_session_timeout') and current_user.is_authenticated %}
             <script>
+                const sessionTimeoutSec = Number({{ ((SETTING.get('session_timeout')|int if SETTING.get('session_timeout') else 120) * 60)|tojson }});
+                const pingUrl = {{ url_for("index.ping")|tojson }};
+                const logoutUrl = {{ url_for("index.logout")|tojson }};
+                const loginUrl = {{ url_for("index.login")|tojson }};
+
                 // close the session warning popup when receive
                 // a boradcast message
                 var bc = new BroadcastChannel('powerdnsadmin');
@@ -273,11 +278,6 @@
 
                 // jTimeout definition
                 $(function () {
-                    const sessionTimeoutSec = Number({{ (SETTING.get('session_timeout')|int * 60)|tojson }});
-                    const pingUrl = {{ url_for("index.ping")|tojson }};
-                    const logoutUrl = {{ url_for("index.logout")|tojson }};
-                    const loginUrl = {{ url_for("index.login")|tojson }};
-
                     $.jTimeout({
                         flashTitle: true,
                         flashTitleSpeed: 500,

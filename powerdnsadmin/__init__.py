@@ -58,23 +58,54 @@ def create_app(config=None):
         from flask_sslify import SSLify
         _sslify = SSLify(app)  # lgtm [py/unused-local-variable]
 
+    # Load app's database models first
+    models.init_app(app)
+
     # Load Flask-Session
     app.config['SESSION_TYPE'] = app.config.get('SESSION_TYPE')
     if 'SESSION_TYPE' in os.environ:
         app.config['SESSION_TYPE'] = os.environ.get('SESSION_TYPE')
 
+    if app.config.get('SESSION_TYPE') == 'sqlalchemy':
+        app.config['SESSION_SQLALCHEMY'] = models.db
+        import flask_session.sqlalchemy.sqlalchemy as fss_sqla
+
+        def safe_create_session_model(db, table_name, schema=None, bind_key=None, sequence=None):
+            table_args = {'extend_existing': True}
+            if schema:
+                table_args['schema'] = schema
+
+            class Session(db.Model):
+                __tablename__ = table_name
+                __table_args__ = table_args
+                __bind_key__ = bind_key
+
+                id = db.Column(db.Integer, primary_key=True)
+                session_id = db.Column(db.String(255), unique=True)
+                data = db.Column(db.BLOB)
+                expiry = db.Column(db.DateTime)
+
+                def __init__(self, session_id, data, expiry):
+                    self.session_id = session_id
+                    self.data = data
+                    self.expiry = expiry
+
+            return Session
+
+        fss_sqla.create_session_model = safe_create_session_model
+
     sess = Session(app)
 
     # create sessions table if using sqlalchemy backend
-    if os.environ.get('SESSION_TYPE') == 'sqlalchemy':
-        sess.app.session_interface.db.create_all()
+    if app.config.get('SESSION_TYPE') == 'sqlalchemy':
+        with app.app_context():
+            models.db.create_all()
 
     # SMTP
     app.mail = Mail(app)
 
     # Load app's components
     assets.init_app(app)
-    models.init_app(app)
     routes.init_app(app)
     services.init_app(app)
 
@@ -99,5 +130,10 @@ def create_app(config=None):
     def inject_setting():
         setting = Setting()
         return dict(SETTING=setting)
+
+    @app.context_processor
+    def inject_pdns_version():
+        setting = Setting().get('pdns_version')
+        return dict(pdns_version=setting)
 
     return app

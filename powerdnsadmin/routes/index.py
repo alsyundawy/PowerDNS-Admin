@@ -47,22 +47,31 @@ index_bp = Blueprint('index',
                      url_prefix='/')
 
 
-@index_bp.before_app_first_request
+_modules_registered = False
+
+
 def register_modules():
     global google
     global github
     global azure
     global oidc
     global saml
+    global _modules_registered
+
+    if _modules_registered:
+        return
+
     google = google_oauth()
     github = github_oauth()
     azure = azure_oauth()
     oidc = oidc_oauth()
     saml = SAML()
+    _modules_registered = True
 
 
 @index_bp.before_request
 def before_request():
+    register_modules()
     # Check if user is anonymous
     g.user = current_user
     login_manager.anonymous_user = Anonymous

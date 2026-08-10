@@ -4,8 +4,11 @@ import time
 import traceback
 import bcrypt
 import pyotp
-import ldap
-import ldap.filter
+try:
+    import ldap
+    import ldap.filter
+except ImportError:
+    ldap = None
 from collections import OrderedDict
 from flask import current_app
 from flask_login import AnonymousUserMixin
