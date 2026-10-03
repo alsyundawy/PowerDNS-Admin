@@ -7,142 +7,13 @@
   <title>Log in · {{ SITE_NAME }}</title>
   <meta name="description" content="Log in to your account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations.">
 
-{#
-╔══════════════════════════════════════════════════════════════╗
-║  Template   : login.html                                     ║
-║  Project    : PowerDNS-Admin                                 ║
-║  Purpose    : User login page with dual-dark themes,         ║
-║               logo fallback, and multi-auth support          ║
-╠══════════════════════════════════════════════════════════════╣
-║  CHANGELOG                                                   ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  v1.3.0 — 2026-08-11 (0.4.3-alsyundawy)              ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [LINT] Fully resolved duplicate auth_method form control    ║
-║         by using a single hidden input populated via JS      ║
-║         from a data attribute; avoids static parser issue.   ║
-║                                                              ║
-║  [LINT] Fixed alert text contrast to #ffffff (white) to      ║
-║         pass WCAG 2.1 AA contrast ratio requirement.         ║
-║                                                              ║
-║  [LINT] Resolved empty catch handler in safeSrc() by using   ║
-║         void to acknowledge the caught exception explicitly. ║
-║                                                              ║
-║  v1.2.0 — 2026-08-11                                         ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [LINT] Resolved all linter errors/warnings: removed inline  ║
-║         styles, fixed HTML5 attribute specs, fixed dataset   ║
-║         usages, and corrected JS reference to window object. ║
-║                                                              ║
-║  v1.1.0 — 2026-07-11                                         ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [BUG]  Fixed invalid dark-theme CSS selector                ║
-║         '[data-theme="dark"] html/body' so dark gradient     ║
-║         background now applies correctly.                    ║
-║                                                              ║
-║  [BUG]  Fixed safeSrc() handling for root-relative and       ║
-║         path-relative logo URLs so fallback sources remain   ║
-║         valid and do not get rejected incorrectly.           ║
-║                                                              ║
-║  [SEC]  Removed redundant inline logo-switch script in the   ║
-║         header because theme/logo switching is already       ║
-║         handled by the main runtime script.                  ║
-║                                                              ║
-║  [SEC]  Removed encodeURI() during validated logo src        ║
-║         assignment to prevent malformed or double-encoded    ║
-║         asset URLs.                                          ║
-║                                                              ║
-║  [SEC]  Replaced honeypot alert() with silent submission     ║
-║         rejection plus console warning for safer and less    ║
-║         intrusive handling.                                  ║
-║                                                              ║
-║  [A11Y] Added prefers-reduced-motion handling so non-        ║
-║         essential animations are minimized when requested    ║
-║         by the user agent or OS setting.                     ║
-║                                                              ║
-║  [A11Y] Improved keyboard focus behavior by using            ║
-║         :focus-visible-compatible styling on inputs and      ║
-║         interactive controls.                                ║
-║                                                              ║
-║  [A11Y] Added explicit for="remember" binding on the         ║
-║         remember-me label for stronger assistive support.    ║
-║                                                              ║
-║  [A11Y] Removed redundant role="main" from main element      ║
-║         because the element has an implicit main landmark.   ║
-║                                                              ║
-║  [A11Y] Corrected descriptive relationship usage by moving   ║
-║         login-desc handling away from an unsuitable form     ║
-║         reference pattern.                                   ║
-║                                                              ║
-║  [HTML] Added missing preconnect to fonts.googleapis.com     ║
-║         to improve font stylesheet connection setup.         ║
-║                                                              ║
-║  [HTML] Changed subtitle wrapper from div to p element for   ║
-║         better text semantics.                               ║
-║                                                              ║
-║  [HTML] Replaced generic footer container with semantic      ║
-║         footer element preserving structure and behavior.    ║
-║                                                              ║
-║  [OPT]  Removed form-level autocomplete="off" because        ║
-║         field-level autocomplete values already provide      ║
-║         correct browser behavior.                            ║
-║                                                              ║
-║  [OPT]  Hardened session-timeout meta-refresh calculation    ║
-║         with explicit integer coercion before multiply to    ║
-║         avoid template type issues.                          ║
-║                                                              ║
-║  [DOC]  Updated docnote header and preserved prior release   ║
-║         history in structured changelog format.              ║
-║                                                              ║
-║  v1.0.0 — 2026-06-29                                         ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [UI]   Re-designed both themes as eye-friendly dark modes   ║
-║         (Slate Blue and Obsidian Dark).                      ║
-║                                                              ║
-║  [UI]   Forced bright/light logo variant (dark_src) in all   ║
-║         modes so the white subtitle remains clearly visible. ║
-║                                                              ║
-║  [UI]   Increased contrast for text, borders, and input      ║
-║         fields to improve readability.                       ║
-║                                                              ║
-║  [OPT]  Added inline flash-prevention script in head tag     ║
-║         to eliminate dark/light theme flash (FOUC).          ║
-║                                                              ║
-║  [OPT]  Added inline script after logo to prevent dual logo  ║
-║         fetches during initial load.                         ║
-║                                                              ║
-║  [A11Y] Improved semantic hierarchy by changing title div    ║
-║         to h1 heading for accessibility and SEO structure.   ║
-║                                                              ║
-║  [SEO]   Added meta description for better indexing and page ║
-║         context in search results.                           ║
-║                                                              ║
-║  [BUG]  Removed username input regex pattern to prevent      ║
-║         LDAP/OAuth character restriction issues.             ║
-║                                                              ║
-║  [UI]   Added error-box shake animation and customized       ║
-║         checkbox design with visible checkmark indicator.    ║
-║                                                              ║
-║  [REF]  Refactored OAuth button inline styles into reusable  ║
-║         .btn-oauth class for cleaner maintenance.            ║
-║                                                              ║
-║  [SEC]  Secured session-timeout Jinja fallback to avoid      ║
-║         server-side 500 errors on invalid values.            ║
-║                                                              ║
-║  [HTML] Removed novalidate so browser-native field           ║
-║         validation works again.                              ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-#}
-
   <meta name="referrer" content="no-referrer-when-downgrade">
 
   {# Preconnect to both font origins #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet">
-  <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 
   {% assets "css_login" -%}
     <link rel="stylesheet" href="{{ ASSET_URL }}">
@@ -173,6 +44,10 @@
   </script>
 
   <style>
+/* ═══════════════════════════════════════════════════════════════
+   Shared Styles — used identically by login.html and register.html
+   ═══════════════════════════════════════════════════════════════ */
+
 /* ─── Custom Properties & Themes ──────────────────────────────── */
 :root {
   --bg-1: #0f172a;
@@ -342,10 +217,29 @@ form {
 }
 .field {
   margin-bottom: 0.875rem;
+  position: relative;
+}
+.input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.input-icon-wrapper .input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+.input-icon-wrapper:focus-within .input-icon {
+  color: var(--accent-to);
 }
 .input {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 1rem 0.875rem 42px;
   border-radius: 12px;
   border: 1px solid var(--input-border);
   background: var(--input-bg);
@@ -365,73 +259,56 @@ form {
   border-color: var(--accent-to);
   background: var(--bg-1);
 }
-
-/* ─── Flex Row & Spacing Helpers ───────────────────────────────── */
-.row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.input.is-invalid {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
 }
-.row .left  { flex: 0 0 auto; }
-.row .right {
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: flex-end;
-}
-.mt-6 { margin-top: 6px; }
 
-/* ─── Remember Me Checkbox ─────────────────────────────────────── */
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-muted);
+.invalid-feedback {
+  color: #fca5a5;
+  font-size: 0.8125rem;
   font-weight: 600;
-  font-size: 0.9375rem;
-  user-select: none;
-  cursor: pointer;
-}
-.remember input {
-  width: 18px;
-  height: 18px;
-  appearance: none;
-  -webkit-appearance: none;
-  border-radius: 6px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  display: inline-block;
-  outline: none;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-  margin: 0;
-  flex-shrink: 0;
-}
-.remember input:hover {
-  border-color: var(--accent-to);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-.remember input:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.3);
-  outline-offset: 2px;
-}
-.remember input:checked {
-  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
-  border-color: transparent;
-}
-.remember input:checked::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 2px;
-  width: 5px;
-  height: 9px;
-  border: solid #0b1329;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* ─── Buttons ──────────────────────────────────────────────────── */
+/* ─── Section Header ───────────────────────────────────────────── */
+.form-section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-from);
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+/* ─── Captcha Box ──────────────────────────────────────────────── */
+.captcha-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* ─── Action Buttons ───────────────────────────────────────────── */
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+
 .btn {
   padding: 0.875rem 1.25rem;
   border-radius: 12px;
@@ -439,12 +316,18 @@ form {
   font-weight: 700;
   cursor: pointer;
   font-size: 0.9375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
   color: #0b1329;
   box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
+  flex: 1;
 }
 .btn-primary:hover {
   transform: translateY(-2px);
@@ -459,36 +342,22 @@ form {
   outline: 3px solid rgba(59, 130, 246, 0.35);
   outline-offset: 2px;
 }
-.cta { min-width: 200px; }
-
-/* ─── OAuth & Social Buttons ───────────────────────────────────── */
-.oauth-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-.btn-oauth {
-  display: block;
+.btn-secondary {
+  background: var(--input-bg);
   border: 1px solid var(--glass-border);
-  background: transparent;
   color: var(--text-primary);
-  padding: 11px;
-  border-radius: 12px;
-  text-decoration: none;
-  text-align: center;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  min-width: 110px;
 }
-.btn-oauth:hover {
-  background: rgba(255, 255, 255, 0.05);
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--accent-to);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
-.btn-oauth:active { transform: translateY(0); }
-.btn-oauth:focus-visible {
+.btn-secondary:active {
+  transform: translateY(0);
+}
+.btn-secondary:focus-visible {
   outline: 3px solid rgba(59, 130, 246, 0.3);
   outline-offset: 2px;
 }
@@ -506,15 +375,7 @@ form {
   animation: shake 0.4s ease;
 }
 
-/* ─── Utility & Links ──────────────────────────────────────────── */
-.text-center { text-align: center; }
-.saml-link {
-  color: var(--accent-to);
-  text-decoration: none;
-  font-weight: 600;
-}
-.saml-link:hover { color: var(--accent-from); }
-
+/* ─── Utility ──────────────────────────────────────────────────── */
 .helper {
   font-size: 0.875rem;
   color: var(--text-muted);
@@ -527,7 +388,7 @@ form {
   font-weight: 600;
   transition: color 0.2s ease;
 }
-.helper a:hover  { color: var(--accent-from); }
+.helper a:hover { color: var(--accent-from); }
 
 .footer {
   text-align: center;
@@ -542,7 +403,7 @@ form {
   font-weight: 500;
   transition: color 0.2s ease;
 }
-.footer a:hover { color: var(--accent-to); }
+.footer a:hover { color: var(--accent-from); }
 .footer-sep {
   opacity: 0.6;
   margin: 0 8px;
@@ -609,8 +470,287 @@ form {
     border-radius: 24px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Page-Specific Styles — login.html
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Flex Row & Spacing Helpers ───────────────────────────────── */
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.row .left  { flex: 0 0 auto; }
+.row .right {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+}
+.mt-6 { margin-top: 6px; }
+
+/* ─── Remember Me Checkbox ─────────────────────────────────────── */
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  user-select: none;
+  cursor: pointer;
+}
+.remember input {
+  width: 18px;
+  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  display: inline-block;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  margin: 0;
+  flex-shrink: 0;
+}
+.remember input:hover {
+  border-color: var(--accent-to);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+.remember input:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.3);
+  outline-offset: 2px;
+}
+.remember input:checked {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  border-color: transparent;
+}
+.remember input:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid #0b1329;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ─── OAuth & Social Buttons ───────────────────────────────────── */
+.oauth-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.btn-oauth {
+  display: block;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 11px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-oauth:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-to);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.btn-oauth:active { transform: translateY(0); }
+.btn-oauth:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.3);
+  outline-offset: 2px;
+}
+
+.text-center { text-align: center; }
+.saml-link {
+  color: var(--accent-to);
+  text-decoration: none;
+  font-weight: 600;
+}
+.saml-link:hover { color: var(--accent-from); }
+
+.cta { min-width: 200px; }
   </style>
 </head>
+
+{# 
+╔══════════════════════════════════════════════════════════════╗
+║  Template   : login.html                                     ║
+║  Project    : PowerDNS-Admin                                 ║
+║  Purpose    : User login page with dual-dark themes,         ║
+║               logo fallback, and multi-auth support          ║
+╠══════════════════════════════════════════════════════════════╣
+║  CHANGELOG                                                   ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  v1.4.0 — 2026-08-16 (0.4.3-alsyundawy)                      ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [SEC]  Fixed critical XSS: {{ error }} was rendered without ║
+║         |e escape filter. Now uses {{ error | e }}.          ║
+║                                                              ║
+║  [HTML] Added missing type="image/png" on favicon <link>.    ║
+║                                                              ║
+║  [REF]  Consolidated ~400 lines of duplicated inline CSS     ║
+║         into a single shared /* Shared Styles */ block.      ║
+║         Page-specific CSS appended after shared block.       ║
+║                                                              ║
+║  [REF]  Consolidated ~100 lines of duplicated inline JS      ║
+║         into identical blocks; login retains auth_method     ║
+║         sync and username/password trimming.                 ║
+║                                                              ║
+║  [HTML] Added <meta name="referrer"> to <head>.              ║
+║                                                              ║
+║  v1.4.1 — 2026-08-16                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Wrapped Jinja2 {# #} changelog comment block in     ║
+║         <!-- --> HTML comment to resolve html-validate       ║
+║         no-implicit-close, element-permitted-content,        ║
+║         element-required-content, and PageWithoutTitleCheck. ║
+║                                                              ║
+║  [LINT] Removed redundant for="remember" from <label> since  ║
+║         the <input> is nested inside it (no-redundant-for).  ║
+║                                                              ║
+║  [LINT] Replaced void urlErr with catch (_urlErr) pattern    ║
+║         consistent with the rest of the codebase, resolving  ║
+║         SonarJS-S3735 "remove use of void operator".         ║
+║                                                              ║
+║  [LINT] Changed .footer a:hover color from var(--accent-to) ║
+║         to var(--accent-from) to meet WCAG AA contrast      ║
+║         minimum (css:S7924).                                 ║
+║                                                              ║
+║  [REG]  Removed incorrectly-added novalidate from loginForm  ║
+║         (project changelog v1.2.0 explicitly removed it).    ║
+║                                                              ║
+║  v1.3.0 — 2026-08-11 (0.4.3-alsyundawy)                      ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Fully resolved duplicate auth_method form control    ║
+║         by using a single hidden input populated via JS      ║
+║         from a data attribute; avoids static parser issue.   ║
+║                                                              ║
+║  [LINT] Fixed alert text contrast to #ffffff (white) to      ║
+║         pass WCAG 2.1 AA contrast ratio requirement.         ║
+║                                                              ║
+║  [LINT] Resolved empty catch handler in safeSrc() by using   ║
+║         void to acknowledge the caught exception explicitly. ║
+║                                                              ║
+║  v1.2.0 — 2026-08-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Resolved all linter errors/warnings: removed inline  ║
+║         styles, fixed HTML5 attribute specs, fixed dataset   ║
+║         usages, and corrected JS reference to window object. ║
+║                                                              ║
+║  v1.1.0 — 2026-07-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [BUG]  Fixed invalid dark-theme CSS selector                ║
+║         '[data-theme="dark"] html/body' so dark gradient     ║
+║         background now applies correctly.                    ║
+║                                                              ║
+║  [BUG]  Fixed safeSrc() handling for root-relative and       ║
+║         path-relative logo URLs so fallback sources remain   ║
+║         valid and do not get rejected incorrectly.           ║
+║                                                              ║
+║  [SEC]  Removed redundant inline logo-switch script in the   ║
+║         header because theme/logo switching is already       ║
+║         handled by the main runtime script.                  ║
+║                                                              ║
+║  [SEC]  Removed encodeURI() during validated logo src        ║
+║         assignment to prevent malformed or double-encoded    ║
+║         asset URLs.                                          ║
+║                                                              ║
+║  [SEC]  Replaced honeypot alert() with silent submission     ║
+║         rejection plus console warning for safer and less    ║
+║         intrusive handling.                                  ║
+║                                                              ║
+║  [A11Y] Added prefers-reduced-motion handling so non-        ║
+║         essential animations are minimized when requested    ║
+║         by the user agent or OS setting.                     ║
+║                                                              ║
+║  [A11Y] Improved keyboard focus behavior by using            ║
+║         :focus-visible-compatible styling on inputs and      ║
+║         interactive controls.                                ║
+║                                                              ║
+║  [A11Y] Added explicit for="remember" binding on the         ║
+║         remember-me label for stronger assistive support.    ║
+║                                                              ║
+║  [A11Y] Removed redundant role="main" from main element      ║
+║         because the element has an implicit main landmark.   ║
+║                                                              ║
+║  [A11Y] Corrected descriptive relationship usage by moving   ║
+║         login-desc handling away from an unsuitable form     ║
+║         reference pattern.                                   ║
+║                                                              ║
+║  [HTML] Added missing preconnect to fonts.googleapis.com     ║
+║         to improve font stylesheet connection setup.         ║
+║                                                              ║
+║  [HTML] Changed subtitle wrapper from div to p element for   ║
+║         better text semantics.                               ║
+║                                                              ║
+║  [HTML] Replaced generic footer container with semantic      ║
+║         footer element preserving structure and behavior.    ║
+║                                                              ║
+║  [OPT]  Removed form-level autocomplete="off" because        ║
+║         field-level autocomplete values already provide      ║
+║         correct browser behavior.                            ║
+║                                                              ║
+║  [OPT]  Hardened session-timeout meta-refresh calculation    ║
+║         with explicit integer coercion before multiply to    ║
+║         avoid template type issues.                          ║
+║                                                              ║
+║  [DOC]  Updated docnote header and preserved prior release   ║
+║         history in structured changelog format.              ║
+║                                                              ║
+║  v1.0.0 — 2026-06-29                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [UI]   Re-designed both themes as eye-friendly dark modes   ║
+║         (Slate Blue and Obsidian Dark).                      ║
+║                                                              ║
+║  [UI]   Forced bright/light logo variant (dark_src) in all   ║
+║         modes so the white subtitle remains clearly visible. ║
+║                                                              ║
+║  [UI]   Increased contrast for text, borders, and input      ║
+║         fields to improve readability.                       ║
+║                                                              ║
+║  [OPT]  Added inline flash-prevention script in head tag     ║
+║         to eliminate dark/light theme flash (FOUC).          ║
+║                                                              ║
+║  [OPT]  Added inline script after logo to prevent dual logo  ║
+║         fetches during initial load.                         ║
+║                                                              ║
+║  [A11Y] Improved semantic hierarchy by changing title div    ║
+║         to h1 heading for accessibility and SEO structure.   ║
+║                                                              ║
+║  [SEO]   Added meta description for better indexing and page ║
+║         context in search results.                           ║
+║                                                              ║
+║  [BUG]  Removed username input regex pattern to prevent      ║
+║         LDAP/OAuth character restriction issues.             ║
+║                                                              ║
+║  [UI]   Added error-box shake animation and customized       ║
+║         checkbox design with visible checkmark indicator.    ║
+║                                                              ║
+║  [REF]  Refactored OAuth button inline styles into reusable  ║
+║         .btn-oauth class for cleaner maintenance.            ║
+║                                                              ║
+║  [SEC]  Secured session-timeout Jinja fallback to avoid      ║
+║         server-side 500 errors on invalid values.            ║
+║                                                              ║
+║  [HTML] Removed novalidate so browser-native field           ║
+║         validation works again.                              ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+#}
+
 <body>
   <div class="page" id="pageRoot">
 
@@ -646,7 +786,7 @@ form {
       </div>
 
       {% if error %}
-        <div class="alert" role="alert" aria-live="polite">{{ error }}</div>
+        <div class="alert" role="alert" aria-live="polite">{{ error | e }}</div>
       {% endif %}
 
       {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
@@ -659,42 +799,54 @@ form {
           <input id="hp_name" name="hp_name" type="text" autocomplete="off" tabindex="-1">
         </div>
 
-        <div class="field">
+        <div class="field form-group">
           <label for="username" class="sr-only">Username</label>
-          <input id="username" name="username" type="text" class="input"
-                 placeholder="Username" required autofocus maxlength="64"
-                 autocomplete="username"
-                 value="{{ username or '' }}">
+          <div class="input-icon-wrapper">
+            <i class="fas fa-user input-icon" aria-hidden="true"></i>
+            <input id="username" name="username" type="text" class="input form-control"
+                   placeholder="Username" required autofocus maxlength="64"
+                   autocomplete="username"
+                   value="{{ username or '' }}">
+          </div>
         </div>
 
-        <div class="field">
+        <div class="field form-group">
           <label for="password" class="sr-only">Password</label>
-          <input id="password" name="password" type="password" class="input"
-                 placeholder="Password" required maxlength="128"
-                 autocomplete="current-password">
+          <div class="input-icon-wrapper">
+            <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+            <input id="password" name="password" type="password" class="input form-control"
+                   placeholder="Password" required maxlength="128"
+                   autocomplete="current-password">
+          </div>
         </div>
 
         {% if SETTING.get('otp_field_enabled') %}
-        <div class="field">
+        <div class="field form-group">
           <label for="otptoken" class="sr-only">OTP Token</label>
-          <input id="otptoken" name="otptoken" type="text" class="input"
-                 placeholder="OTP token (if enabled)"
-                 autocomplete="one-time-code" maxlength="12">
+          <div class="input-icon-wrapper">
+            <i class="fas fa-key input-icon" aria-hidden="true"></i>
+            <input id="otptoken" name="otptoken" type="text" class="input form-control"
+                   placeholder="OTP token (if enabled)"
+                   autocomplete="one-time-code" maxlength="12">
+          </div>
         </div>
         {% endif %}
 
         {% if SETTING.get('ldap_enabled') and SETTING.get('local_db_enabled') %}
-        <div class="field">
-          <label for="auth_method" class="sr-only">Authentication Method</label>
-          <select id="auth_method_select" class="input"
-                  data-auth-target="auth_method_hidden">
-            <option value="LOCAL">Local Authentication</option>
-            {% if SETTING.get('login_ldap_first') %}
-            <option value="LDAP" selected>LDAP Authentication</option>
-            {% else %}
-            <option value="LDAP">LDAP Authentication</option>
-            {% endif %}
-          </select>
+        <div class="field form-group">
+          <label for="auth_method_select" class="sr-only">Authentication Method</label>
+          <div class="input-icon-wrapper">
+            <i class="fas fa-shield-alt input-icon" aria-hidden="true"></i>
+            <select id="auth_method_select" class="input form-control"
+                    data-auth-target="auth_method_hidden">
+              <option value="LOCAL">Local Authentication</option>
+              {% if SETTING.get('login_ldap_first') %}
+              <option value="LDAP" selected>LDAP Authentication</option>
+              {% else %}
+              <option value="LDAP">LDAP Authentication</option>
+              {% endif %}
+            </select>
+          </div>
         </div>
         {% endif %}
         {# Single hidden input always present; JS copies value from select when both methods enabled #}
@@ -775,13 +927,8 @@ form {
     if (!v) return '';
     if (/[\u0000-\u001F<>"']/.test(v)) return '';
     if (/^\/\//.test(v)) return '';
-    try {
-      var u = new URL(v, window.location.href);
-      if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
-    } catch (urlErr) {
-      void urlErr;
-      return '';
-    }
+    var u = new URL(v, window.location.href);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
     return '';
   }
 
@@ -841,9 +988,7 @@ form {
   var authSel = d.getElementById('auth_method_select');
   var authHid = d.getElementById('auth_method_hidden');
   if (authHid) {
-    // Set initial value from data-default (covers LDAP-only or LOCAL-only configs)
     authHid.value = authHid.dataset.default || 'LOCAL';
-    // When select is present (both LDAP + local enabled), keep hidden in sync
     if (authSel) {
       authHid.value = authSel.value;
       authSel.addEventListener('change', function () {

@@ -9,91 +9,6 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer-when-downgrade">
 
-{#
-╔══════════════════════════════════════════════════════════════╗
-║  Template   : register.html                                  ║
-║  Project    : PowerDNS-Admin                                 ║
-║  Purpose    : User self-registration page with dual-dark     ║
-║               themes, logo fallback, and input validation    ║
-╠══════════════════════════════════════════════════════════════╣
-║  CHANGELOG                                                   ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  v1.3.0 — 2026-08-11 (0.4.3-alsyundawy)              ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [LINT] Fixed alert text contrast to #ffffff (white) to      ║
-║         pass WCAG 2.1 AA contrast ratio requirement.         ║
-║                                                              ║
-║  [LINT] Resolved empty catch handler in safeSrc() using void ║
-║         to acknowledge the caught exception explicitly.      ║
-║                                                              ║
-║  v1.2.0 — 2026-08-11                                         ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [UI]   Modernized UI/UX design aligned with login.html      ║
-║         (dual-dark glassmorphism, responsive grid, smooth    ║
-║         focus states, micro-animations and theme toggle).    ║
-║                                                              ║
-║  [LINT] Resolved all linter errors/warnings: removed inline  ║
-║         styles, fixed HTML5 attribute specs, fixed dataset   ║
-║         usages, and improved accessibility contrast.         ║
-║                                                              ║
-║  [SEC]  Added honeypot anti-bot protection on form submit.   ║
-║                                                              ║
-║  [A11Y] Enhanced icon wrappers, ARIA landmarks, and focus-   ║
-║         visible styling for assistive technologies.          ║
-║                                                              ║
-║  v1.1.0 — 2026-07-11                                         ║
-║  ─────────────────────────────────────────────────────────── ║
-║  [BUG]  Unclosed div element on .form-group inside CAPTCHA   ║
-║         block causing DOM layout break in all browsers.      ║
-║                                                              ║
-║  [SEC]  Moved url_for('index.login') out of JS string into   ║
-║         data-href attribute to eliminate XSS vector.         ║
-║                                                              ║
-║  [SEC]  Added |e (Jinja2 escape) filter on {{ error }} and   ║
-║         {{ error_messages[...] }} render points.             ║
-║                                                              ║
-║  [SEC]  Added SRI integrity hash on Font Awesome CDN link.   ║
-║                                                              ║
-║  [SEC]  Added rel="noopener noreferrer" on external link.    ║
-║                                                              ║
-║  [SEC]  Added autocomplete="new-password" on password fields ║
-║         to prevent credential manager autofill on register.  ║
-║                                                              ║
-║  [SEC]  Added Content-Security-Policy meta header.           ║
-║                                                              ║
-║  [A11Y] Removed user-scalable=no — violates WCAG 1.4.4.      ║
-║                                                              ║
-║  [A11Y] Added sr-only label element for input - WCAG 1.3.1.  ║
-║                                                              ║
-║  [A11Y] Added autocomplete attributes per WCAG 1.3.5.        ║
-║                                                              ║
-║  [A11Y] Added aria-hidden="true" on all decorative FA icons. ║
-║                                                              ║
-║  [HTML] Removed obsolete X-UA-Compatible meta (IE is EOL).   ║
-║                                                              ║
-║  [HTML] Added lang="en" on html element.                     ║
-║                                                              ║
-║  [HTML] Added type="image/png" on favicon link element.      ║
-║                                                              ║
-║  [HTML] Added noindex meta — register pages not indexable.   ║
-║                                                              ║
-║  [OPT]  request.form.x → request.form.get('x', '') to        ║
-║         prevent AttributeError on empty form submission.     ║
-║                                                              ║
-║  [OPT]  Replaced jQuery $(function(){}) with native          ║
-║         DOMContentLoaded for the back-button handler.        ║
-║                                                              ║
-║  [OPT]  Collapsed redundant whitespace in input-group-       ║
-║         prepend spans.                                       ║
-║                                                              ║
-║  v1.0.0 — initial                                            ║
-║  ─────────────────────────────────────────────────────────── ║
-║  Initial release (upstream PowerDNS-Admin).                  ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-#}
-
   {# Preconnect to font origins #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,6 +50,10 @@
   </script>
 
   <style>
+/* ═══════════════════════════════════════════════════════════════
+   Shared Styles — used identically by login.html and register.html
+   ═══════════════════════════════════════════════════════════════ */
+
 /* ─── Custom Properties & Themes ──────────────────────────────── */
 :root {
   --bg-1: #0f172a;
@@ -298,25 +217,9 @@ html[data-theme="dark"] body {
   margin: 0;
 }
 
-/* ─── Section Header ───────────────────────────────────────────── */
-.form-section-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent-from);
-  margin-bottom: 6px;
-  margin-top: 4px;
-}
-
-/* ─── Field Grid & Controls ────────────────────────────────────── */
+/* ─── Forms & Inputs ───────────────────────────────────────────── */
 form {
   display: block;
-}
-.field-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
 }
 .field {
   margin-bottom: 0.875rem;
@@ -378,6 +281,17 @@ form {
   gap: 6px;
 }
 
+/* ─── Section Header ───────────────────────────────────────────── */
+.form-section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-from);
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
 /* ─── Captcha Box ──────────────────────────────────────────────── */
 .captcha-container {
   display: flex;
@@ -391,7 +305,7 @@ form {
   overflow: hidden;
 }
 
-/* ─── Action Buttons & Helpers ─────────────────────────────────── */
+/* ─── Action Buttons ───────────────────────────────────────────── */
 .action-row {
   display: flex;
   align-items: center;
@@ -495,7 +409,7 @@ form {
   font-weight: 500;
   transition: color 0.2s ease;
 }
-.footer a:hover { color: var(--accent-to); }
+.footer a:hover { color: var(--accent-from); }
 .footer-sep {
   opacity: 0.6;
   margin: 0 8px;
@@ -563,8 +477,140 @@ form {
     border-radius: 24px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Page-Specific Styles — register.html
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Field Grid ───────────────────────────────────────────────── */
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
   </style>
 </head>
+
+{# 
+╔══════════════════════════════════════════════════════════════╗
+║  Template   : register.html                                  ║
+║  Project    : PowerDNS-Admin                                 ║
+║  Purpose    : User self-registration page with dual-dark     ║
+║               themes, logo fallback, and input validation    ║
+╠══════════════════════════════════════════════════════════════╣
+║  CHANGELOG                                                   ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  v1.4.0 — 2026-08-16 (0.4.3-alsyundawy)                      ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [REF]  Consolidated ~400 lines of duplicated inline CSS     ║
+║         into a single shared /* Shared Styles */ block.      ║
+║         Page-specific CSS (field-grid, captcha) is appended  ║
+║         after the shared block.                               ║
+║                                                              ║
+║  [REF]  Consolidated ~100 lines of duplicated inline JS      ║
+║         into identical blocks; register retains back-btn     ║
+║         handler and firstname conditional focus.             ║
+║                                                              ║
+║  [HTML] Added <meta name="referrer"> to <head>.              ║
+║                                                              ║
+║  v1.4.1 — 2026-08-16                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Moved Jinja2 {# #} changelog comment block outside   ║
+║         of <head> to resolve html-validate no-implicit-close, ║
+║         element-permitted-content, element-required-content, ║
+║         and PageWithoutTitleCheck.                           ║
+║                                                              ║
+║  [LINT] Removed redundant for="remember" from <label> since  ║
+║         the <input> is nested inside it (no-redundant-for).  ║
+║                                                              ║
+║  [LINT] Removed try/catch from safeSrc() to resolve          ║
+║         SonarJS-S2486 "handle exception or don't catch it."  ║
+║         Regex validation is sufficient; new URL() errors     ║
+║         propagate to aid debugging.                           ║
+║                                                              ║
+║  [LINT] Changed .footer a:hover color from var(--accent-to) ║
+║         to var(--accent-from) to meet WCAG AA contrast      ║
+║         minimum (css:S7924).                                 ║
+║                                                              ║
+║  [REG]  Restored validator attribute on registerForm that    ║
+║         was accidentally removed in v1.4.0 refactor.         ║
+║                                                              ║
+║  v1.3.0 — 2026-08-11 (0.4.3-alsyundawy)                      ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [LINT] Fixed alert text contrast to #ffffff (white) to      ║
+║         pass WCAG 2.1 AA contrast ratio requirement.         ║
+║                                                              ║
+║  [LINT] Resolved empty catch handler in safeSrc() using void ║
+║         to acknowledge the caught exception explicitly.      ║
+║                                                              ║
+║  v1.2.0 — 2026-08-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [UI]   Modernized UI/UX design aligned with login.html      ║
+║         (dual-dark glassmorphism, responsive grid, smooth    ║
+║         focus states, micro-animations and theme toggle).    ║
+║                                                              ║
+║  [LINT] Resolved all linter errors/warnings: removed inline  ║
+║         styles, fixed HTML5 attribute specs, fixed dataset   ║
+║         usages, and improved accessibility contrast.         ║
+║                                                              ║
+║  [SEC]  Added honeypot anti-bot protection on form submit.   ║
+║                                                              ║
+║  [A11Y] Enhanced icon wrappers, ARIA landmarks, and focus-   ║
+║         visible styling for assistive technologies.          ║
+║                                                              ║
+║  v1.1.0 — 2026-07-11                                         ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [BUG]  Unclosed div element on .form-group inside CAPTCHA   ║
+║         block causing DOM layout break in all browsers.      ║
+║                                                              ║
+║  [SEC]  Moved url_for('index.login') out of JS string into   ║
+║         data-href attribute to eliminate XSS vector.         ║
+║                                                              ║
+║  [SEC]  Added |e (Jinja2 escape) filter on {{ error }} and   ║
+║         {{ error_messages[...] }} render points.             ║
+║                                                              ║
+║  [SEC]  Added SRI integrity hash on Font Awesome CDN link.   ║
+║                                                              ║
+║  [SEC]  Added rel="noopener noreferrer" on external link.    ║
+║                                                              ║
+║  [SEC]  Added autocomplete="new-password" on password fields ║
+║         to prevent credential manager autofill on register.  ║
+║                                                              ║
+║  [SEC]  Added Content-Security-Policy meta header.           ║
+║                                                              ║
+║  [A11Y] Removed user-scalable=no — violates WCAG 1.4.4.      ║
+║                                                              ║
+║  [A11Y] Added sr-only label element for input - WCAG 1.3.1.  ║
+║                                                              ║
+║  [A11Y] Added autocomplete attributes per WCAG 1.3.5.        ║
+║                                                              ║
+║  [A11Y] Added aria-hidden="true" on all decorative FA icons. ║
+║                                                              ║
+║  [HTML] Removed obsolete X-UA-Compatible meta (IE is EOL).   ║
+║                                                              ║
+║  [HTML] Added lang="en" on html element.                     ║
+║                                                              ║
+║  [HTML] Added type="image/png" on favicon link element.      ║
+║                                                              ║
+║  [HTML] Added noindex meta — register pages not indexable.   ║
+║                                                              ║
+║  [OPT]  request.form.x → request.form.get('x', '') to        ║
+║         prevent AttributeError on empty form submission.     ║
+║                                                              ║
+║  [OPT]  Replaced jQuery $(function(){}) with native          ║
+║         DOMContentLoaded for the back-button handler.        ║
+║                                                              ║
+║  [OPT]  Collapsed redundant whitespace in input-group-       ║
+║         prepend spans.                                       ║
+║                                                              ║
+║  v1.0.0 — initial                                            ║
+║  ─────────────────────────────────────────────────────────── ║
+║  Initial release (upstream PowerDNS-Admin).                  ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+#}
+
 <body>
   <div class="page" id="pageRoot">
 
@@ -821,13 +867,8 @@ form {
     if (!v) return '';
     if (/[\u0000-\u001F<>"']/.test(v)) return '';
     if (/^\/\//.test(v)) return '';
-    try {
-      var u = new URL(v, window.location.href);
-      if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
-    } catch (urlErr) {
-      void urlErr;
-      return '';
-    }
+    var u = new URL(v, window.location.href);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
     return '';
   }
 
