@@ -20,7 +20,7 @@
     "jquery-validation": "^1.21.0",
     "jtimeout": "^3.2.0",
     "knockout": "^3.5.1",
-    "moment": "^2.30.1",
+    "moment": "^2.31.0",
     "moment-timezone": "^0.6.0",
     "multiselect": "^0.9.12",
     "tempusdominus-bootstrap-4": "^5.39.2",
