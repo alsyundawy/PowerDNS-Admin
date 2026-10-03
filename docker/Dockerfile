@@ -30,8 +30,8 @@ WORKDIR /build
 COPY ./requirements.txt /build/requirements.txt
 
 # Get application dependencies
-RUN pip install --upgrade pip && \
-    pip install --use-pep517 -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --use-pep517 -r requirements.txt
 
 # Add sources
 COPY . /build
@@ -71,14 +71,25 @@ RUN mkdir -p /app && \
 FROM alpine:3.22
 
 ENV FLASK_APP=/app/powerdnsadmin/__init__.py \
-    USER=pda
+    USER=pda \
+    UID=10001 \
+    GID=10001
 
-RUN apk add --no-cache mariadb-connector-c postgresql-client py3-gunicorn py3-pyldap py3-flask py3-psycopg2 xmlsec tzdata libcap && \
-    addgroup -S ${USER} && \
-    adduser -S -D -G ${USER} ${USER} && \
+RUN apk add --no-cache \
+        mariadb-connector-c \
+        postgresql-client \
+        py3-gunicorn \
+        py3-pyldap \
+        py3-flask \
+        py3-psycopg2 \
+        xmlsec \
+        tzdata \
+        libcap && \
+    addgroup -g ${GID} -S ${USER} && \
+    adduser -u ${UID} -S -D -G ${USER} ${USER} && \
     mkdir /data && \
     chown ${USER}:${USER} /data && \
-    setcap cap_net_bind_service=+ep $(readlink -f /usr/bin/python3) && \
+    setcap cap_net_bind_service=+ep "$(readlink -f /usr/bin/python3)" && \
     apk del libcap
 
 COPY --from=builder /usr/bin/flask /usr/bin/
@@ -91,7 +102,7 @@ RUN chown ${USER}:${USER} ./configs /app && \
     cat ./powerdnsadmin/default_config.py ./configs/docker_config.py > ./powerdnsadmin/docker_config.py
 
 EXPOSE 80/tcp
-USER ${USER}
+USER 10001:10001
 HEALTHCHECK --interval=5s --timeout=5s --start-period=20s --retries=5 CMD wget --output-document=- --quiet --tries=1 http://127.0.0.1${SCRIPT_NAME:-/}
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["gunicorn","powerdnsadmin:create_app()"]

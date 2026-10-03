@@ -1,5 +1,5 @@
 #!/bin/sh
-set -euo pipefail
+set -eu
 cd /app
 
 GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-120}"
@@ -8,10 +8,10 @@ GUNICORN_LOGLEVEL="${GUNICORN_LOGLEVEL:-info}"
 BIND_ADDRESS="${BIND_ADDRESS:-0.0.0.0:80}"
 
 GUNICORN_ARGS="-t ${GUNICORN_TIMEOUT} --workers ${GUNICORN_WORKERS} --bind ${BIND_ADDRESS} --log-level ${GUNICORN_LOGLEVEL}"
-if [ "$1" == gunicorn ]; then
-    /bin/sh -c "flask db upgrade"
-    exec "$@" $GUNICORN_ARGS
-
+if [ "$1" = "gunicorn" ]; then
+	/bin/sh -c "flask db upgrade"
+	# shellcheck disable=SC2086
+	exec "$@" ${GUNICORN_ARGS}
 else
-    exec "$@"
+	exec "$@"
 fi

@@ -1,590 +1,661 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Log in · {{ SITE_NAME }}</title>
-  <meta name="description" content="Log in to your account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations.">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Log in · {{ SITE_NAME }}</title>
+    <meta
+      name="description"
+      content="Log in to your account at {{ SETTING.get('site_name') or SITE_NAME }} to manage your PowerDNS zones and DNS configurations.">
 
-  <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta name="referrer" content="no-referrer-when-downgrade">
 
-  {# Preconnect to both font origins #}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    {# Preconnect to both font origins #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&amp;display=swap"
+      rel="stylesheet">
+    <link
+      rel="icon"
+      type="image/png"
+      href="{{ url_for('static', filename='img/favicon.png') }}">
 
-  {% assets "css_login" -%}
+    {% assets "css_login" -%}
     <link rel="stylesheet" href="{{ ASSET_URL }}">
-  {%- endassets %}
+    {%- endassets %} {% set logo_default = SETTING.get('site_logo') or
+    'logo.png' %} {% set logo_light = SETTING.get('site_logo_light') or
+    logo_default %} {% set logo_dark = SETTING.get('site_logo_dark') or
+    logo_default %} {% if logo_light.startswith('http') %} {% set light_src =
+    logo_light %} {% else %} {% set light_src = url_for('static',
+    filename='img/' ~ logo_light) %} {% endif %} {% if
+    logo_dark.startswith('http') %} {% set dark_src = logo_dark %} {% else %} {%
+    set dark_src = url_for('static', filename='img/' ~ logo_dark) %} {% endif %}
+    {# Flash-prevention: apply stored theme BEFORE first paint to eliminate FOUC
+    #}
+    <script nonce="{{ CSP_NONCE | default('') }}">
+      (function () {
+        var t = "dark";
+        try {
+          t = localStorage.getItem("site-theme") || "dark";
+        } catch (_e) {
+          /* ignore */
+        }
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
 
-  {% set logo_default = SETTING.get('site_logo') or 'logo.png' %}
-  {% set logo_light   = SETTING.get('site_logo_light') or logo_default %}
-  {% set logo_dark    = SETTING.get('site_logo_dark')  or logo_default %}
-
-  {% if logo_light.startswith('http') %}
-    {% set light_src = logo_light %}
-  {% else %}
-    {% set light_src = url_for('static', filename='img/' ~ logo_light) %}
-  {% endif %}
-  {% if logo_dark.startswith('http') %}
-    {% set dark_src = logo_dark %}
-  {% else %}
-    {% set dark_src = url_for('static', filename='img/' ~ logo_dark) %}
-  {% endif %}
-
-  {# Flash-prevention: apply stored theme BEFORE first paint to eliminate FOUC #}
-  <script nonce="{{ CSP_NONCE | default('') }}">
-    (function () {
-      var t = 'dark';
-      try { t = localStorage.getItem('site-theme') || 'dark'; } catch (_e) { /* ignore */ }
-      document.documentElement.dataset.theme = t;
-    }());
-  </script>
-
-  <style>
-/* ═══════════════════════════════════════════════════════════════
+    <style>
+      /* ═══════════════════════════════════════════════════════════════
    Shared Styles — used identically by login.html and register.html
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Custom Properties & Themes ──────────────────────────────── */
-:root {
-  --bg-1: #0f172a;
-  --bg-2: #020617;
-  --text-primary: #f8fafc;
-  --text-muted: #cbd5e1;
-  --accent-from: #38bdf8;
-  --accent-to: #0ea5e9;
-  --glass-border: rgba(56, 189, 248, 0.22);
-  --card-bg: rgba(15, 23, 42, 0.65);
-  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.15);
-  --input-bg: rgba(2, 6, 23, 0.55);
-  --input-border: rgba(56, 189, 248, 0.3);
-  --radius: 14px;
-  color-scheme: dark;
-}
+      /* ─── Custom Properties & Themes ──────────────────────────────── */
+      :root {
+        --bg-1: #0f172a;
+        --bg-2: #020617;
+        --text-primary: #f8fafc;
+        --text-muted: #cbd5e1;
+        --accent-from: #38bdf8;
+        --accent-to: #0ea5e9;
+        --glass-border: rgba(56, 189, 248, 0.22);
+        --card-bg: rgba(15, 23, 42, 0.65);
+        --card-shadow:
+          0 20px 40px -15px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(56, 189, 248, 0.15);
+        --input-bg: rgba(2, 6, 23, 0.55);
+        --input-border: rgba(56, 189, 248, 0.3);
+        --radius: 14px;
+        color-scheme: dark;
+      }
 
-html[data-theme="dark"] {
-  --bg-1: #0a0518;
-  --bg-2: #02010a;
-  --text-primary: #ffffff;
-  --text-muted: #cbd5e1;
-  --accent-from: #818cf8;
-  --accent-to: #6366f1;
-  --glass-border: rgba(129, 140, 248, 0.22);
-  --card-bg: rgba(10, 5, 24, 0.68);
-  --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.15);
-  --input-bg: rgba(2, 1, 10, 0.6);
-  --input-border: rgba(129, 140, 248, 0.3);
-  --radius: 14px;
-  color-scheme: dark;
-}
+      html[data-theme="dark"] {
+        --bg-1: #0a0518;
+        --bg-2: #02010a;
+        --text-primary: #ffffff;
+        --text-muted: #cbd5e1;
+        --accent-from: #818cf8;
+        --accent-to: #6366f1;
+        --glass-border: rgba(129, 140, 248, 0.22);
+        --card-bg: rgba(10, 5, 24, 0.68);
+        --card-shadow:
+          0 25px 50px -12px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(129, 140, 248, 0.15);
+        --input-bg: rgba(2, 1, 10, 0.6);
+        --input-border: rgba(129, 140, 248, 0.3);
+        --radius: 14px;
+        color-scheme: dark;
+      }
 
-/* ─── Core Page Setup ──────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+      /* ─── Core Page Setup ──────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
-}
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        color: var(--text-primary);
+        transition: background-color 0.3s ease;
+      }
 
-body {
-  background:
-    radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.15), transparent 50%),
-    linear-gradient(180deg, var(--bg-1), var(--bg-2));
-}
-html[data-theme="dark"] body {
-  background:
-    radial-gradient(circle at 50% -20%, rgba(129, 140, 248, 0.15), transparent 50%),
-    linear-gradient(180deg, var(--bg-1), var(--bg-2));
-}
+      body {
+        background:
+          radial-gradient(
+            circle at 50% -20%,
+            rgba(56, 189, 248, 0.15),
+            transparent 50%
+          ),
+          linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      }
+      html[data-theme="dark"] body {
+        background:
+          radial-gradient(
+            circle at 50% -20%,
+            rgba(129, 140, 248, 0.15),
+            transparent 50%
+          ),
+          linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      }
 
-/* ─── Page Layout ──────────────────────────────────────────────── */
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2.5rem 1.2rem;
-  gap: 1.5rem;
-}
+      /* ─── Page Layout ──────────────────────────────────────────────── */
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 1.2rem;
+        gap: 1.5rem;
+      }
 
-/* ─── Header & Logo ────────────────────────────────────────────── */
-.site-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 0;
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.site-header img {
-  height: 72px;
-  object-fit: contain;
-  -webkit-user-drag: none;
-  user-select: none;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
-}
+      /* ─── Header & Logo ────────────────────────────────────────────── */
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0;
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .site-header img {
+        height: 72px;
+        object-fit: contain;
+        -webkit-user-drag: none;
+        user-select: none;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+      }
 
-/* ─── Theme Toggle ─────────────────────────────────────────────── */
-.theme-toggle {
-  position: fixed;
-  right: 16px;
-  top: 12px;
-  z-index: 60;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--glass-border);
-  background: var(--card-bg);
-  box-shadow: var(--card-shadow);
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.theme-toggle:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.35);
-  outline-offset: 2px;
-}
-.theme-toggle:hover {
-  transform: scale(1.08) rotate(8deg);
-  border-color: var(--accent-to);
-  color: var(--accent-to);
-}
-.theme-toggle:active {
-  transform: scale(0.95);
-}
+      /* ─── Theme Toggle ─────────────────────────────────────────────── */
+      .theme-toggle {
+        position: fixed;
+        right: 16px;
+        top: 12px;
+        z-index: 60;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid var(--glass-border);
+        background: var(--card-bg);
+        box-shadow: var(--card-shadow);
+        cursor: pointer;
+        color: var(--text-primary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .theme-toggle:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.35);
+        outline-offset: 2px;
+      }
+      .theme-toggle:hover {
+        transform: scale(1.08) rotate(8deg);
+        border-color: var(--accent-to);
+        color: var(--accent-to);
+      }
+      .theme-toggle:active {
+        transform: scale(0.95);
+      }
 
-/* ─── Glassmorphism Card ───────────────────────────────────────── */
-.card {
-  width: 100%;
-  max-width: 500px;
-  padding: 36px;
-  border-radius: 20px;
-  background: var(--card-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--card-shadow);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: stretch;
-  position: relative;
-  overflow: hidden;
-  min-width: 280px;
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
+      /* ─── Glassmorphism Card ───────────────────────────────────────── */
+      .card {
+        width: 100%;
+        max-width: 500px;
+        padding: 36px;
+        border-radius: 20px;
+        background: var(--card-bg);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--card-shadow);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch;
+        position: relative;
+        overflow: hidden;
+        min-width: 280px;
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
 
-/* ─── Branding ─────────────────────────────────────────────────── */
-.brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-.brand .title {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--text-primary);
-  letter-spacing: 0.2px;
-  margin: 0;
-}
-.brand .subtitle {
-  font-size: 0.9375rem;
-  color: var(--text-muted);
-  margin: 0;
-}
+      /* ─── Branding ─────────────────────────────────────────────────── */
+      .brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .brand .title {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--text-primary);
+        letter-spacing: 0.2px;
+        margin: 0;
+      }
+      .brand .subtitle {
+        font-size: 0.9375rem;
+        color: var(--text-muted);
+        margin: 0;
+      }
 
-/* ─── Forms & Inputs ───────────────────────────────────────────── */
-form {
-  display: block;
-}
-.field {
-  margin-bottom: 0.875rem;
-  position: relative;
-}
-.input-icon-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-.input-icon-wrapper .input-icon {
-  position: absolute;
-  left: 14px;
-  color: var(--text-muted);
-  font-size: 0.9375rem;
-  pointer-events: none;
-  transition: color 0.2s ease;
-  z-index: 2;
-}
-.input-icon-wrapper:focus-within .input-icon {
-  color: var(--accent-to);
-}
-.input {
-  width: 100%;
-  padding: 0.875rem 1rem 0.875rem 42px;
-  border-radius: 12px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 0.9375rem;
-  outline: none;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-.input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.75;
-}
-.input:focus-visible,
-.input:focus {
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-  border-color: var(--accent-to);
-  background: var(--bg-1);
-}
-.input.is-invalid {
-  border-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.08) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
-}
+      /* ─── Forms & Inputs ───────────────────────────────────────────── */
+      form {
+        display: block;
+      }
+      .field {
+        margin-bottom: 0.875rem;
+        position: relative;
+      }
+      .input-icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
+      .input-icon-wrapper .input-icon {
+        position: absolute;
+        left: 14px;
+        color: var(--text-muted);
+        font-size: 0.9375rem;
+        pointer-events: none;
+        transition: color 0.2s ease;
+        z-index: 2;
+      }
+      .input-icon-wrapper:focus-within .input-icon {
+        color: var(--accent-to);
+      }
+      .input {
+        width: 100%;
+        padding: 0.875rem 1rem 0.875rem 42px;
+        border-radius: 12px;
+        border: 1px solid var(--input-border);
+        background: var(--input-bg);
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+        outline: none;
+        box-sizing: border-box;
+        transition: all 0.2s ease;
+      }
+      .input::placeholder {
+        color: var(--text-muted);
+        opacity: 0.75;
+      }
+      .input:focus-visible,
+      .input:focus {
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        border-color: var(--accent-to);
+        background: var(--bg-1);
+      }
+      .input.is-invalid {
+        border-color: #ef4444 !important;
+        background: rgba(239, 68, 68, 0.08) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+      }
 
-.invalid-feedback {
-  color: #fca5a5;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+      .invalid-feedback {
+        color: #fca5a5;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-/* ─── Section Header ───────────────────────────────────────────── */
-.form-section-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent-from);
-  margin-bottom: 6px;
-  margin-top: 4px;
-}
+      /* ─── Section Header ───────────────────────────────────────────── */
+      .form-section-title {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--accent-from);
+        margin-bottom: 6px;
+        margin-top: 4px;
+      }
 
-/* ─── Captcha Box ──────────────────────────────────────────────── */
-.captcha-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 8px;
-  overflow: hidden;
-}
+      /* ─── Captcha Box ──────────────────────────────────────────────── */
+      .captcha-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 8px;
+        overflow: hidden;
+      }
 
-/* ─── Action Buttons ───────────────────────────────────────────── */
-.action-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.mt-8 { margin-top: 8px; }
-.mt-16 { margin-top: 16px; }
+      /* ─── Action Buttons ───────────────────────────────────────────── */
+      .action-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .mt-8 {
+        margin-top: 8px;
+      }
+      .mt-16 {
+        margin-top: 16px;
+      }
 
-.btn {
-  padding: 0.875rem 1.25rem;
-  border-radius: 12px;
-  border: 0;
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 0.9375rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: none;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
-  color: #0b1329;
-  box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
-  flex: 1;
-}
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.5);
-  filter: brightness(1.05);
-}
-.btn-primary:active {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}
-.btn-primary:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.35);
-  outline-offset: 2px;
-}
-.btn-secondary {
-  background: var(--input-bg);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  min-width: 110px;
-}
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-to);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-}
-.btn-secondary:active {
-  transform: translateY(0);
-}
-.btn-secondary:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.3);
-  outline-offset: 2px;
-}
+      .btn {
+        padding: 0.875rem 1.25rem;
+        border-radius: 12px;
+        border: 0;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.9375rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--accent-from),
+          var(--accent-to)
+        );
+        color: #0b1329;
+        box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
+        flex: 1;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.5);
+        filter: brightness(1.05);
+      }
+      .btn-primary:active {
+        transform: translateY(0);
+        filter: brightness(0.95);
+      }
+      .btn-primary:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.35);
+        outline-offset: 2px;
+      }
+      .btn-secondary {
+        background: var(--input-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-primary);
+        min-width: 110px;
+      }
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--accent-to);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+      }
+      .btn-secondary:active {
+        transform: translateY(0);
+      }
+      .btn-secondary:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.3);
+        outline-offset: 2px;
+      }
 
-/* ─── Alert / Error ────────────────────────────────────────────── */
-.alert {
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.20);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 8px;
-  animation: shake 0.4s ease;
-}
+      /* ─── Alert / Error ────────────────────────────────────────────── */
+      .alert {
+        padding: 12px;
+        border-radius: 12px;
+        background: #b91c1c;
+        border: 1px solid #dc2626;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 8px;
+        animation: shake 0.4s ease;
+      }
 
-/* ─── Utility ──────────────────────────────────────────────────── */
-.helper {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 6px;
-}
-.helper a {
-  color: var(--accent-to);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-.helper a:hover { color: var(--accent-from); }
+      /* ─── Utility ──────────────────────────────────────────────────── */
+      .helper {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 6px;
+      }
+      .helper a {
+        color: var(--accent-to);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+      }
+      .helper a:hover {
+        color: var(--accent-from);
+      }
 
-.footer {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.8125rem;
-  margin-top: 6px;
-  line-height: 1.5;
-}
-.footer a {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-.footer a:hover { color: var(--accent-from); }
-.footer-sep {
-  opacity: 0.6;
-  margin: 0 8px;
-}
+      .footer {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.8125rem;
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+      .footer a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+      .footer a:hover {
+        color: var(--accent-from);
+      }
+      .footer-sep {
+        opacity: 0.6;
+        margin: 0 8px;
+      }
 
-/* ─── Honeypot (anti-bot trap) ─────────────────────────────────── */
-.hp-field {
-  position: absolute !important;
-  left: -9999px !important;
-  top: auto !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: hidden !important;
-}
+      /* ─── Honeypot (anti-bot trap) ─────────────────────────────────── */
+      .hp-field {
+        position: absolute !important;
+        left: -9999px !important;
+        top: auto !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+      }
 
-/* ─── Screen-reader only ───────────────────────────────────────── */
-.sr-only {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
+      /* ─── Screen-reader only ───────────────────────────────────────── */
+      .sr-only {
+        position: absolute;
+        left: -10000px;
+        top: auto;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
 
-/* ─── Animations ───────────────────────────────────────────────── */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25%       { transform: translateX(-4px); }
-  75%       { transform: translateX(4px); }
-}
+      /* ─── Animations ───────────────────────────────────────────────── */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-4px);
+        }
+        75% {
+          transform: translateX(4px);
+        }
+      }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
 
-/* ─── Responsive ───────────────────────────────────────────────── */
-@media (max-width: 520px) {
-  .card {
-    padding: 24px;
-    border-radius: 16px;
-  }
-  .site-header img { height: 56px; }
-  .row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-  .row .right { justify-content: stretch; }
-  .cta { width: 100%; }
-}
-@media (min-width: 1600px) {
-  .card {
-    max-width: 600px;
-    padding: 40px;
-    border-radius: 24px;
-  }
-}
+      /* ─── Responsive ───────────────────────────────────────────────── */
+      @media (max-width: 520px) {
+        .card {
+          padding: 24px;
+          border-radius: 16px;
+        }
+        .site-header img {
+          height: 56px;
+        }
+        .row {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 16px;
+        }
+        .row .right {
+          justify-content: stretch;
+        }
+        .cta {
+          width: 100%;
+        }
+      }
+      @media (min-width: 1600px) {
+        .card {
+          max-width: 600px;
+          padding: 40px;
+          border-radius: 24px;
+        }
+      }
 
-/* ═══════════════════════════════════════════════════════════════
+      /* ═══════════════════════════════════════════════════════════════
    Page-Specific Styles — login.html
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Flex Row & Spacing Helpers ───────────────────────────────── */
-.row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.row .left  { flex: 0 0 auto; }
-.row .right {
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: flex-end;
-}
-.mt-6 { margin-top: 6px; }
+      /* ─── Flex Row & Spacing Helpers ───────────────────────────────── */
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .row .left {
+        flex: 0 0 auto;
+      }
+      .row .right {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .mt-6 {
+        margin-top: 6px;
+      }
 
-/* ─── Remember Me Checkbox ─────────────────────────────────────── */
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  user-select: none;
-  cursor: pointer;
-}
-.remember input {
-  width: 18px;
-  height: 18px;
-  appearance: none;
-  -webkit-appearance: none;
-  border-radius: 6px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  display: inline-block;
-  outline: none;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-  margin: 0;
-  flex-shrink: 0;
-}
-.remember input:hover {
-  border-color: var(--accent-to);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-.remember input:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.3);
-  outline-offset: 2px;
-}
-.remember input:checked {
-  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
-  border-color: transparent;
-}
-.remember input:checked::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 2px;
-  width: 5px;
-  height: 9px;
-  border: solid #0b1329;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
+      /* ─── Remember Me Checkbox ─────────────────────────────────────── */
+      .remember {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.9375rem;
+        user-select: none;
+        cursor: pointer;
+      }
+      .remember input {
+        width: 18px;
+        height: 18px;
+        appearance: none;
+        -webkit-appearance: none;
+        border-radius: 6px;
+        border: 1px solid var(--input-border);
+        background: var(--input-bg);
+        display: inline-block;
+        outline: none;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        margin: 0;
+        flex-shrink: 0;
+      }
+      .remember input:hover {
+        border-color: var(--accent-to);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+      .remember input:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.3);
+        outline-offset: 2px;
+      }
+      .remember input:checked {
+        background: linear-gradient(
+          135deg,
+          var(--accent-from),
+          var(--accent-to)
+        );
+        border-color: transparent;
+      }
+      .remember input:checked::after {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        width: 5px;
+        height: 9px;
+        border: solid #0b1329;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
 
-/* ─── OAuth & Social Buttons ───────────────────────────────────── */
-.oauth-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-.btn-oauth {
-  display: block;
-  border: 1px solid var(--glass-border);
-  background: transparent;
-  color: var(--text-primary);
-  padding: 11px;
-  border-radius: 12px;
-  text-decoration: none;
-  text-align: center;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-.btn-oauth:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--accent-to);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-}
-.btn-oauth:active { transform: translateY(0); }
-.btn-oauth:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.3);
-  outline-offset: 2px;
-}
+      /* ─── OAuth & Social Buttons ───────────────────────────────────── */
+      .oauth-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .btn-oauth {
+        display: block;
+        border: 1px solid var(--glass-border);
+        background: transparent;
+        color: var(--text-primary);
+        padding: 11px;
+        border-radius: 12px;
+        text-decoration: none;
+        text-align: center;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+      .btn-oauth:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--accent-to);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+      }
+      .btn-oauth:active {
+        transform: translateY(0);
+      }
+      .btn-oauth:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, 0.3);
+        outline-offset: 2px;
+      }
 
-.text-center { text-align: center; }
-.saml-link {
-  color: var(--accent-to);
-  text-decoration: none;
-  font-weight: 600;
-}
-.saml-link:hover { color: var(--accent-from); }
+      .text-center {
+        text-align: center;
+      }
+      .saml-link {
+        color: var(--accent-to);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .saml-link:hover {
+        color: var(--accent-from);
+      }
 
-.cta { min-width: 200px; }
-  </style>
-</head>
-
-{# 
+      .cta {
+        min-width: 200px;
+      }
+    </style>
+    {#
 ╔══════════════════════════════════════════════════════════════╗
 ║  Template   : login.html                                     ║
 ║  Project    : PowerDNS-Admin                                 ║
@@ -594,12 +665,17 @@ form {
 ║  CHANGELOG                                                   ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
+║  v1.5.0 — 2026-10-03 (0.4.4-alsyundawy)                      ║
+║  ─────────────────────────────────────────────────────────── ║
+║  [HTML] Relocated Jinja2 comment block inside [head] to      ║
+║         maintain clean HTML5 structure before [body] start.  ║
+║                                                              ║
 ║  v1.4.0 — 2026-08-16 (0.4.3-alsyundawy)                      ║
 ║  ─────────────────────────────────────────────────────────── ║
 ║  [SEC]  Fixed critical XSS: {{ error }} was rendered without ║
 ║         |e escape filter. Now uses {{ error | e }}.          ║
 ║                                                              ║
-║  [HTML] Added missing type="image/png" on favicon <link>.    ║
+║  [HTML] Added missing type="image/png" on favicon [link].    ║
 ║                                                              ║
 ║  [REF]  Consolidated ~400 lines of duplicated inline CSS     ║
 ║         into a single shared /* Shared Styles */ block.      ║
@@ -609,17 +685,17 @@ form {
 ║         into identical blocks; login retains auth_method     ║
 ║         sync and username/password trimming.                 ║
 ║                                                              ║
-║  [HTML] Added <meta name="referrer"> to <head>.              ║
+║  [HTML] Added [meta name="referrer"] to [head].              ║
 ║                                                              ║
 ║  v1.4.1 — 2026-08-16                                         ║
 ║  ─────────────────────────────────────────────────────────── ║
-║  [LINT] Wrapped Jinja2 {# #} changelog comment block in     ║
-║         <!-- --> HTML comment to resolve html-validate       ║
+║  [LINT] Wrapped Jinja2 comment block in                      ║
+║         HTML comment to resolve html-validate                ║
 ║         no-implicit-close, element-permitted-content,        ║
 ║         element-required-content, and PageWithoutTitleCheck. ║
 ║                                                              ║
-║  [LINT] Removed redundant for="remember" from <label> since  ║
-║         the <input> is nested inside it (no-redundant-for).  ║
+║  [LINT] Removed redundant for="remember" from [label] since  ║
+║         the [input] is nested inside it (no-redundant-for).  ║
 ║                                                              ║
 ║  [LINT] Replaced void urlErr with catch (_urlErr) pattern    ║
 ║         consistent with the rest of the codebase, resolving  ║
@@ -750,279 +826,450 @@ form {
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 #}
+  </head>
 
-<body>
-  <div class="page" id="pageRoot">
+  <body>
+    <div class="page" id="pageRoot">
+      <header class="site-header">
+        <a
+          href="/"
+          aria-label="Home"
+          title="{{ SETTING.get('site_name') or SITE_NAME }}"
+        >
+          <img
+            id="siteLogo"
+            src="{{ dark_src }}"
+            data-light-src="{{ dark_src }}"
+            data-dark-src="{{ dark_src }}"
+            alt="{{ SETTING.get('site_name') or SITE_NAME }} logo"
+            height="72">
+        </a>
+      </header>
 
-    <header class="site-header">
-      <a href="/" aria-label="Home" title="{{ SETTING.get('site_name') or SITE_NAME }}">
-        <img id="siteLogo"
-             src="{{ dark_src }}"
-             data-light-src="{{ dark_src }}"
-             data-dark-src="{{ dark_src }}"
-             alt="{{ SETTING.get('site_name') or SITE_NAME }} logo"
-             height="72">
-      </a>
-    </header>
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        aria-label="Toggle color theme"
+        title="Toggle color theme"
+        type="button"
+      >
+        <svg
+          id="themeIcon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M12 3v2"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M12 19v2"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M4.22 4.22l1.42 1.42"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M18.36 18.36l1.42 1.42"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M1 12h2"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M21 12h2"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M4.22 19.78l1.42-1.42"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <path
+            d="M18.36 5.64l1.42-1.42"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+          <circle
+            cx="12"
+            cy="12"
+            r="3.5"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.6"
+          />
+        </svg>
+      </button>
 
-    <button id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle color theme" type="button">
-      <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-        <path d="M12 3v2"           stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M12 19v2"          stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M4.22 4.22l1.42 1.42"   stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M18.36 18.36l1.42 1.42" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M1 12h2"           stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M21 12h2"          stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M4.22 19.78l1.42-1.42"  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <path d="M18.36 5.64l1.42-1.42"  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-        <circle cx="12" cy="12" r="3.5"  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
-      </svg>
-    </button>
+      <main class="card" aria-labelledby="login-title">
+        <div class="brand">
+          <h1 id="login-title" class="title">
+            {{ SETTING.get('site_name') or SITE_NAME }}
+          </h1>
+          <p class="subtitle">Sign in to continue</p>
+        </div>
 
-    <main class="card" aria-labelledby="login-title">
-      <div class="brand">
-        <h1 id="login-title" class="title">{{ SETTING.get('site_name') or SITE_NAME }}</h1>
-        <p class="subtitle">Sign in to continue</p>
-      </div>
-
-      {% if error %}
+        {% if error %}
         <div class="alert" role="alert" aria-live="polite">{{ error | e }}</div>
-      {% endif %}
+        {% endif %} {% if SETTING.get('ldap_enabled') or
+        SETTING.get('local_db_enabled') %}
+        <form id="loginForm" method="post" accept-charset="UTF-8">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
-      {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
-      <form id="loginForm" method="post" accept-charset="UTF-8">
-        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
-        {# Honeypot anti-bot trap: hidden from humans, visible to bots #}
-        <div class="hp-field" aria-hidden="true">
-          <label for="hp_name">Do not fill</label>
-          <input id="hp_name" name="hp_name" type="text" autocomplete="off" tabindex="-1">
-        </div>
-
-        <div class="field form-group">
-          <label for="username" class="sr-only">Username</label>
-          <div class="input-icon-wrapper">
-            <i class="fas fa-user input-icon" aria-hidden="true"></i>
-            <input id="username" name="username" type="text" class="input form-control"
-                   placeholder="Username" required autofocus maxlength="64"
-                   autocomplete="username"
-                   value="{{ username or '' }}">
+          {# Honeypot anti-bot trap: hidden from humans, visible to bots #}
+          <div class="hp-field" aria-hidden="true">
+            <label for="hp_name">Do not fill</label>
+            <input
+              id="hp_name"
+              name="hp_name"
+              type="text"
+              autocomplete="off"
+              tabindex="-1">
           </div>
-        </div>
 
-        <div class="field form-group">
-          <label for="password" class="sr-only">Password</label>
-          <div class="input-icon-wrapper">
-            <i class="fas fa-lock input-icon" aria-hidden="true"></i>
-            <input id="password" name="password" type="password" class="input form-control"
-                   placeholder="Password" required maxlength="128"
-                   autocomplete="current-password">
+          <div class="field form-group">
+            <label for="username" class="sr-only">Username</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-user input-icon" aria-hidden="true"></i>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                class="input form-control"
+                placeholder="Username"
+                required
+                autofocus
+                maxlength="64"
+                autocomplete="username"
+                value="{{ username or '' }}">
+            </div>
           </div>
-        </div>
 
-        {% if SETTING.get('otp_field_enabled') %}
-        <div class="field form-group">
-          <label for="otptoken" class="sr-only">OTP Token</label>
-          <div class="input-icon-wrapper">
-            <i class="fas fa-key input-icon" aria-hidden="true"></i>
-            <input id="otptoken" name="otptoken" type="text" class="input form-control"
-                   placeholder="OTP token (if enabled)"
-                   autocomplete="one-time-code" maxlength="12">
+          <div class="field form-group">
+            <label for="password" class="sr-only">Password</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                class="input form-control"
+                placeholder="Password"
+                required
+                maxlength="128"
+                autocomplete="current-password">
+            </div>
           </div>
-        </div>
-        {% endif %}
 
-        {% if SETTING.get('ldap_enabled') and SETTING.get('local_db_enabled') %}
-        <div class="field form-group">
-          <label for="auth_method_select" class="sr-only">Authentication Method</label>
-          <div class="input-icon-wrapper">
-            <i class="fas fa-shield-alt input-icon" aria-hidden="true"></i>
-            <select id="auth_method_select" class="input form-control"
-                    data-auth-target="auth_method_hidden">
-              <option value="LOCAL">Local Authentication</option>
-              {% if SETTING.get('login_ldap_first') %}
-              <option value="LDAP" selected>LDAP Authentication</option>
-              {% else %}
-              <option value="LDAP">LDAP Authentication</option>
-              {% endif %}
-            </select>
+          {% if SETTING.get('otp_field_enabled') %}
+          <div class="field form-group">
+            <label for="otptoken" class="sr-only">OTP Token</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-key input-icon" aria-hidden="true"></i>
+              <input
+                id="otptoken"
+                name="otptoken"
+                type="text"
+                class="input form-control"
+                placeholder="OTP token (if enabled)"
+                autocomplete="one-time-code"
+                maxlength="12">
+            </div>
           </div>
-        </div>
-        {% endif %}
-        {# Single hidden input always present; JS copies value from select when both methods enabled #}
-        <input type="hidden" id="auth_method_hidden" name="auth_method"
-               data-default="{{ 'LDAP' if SETTING.get('ldap_enabled') else 'LOCAL' }}">
+          {% endif %} {% if SETTING.get('ldap_enabled') and
+          SETTING.get('local_db_enabled') %}
+          <div class="field form-group">
+            <label for="auth_method_select" class="sr-only"
+              >Authentication Method</label
+            >
+            <div class="input-icon-wrapper">
+              <i class="fas fa-shield-alt input-icon" aria-hidden="true"></i>
+              <select
+                id="auth_method_select"
+                class="input form-control"
+                data-auth-target="auth_method_hidden"
+              >
+                <option value="LOCAL">Local Authentication</option>
+                {% if SETTING.get('login_ldap_first') %}
+                <option value="LDAP" selected>LDAP Authentication</option>
+                {% else %}
+                <option value="LDAP">LDAP Authentication</option>
+                {% endif %}
+              </select>
+            </div>
+          </div>
+          {% endif %} {# Single hidden input always present; JS copies value
+          from select when both methods enabled #}
+          <input
+            type="hidden"
+            id="auth_method_hidden"
+            name="auth_method"
+            data-default="{{ 'LDAP' if SETTING.get('ldap_enabled') else 'LOCAL' }}">
 
-        <div class="row mt-6">
-          <div class="left">
-            <label class="remember">
-              <input type="checkbox" name="remember" id="remember">
-              Remember me
-            </label>
+          <div class="row mt-6">
+            <div class="left">
+              <label class="remember">
+                <input type="checkbox" name="remember" id="remember">
+                Remember me
+              </label>
+            </div>
+            <div class="right">
+              <button
+                type="submit"
+                class="btn btn-primary cta"
+                aria-label="Sign in"
+              >
+                Sign In
+              </button>
+            </div>
           </div>
-          <div class="right">
-            <button type="submit" class="btn btn-primary cta" aria-label="Sign in">Sign In</button>
-          </div>
-        </div>
-      </form>
-      {% endif %}
-
-      {% if SETTING.get('google_oauth_enabled') or SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled') or SETTING.get('azure_oauth_enabled') %}
-      <div id="login-desc" class="mt-6">
-        {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled') %}
+        </form>
+        {% endif %} {% if SETTING.get('google_oauth_enabled') or
+        SETTING.get('github_oauth_enabled') or SETTING.get('oidc_oauth_enabled')
+        or SETTING.get('azure_oauth_enabled') %}
+        <div id="login-desc" class="mt-6">
+          {% if SETTING.get('ldap_enabled') or SETTING.get('local_db_enabled')
+          %}
           <div class="helper" aria-hidden="true">— OR —</div>
-        {% endif %}
-        <div class="oauth-list">
-          {% if SETTING.get('oidc_oauth_enabled') %}
-            <a href="{{ url_for('index.oidc_login') }}"   class="btn-oauth">Sign in with OpenID Connect</a>
           {% endif %}
-          {% if SETTING.get('github_oauth_enabled') %}
-            <a href="{{ url_for('index.github_login') }}" class="btn-oauth">Sign in with GitHub</a>
-          {% endif %}
-          {% if SETTING.get('google_oauth_enabled') %}
-            <a href="{{ url_for('index.google_login') }}" class="btn-oauth">Sign in with Google</a>
-          {% endif %}
-          {% if SETTING.get('azure_oauth_enabled') %}
-            <a href="{{ url_for('index.azure_login') }}"  class="btn-oauth">Sign in with Microsoft</a>
-          {% endif %}
+          <div class="oauth-list">
+            {% if SETTING.get('oidc_oauth_enabled') %}
+            <a href="{{ url_for('index.oidc_login') }}" class="btn-oauth"
+              >Sign in with OpenID Connect</a
+            >
+            {% endif %} {% if SETTING.get('github_oauth_enabled') %}
+            <a href="{{ url_for('index.github_login') }}" class="btn-oauth"
+              >Sign in with GitHub</a
+            >
+            {% endif %} {% if SETTING.get('google_oauth_enabled') %}
+            <a href="{{ url_for('index.google_login') }}" class="btn-oauth"
+              >Sign in with Google</a
+            >
+            {% endif %} {% if SETTING.get('azure_oauth_enabled') %}
+            <a href="{{ url_for('index.azure_login') }}" class="btn-oauth"
+              >Sign in with Microsoft</a
+            >
+            {% endif %}
+          </div>
         </div>
-      </div>
-      {% endif %}
-
-      {% if saml_enabled %}
+        {% endif %} {% if saml_enabled %}
         <div class="text-center">
-          <a href="{{ url_for('index.saml_login') }}" class="saml-link">SAML login</a>
+          <a href="{{ url_for('index.saml_login') }}" class="saml-link"
+            >SAML login</a
+          >
         </div>
-      {% endif %}
+        {% endif %} {% if SETTING.get('signup_enabled') %}
+        <div class="helper">
+          No account?
+          <a href="{{ url_for('index.register') }}">Create an account</a>
+        </div>
+        {% endif %}
 
-      {% if SETTING.get('signup_enabled') %}
-        <div class="helper">No account? <a href="{{ url_for('index.register') }}">Create an account</a></div>
-      {% endif %}
+        <footer class="footer">
+          Powered by
+          <a
+            href="https://github.com/alsyundawy/PowerDNS-Admin"
+            target="_blank"
+            rel="noopener noreferrer"
+            >PowerDNS-Admin</a
+          >
+          <span aria-hidden="true" class="footer-sep">|</span>
+          Modified by
+          <a
+            href="https://alsyundawy.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            >ALSYUNDAWY IT SOLUTION</a
+          >
+        </footer>
+      </main>
+    </div>
+    <!-- /.page -->
 
-      <footer class="footer">
-        Powered by <a href="https://github.com/alsyundawy/PowerDNS-Admin" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a>
-        <span aria-hidden="true" class="footer-sep">|</span>
-        Modified by <a href="https://alsyundawy.com" target="_blank" rel="noopener noreferrer">ALSYUNDAWY IT SOLUTION</a>
-      </footer>
-    </main>
-
-  </div><!-- /.page -->
-
-  {% assets "js_login" -%}
+    {% assets "js_login" -%}
     <script src="{{ ASSET_URL }}"></script>
-  {%- endassets %}
+    {%- endassets %}
 
-  <script nonce="{{ CSP_NONCE | default('') }}">
-(function () {
-  var d      = document;
-  var ls     = window.localStorage || null;
-  var root   = d.documentElement;
-  var logo   = d.getElementById('siteLogo');
-  var toggle = d.getElementById('themeToggle');
-  var icon   = d.getElementById('themeIcon');
+    <script nonce="{{ CSP_NONCE | default('') }}">
+      (function () {
+        var d = document;
+        var ls = window.localStorage || null;
+        var root = d.documentElement;
+        var logo = d.getElementById("siteLogo");
+        var toggle = d.getElementById("themeToggle");
+        var icon = d.getElementById("themeIcon");
 
-  function safeSrc(v) {
-    if (!v) return '';
-    try { v = String(v).trim(); } catch (_e) { return ''; }
-    if (!v) return '';
-    if (/[\u0000-\u001F<>"']/.test(v)) return '';
-    if (/^\/\//.test(v)) return '';
-    var u = new URL(v, window.location.href);
-    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
-    return '';
-  }
-
-  function applyTheme(t) {
-    if (!t) t = 'dark';
-    root.dataset.theme = t;
-    if (logo) {
-      var base   = safeSrc(logo.src || '');
-      var lSrc   = safeSrc(logo.dataset.lightSrc || base);
-      var dSrc   = safeSrc(logo.dataset.darkSrc  || base);
-      var chosen = (t === 'dark') ? dSrc : lSrc;
-      if (chosen) { try { logo.src = chosen; } catch (_e) { /* ignore */ } }
-    }
-    try { if (ls) ls.setItem('site-theme', t); } catch (_e) { /* ignore */ }
-  }
-
-  function getStoredOrDefault() {
-    try { if (ls) { var s = ls.getItem('site-theme'); if (s) return s; } } catch (_e) { /* ignore */ }
-    return 'dark';
-  }
-
-  function updateIcon(t) {
-    if (!icon) return;
-    if (t === 'dark') {
-      icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
-    } else {
-      icon.innerHTML = '<g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">'
-        + '<path d="M12 3v2"/><path d="M12 19v2"/>'
-        + '<path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/>'
-        + '<path d="M1 12h2"/><path d="M21 12h2"/>'
-        + '<path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/>'
-        + '<circle cx="12" cy="12" r="3.5"/></g>';
-    }
-  }
-
-  function toggleTheme() {
-    var cur = root.dataset.theme || 'dark';
-    applyTheme(cur === 'dark' ? 'light' : 'dark');
-    updateIcon(root.dataset.theme);
-  }
-
-  if (toggle) {
-    toggle.addEventListener('click', function (e) {
-      e.preventDefault();
-      toggleTheme();
-    }, false);
-    toggle.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); }
-    });
-  }
-
-  var initial = getStoredOrDefault();
-  applyTheme(initial);
-  updateIcon(initial);
-
-  // Sync auth_method select → hidden input (avoids duplicate name="auth_method" in DOM)
-  var authSel = d.getElementById('auth_method_select');
-  var authHid = d.getElementById('auth_method_hidden');
-  if (authHid) {
-    authHid.value = authHid.dataset.default || 'LOCAL';
-    if (authSel) {
-      authHid.value = authSel.value;
-      authSel.addEventListener('change', function () {
-        authHid.value = authSel.value;
-      });
-    }
-  }
-
-  var form = d.getElementById('loginForm');
-  if (form) {
-    form.addEventListener('submit', function (e) {
-      var hp = d.getElementById('hp_name');
-      if (hp && hp.value && hp.value.trim() !== '') {
-        e.preventDefault();
-        if (window.console && console.warn) {
-          console.warn('[login] Submission blocked: honeypot field populated.');
+        function safeSrc(v) {
+          if (!v) return "";
+          try {
+            v = String(v).trim();
+          } catch (_e) {
+            return "";
+          }
+          if (!v) return "";
+          if (/[\u0000-\u001F<>"']/.test(v)) return "";
+          if (/^\/\//.test(v)) return "";
+          var u = new URL(v, window.location.href);
+          if (u.protocol === "http:" || u.protocol === "https:") return u.href;
+          return "";
         }
-        return;
-      }
-      var u = d.getElementById('username');
-      var p = d.getElementById('password');
-      if (u) u.value = u.value.trim().slice(0, 64);
-      if (p) p.value = p.value.slice(0, 128);
-    }, { passive: false });
-  }
 
-  try {
-    var u0 = d.getElementById('username');
-    if (u0) { u0.focus(); u0.select(); }
-  } catch (focusErr) {
-    if (window.console && console.warn) { console.warn('[login] autofocus failed:', focusErr); }
-  }
+        function applyTheme(t) {
+          if (!t) t = "dark";
+          root.dataset.theme = t;
+          if (logo) {
+            var base = safeSrc(logo.src || "");
+            var lSrc = safeSrc(logo.dataset.lightSrc || base);
+            var dSrc = safeSrc(logo.dataset.darkSrc || base);
+            var chosen = t === "dark" ? dSrc : lSrc;
+            if (chosen) {
+              try {
+                logo.src = chosen;
+              } catch (_e) {
+                /* ignore */
+              }
+            }
+          }
+          try {
+            if (ls) ls.setItem("site-theme", t);
+          } catch (_e) {
+            /* ignore */
+          }
+        }
 
-}());
-  </script>
-</body>
+        function getStoredOrDefault() {
+          try {
+            if (ls) {
+              var s = ls.getItem("site-theme");
+              if (s) return s;
+            }
+          } catch (_e) {
+            /* ignore */
+          }
+          return "dark";
+        }
+
+        function updateIcon(t) {
+          if (!icon) return;
+          if (t === "dark") {
+            icon.innerHTML =
+              '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>';
+          } else {
+            icon.innerHTML =
+              '<g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">' +
+              '<path d="M12 3v2"/><path d="M12 19v2"/>' +
+              '<path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/>' +
+              '<path d="M1 12h2"/><path d="M21 12h2"/>' +
+              '<path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/>' +
+              '<circle cx="12" cy="12" r="3.5"/></g>';
+          }
+        }
+
+        function toggleTheme() {
+          var cur = root.dataset.theme || "dark";
+          applyTheme(cur === "dark" ? "light" : "dark");
+          updateIcon(root.dataset.theme);
+        }
+
+        if (toggle) {
+          toggle.addEventListener(
+            "click",
+            function (e) {
+              e.preventDefault();
+              toggleTheme();
+            },
+            false,
+          );
+          toggle.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleTheme();
+            }
+          });
+        }
+
+        var initial = getStoredOrDefault();
+        applyTheme(initial);
+        updateIcon(initial);
+
+        // Sync auth_method select → hidden input (avoids duplicate name="auth_method" in DOM)
+        var authSel = d.getElementById("auth_method_select");
+        var authHid = d.getElementById("auth_method_hidden");
+        if (authHid) {
+          authHid.value = authHid.dataset.default || "LOCAL";
+          if (authSel) {
+            authHid.value = authSel.value;
+            authSel.addEventListener("change", function () {
+              authHid.value = authSel.value;
+            });
+          }
+        }
+
+        var form = d.getElementById("loginForm");
+        if (form) {
+          form.addEventListener(
+            "submit",
+            function (e) {
+              var hp = d.getElementById("hp_name");
+              if (hp && hp.value && hp.value.trim() !== "") {
+                e.preventDefault();
+                if (window.console && console.warn) {
+                  console.warn(
+                    "[login] Submission blocked: honeypot field populated.",
+                  );
+                }
+                return;
+              }
+              var u = d.getElementById("username");
+              var p = d.getElementById("password");
+              if (u) u.value = u.value.trim().slice(0, 64);
+              if (p) p.value = p.value.slice(0, 128);
+            },
+            { passive: false },
+          );
+        }
+
+        try {
+          var u0 = d.getElementById("username");
+          if (u0) {
+            u0.focus();
+            u0.select();
+          }
+        } catch (focusErr) {
+          if (window.console && console.warn) {
+            console.warn("[login] autofocus failed:", focusErr);
+          }
+        }
+      })();
+    </script>
+  </body>
 </html>

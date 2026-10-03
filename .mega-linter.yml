@@ -1,0 +1,64 @@
+---
+# MegaLinter Configuration for PowerDNS-Admin
+# Documentation: https://megalinter.io/9.6.0/configuration/
+
+FLAVOR_SUGGESTIONS: false
+SECURITY_SUGGESTIONS: false
+
+# Avoid automatic commit/diff failures in CI
+APPLY_FIXES: none
+
+# Explicitly enable only linters verified and supported for this repository
+ENABLE_LINTERS:
+  - ACTION_ACTIONLINT
+  - BASH_SHELLCHECK
+  - BASH_SHFMT
+  - DOCKERFILE_HADOLINT
+  - JSON_JSONLINT
+  - JSON_NPM_PACKAGE_JSON_LINT
+  - JSON_PRETTIER
+  - JSON_V8R
+  - MARKDOWN_MARKDOWNLINT
+  - MARKDOWN_MARKDOWN_TABLE_FORMATTER
+  - PYTHON_BLACK
+  - PYTHON_ISORT
+  - PYTHON_RUFF
+  - PYTHON_FLAKE8
+  - YAML_PRETTIER
+  - YAML_V8R
+  - YAML_YAMLLINT
+
+# Linter-specific configurations
+PYTHON_RUFF_CONFIG_FILE: pyproject.toml
+PYTHON_BLACK_CONFIG_FILE: pyproject.toml
+PYTHON_FLAKE8_CONFIG_FILE: setup.cfg
+YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.json
+
+# Explicitly disable linters that produce false positives on Jinja templates or require non-containerized environments
+DISABLE_LINTERS:
+  - COPYPASTE_JSCPD
+  - HTML_DJLINT
+  - HTML_HTMLHINT
+  - JAVASCRIPT_STANDARD
+  - PYTHON_BANDIT
+  - PYTHON_MYPY
+  - PYTHON_PYLINT
+  - PYTHON_PYRIGHT
+  - REPOSITORY_BETTERLEAKS
+  - REPOSITORY_CHECKOV
+  - REPOSITORY_DEVSKIM
+  - REPOSITORY_DUSTILOCK
+  - REPOSITORY_GIT_DIFF
+  - REPOSITORY_GITLEAKS
+  - REPOSITORY_GRYPE
+  - REPOSITORY_KINGFISHER
+  - REPOSITORY_OSV_SCANNER
+  - REPOSITORY_SECRETLINT
+  - REPOSITORY_SYFT
+  - REPOSITORY_TRIVY
+  - REPOSITORY_TRIVY_SBOM
+  - REPOSITORY_TRUFFLEHOG
+  - SPELL_CSPELL
+  - SPELL_LYCHEE
+  - SQL_TSQLLINT

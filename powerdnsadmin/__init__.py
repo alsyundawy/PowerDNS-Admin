@@ -1,26 +1,29 @@
-import os
 import logging
+import os
+
 from flask import Flask
 from flask_mail import Mail
-from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_session import Session
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 from .lib import utils
 
 
 def create_app(config=None):
     from powerdnsadmin.lib.settings import AppSettings
+
     from . import models, routes, services
     from .assets import assets
+
     app = Flask(__name__)
 
     # Read log level from environment variable
-    log_level_name = os.environ.get('PDNS_ADMIN_LOG_LEVEL', 'WARNING')
-    log_level = logging.getLevelName(log_level_name.upper())
+    log_level_name = os.environ.get("PDNS_ADMIN_LOG_LEVEL", "WARNING")
+    log_level = getattr(logging, log_level_name.upper(), logging.WARNING)
+    if not isinstance(log_level, int):
+        log_level = logging.WARNING
     # Setting logger
-    logging.basicConfig(
-       level=log_level,
-        format=
-        "[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s - %(message)s")
+    logging.basicConfig(level=log_level, format="[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s - %(message)s")
 
     # If we use Docker + Gunicorn, adjust the
     # log handler
@@ -33,48 +36,49 @@ def create_app(config=None):
     app.wsgi_app = ProxyFix(app.wsgi_app)
 
     # Load config from env variables if using docker
-    if os.path.exists(os.path.join(app.root_path, 'docker_config.py')):
-        app.config.from_object('powerdnsadmin.docker_config')
+    if os.path.exists(os.path.join(app.root_path, "docker_config.py")):
+        app.config.from_object("powerdnsadmin.docker_config")
     else:
         # Load default configuration
-        app.config.from_object('powerdnsadmin.default_config')
+        app.config.from_object("powerdnsadmin.default_config")
 
     # Load config file from FLASK_CONF env variable
-    if 'FLASK_CONF' in os.environ:
-        app.config.from_envvar('FLASK_CONF')
+    if "FLASK_CONF" in os.environ:
+        app.config.from_envvar("FLASK_CONF")
 
     # Load app specified configuration
     if config is not None:
         if isinstance(config, dict):
             app.config.update(config)
-        elif config.endswith('.py'):
+        elif config.endswith(".py"):
             app.config.from_pyfile(config)
 
     # Load any settings defined with environment variables
     AppSettings.load_environment(app)
 
     # HSTS
-    if app.config.get('HSTS_ENABLED'):
+    if app.config.get("HSTS_ENABLED"):
         from flask_sslify import SSLify
+
         _sslify = SSLify(app)  # lgtm [py/unused-local-variable]
 
     # Load app's database models first
     models.init_app(app)
 
     # Load Flask-Session
-    app.config['SESSION_TYPE'] = app.config.get('SESSION_TYPE')
-    if 'SESSION_TYPE' in os.environ:
-        app.config['SESSION_TYPE'] = os.environ.get('SESSION_TYPE')
+    app.config["SESSION_TYPE"] = app.config.get("SESSION_TYPE")
+    if "SESSION_TYPE" in os.environ:
+        app.config["SESSION_TYPE"] = os.environ.get("SESSION_TYPE")
 
-    if app.config.get('SESSION_TYPE') == 'sqlalchemy':
-        app.config['SESSION_SQLALCHEMY'] = models.db
+    if app.config.get("SESSION_TYPE") == "sqlalchemy":
+        app.config["SESSION_SQLALCHEMY"] = models.db
         try:
             import flask_session.sqlalchemy.sqlalchemy as fss_sqla
 
             def safe_create_session_model(db, table_name, schema=None, bind_key=None, sequence=None):
-                table_args = {'extend_existing': True}
+                table_args = {"extend_existing": True}
                 if schema:
-                    table_args['schema'] = schema
+                    table_args["schema"] = schema
 
                 class Session(db.Model):
                     __tablename__ = table_name
@@ -100,10 +104,14 @@ def create_app(config=None):
     Session(app)
 
     # create sessions table if using sqlalchemy backend
-    if os.environ.get('SESSION_TYPE') == 'sqlalchemy':
+    if app.config.get("SESSION_TYPE") == "sqlalchemy":
         with app.app_context():
-            if hasattr(models, 'Sessions'):
-                models.Sessions.__table__.create(bind=models.db.engine, checkfirst=True)
+            session_model = getattr(models, "Sessions", None)
+            if session_model is None and hasattr(app.session_interface, "sql_session_model"):
+                session_model = app.session_interface.sql_session_model
+            if session_model is not None:
+                with models.db.engine.begin() as conn:
+                    session_model.__table__.create(bind=conn, checkfirst=True)
 
     # SMTP
     app.mail = Mail(app)  # type: ignore
@@ -114,30 +122,30 @@ def create_app(config=None):
     services.init_app(app)
 
     # Register filters
-    app.jinja_env.filters['display_record_name'] = utils.display_record_name
-    app.jinja_env.filters['display_master_name'] = utils.display_master_name
-    app.jinja_env.filters['display_second_to_time'] = utils.display_time
-    app.jinja_env.filters['display_setting_state'] = utils.display_setting_state
-    app.jinja_env.filters['pretty_domain_name'] = utils.pretty_domain_name
-    app.jinja_env.filters['format_datetime_local'] = utils.format_datetime
-    app.jinja_env.filters['format_zone_type'] = utils.format_zone_type
+    app.jinja_env.filters["display_record_name"] = utils.display_record_name
+    app.jinja_env.filters["display_master_name"] = utils.display_master_name
+    app.jinja_env.filters["display_second_to_time"] = utils.display_time
+    app.jinja_env.filters["display_setting_state"] = utils.display_setting_state
+    app.jinja_env.filters["pretty_domain_name"] = utils.pretty_domain_name
+    app.jinja_env.filters["format_datetime_local"] = utils.format_datetime
+    app.jinja_env.filters["format_zone_type"] = utils.format_zone_type
 
     # Register context processors
     from .models.setting import Setting
 
     @app.context_processor
     def inject_sitename():
-        setting = Setting().get('site_name')
-        return dict(SITE_NAME=setting)
+        setting = Setting().get("site_name")
+        return {"SITE_NAME": setting}
 
     @app.context_processor
     def inject_setting():
         setting = Setting()
-        return dict(SETTING=setting)
+        return {"SETTING": setting}
 
     @app.context_processor
     def inject_pdns_version():
-        setting = Setting().get('pdns_version')
-        return dict(pdns_version=setting)
+        setting = Setting().get("pdns_version")
+        return {"pdns_version": setting}
 
     return app

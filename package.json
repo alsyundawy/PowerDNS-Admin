@@ -1,4 +1,8 @@
 {
+  "name": "powerdns-admin",
+  "version": "0.4.4-alsyundawy",
+  "description": "A PowerDNS web interface with advanced features",
+  "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@popperjs/core": "^2.11.8",
@@ -27,7 +31,7 @@
     "tempusdominus-core": "^5.19.3"
   },
   "resolutions": {
-	"admin-lte/@fortawesome/fontawesome-free": "^6.7.2",
+    "admin-lte/@fortawesome/fontawesome-free": "^6.7.2",
     "admin-lte/popper.js": "^1.16.1",
     "tempusdominus-bootstrap-4/popper.js": "^1.16.1"
   }

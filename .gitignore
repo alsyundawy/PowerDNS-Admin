@@ -44,9 +44,9 @@ venv*
 .pytest_cache
 .DS_Store
 yarn-error.log
-megalinter-reports/IDE-config.txt
-.mega-linter.yml
-megalinter-reports/megalinter.log
+megalinter-reports/
+.trunk/
 .agents/AGENTS.md
 .agents-sync/
 .agents/skills/
+.kilo/

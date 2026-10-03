@@ -1,0 +1,13 @@
+---
+extends: default
+
+rules:
+  line-length: disable
+  document-start: disable
+  truthy: disable
+  quoted-strings: disable
+  comments: disable
+  comments-indentation: disable
+  key-duplicates: {}
+  octal-values:
+    forbid-implicit-octal: true

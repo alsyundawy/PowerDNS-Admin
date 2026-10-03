@@ -1,82 +1,108 @@
 .length-break {
-    word-break: break-all !important;
-    width: 70% !important;
+  word-break: break-all !important;
+  width: 70% !important;
 }
 
 table td {
-    font-family:'Roboto Mono' !important;
+  font-family: "Roboto Mono", monospace !important;
 }
 
 /*Fit default macbook screen*/
 .small-box .icon {
-    font-size: 70px !important;
+  font-size: 70px !important;
 }
 
 .btn {
-    padding: 5px 4px !important;
+  padding: 5px 4px !important;
 }
 
 /* Pretty JSON */
 .json-pre {
-   background-color: ghostwhite;
-   border: 1px solid silver;
-   padding: 10px 20px;
-   margin: 20px;
+  background-color: ghostwhite;
+  border: 1px solid silver;
+  padding: 10px 20px;
+  margin: 20px;
 }
 .json-key {
-   color: brown;
+  color: brown;
 }
 .json-value {
-   color: navy;
+  color: navy;
 }
 .json-string {
-   color: olive;
+  color: olive;
 }
 
 .user-footer {
-    background-color: #222d32 !important;
+  background-color: #222d32 !important;
 }
 
 .ms-container {
-    background-size: 20px 20px;
-    background-position: center;
+  background-size: 20px 20px;
+  background-position: center;
 }
 
 .search-input {
-    width: 100%;
+  width: 100%;
 }
 
-.sidebar .image { padding-top: 0.7em; }
-.sidebar .info { color: #fff; }
-.sidebar .info p { margin: 0; }
-.sidebar .info a { font-size: 0.8em; }
+.sidebar .image {
+  padding-top: 0.7em;
+}
+.sidebar .info {
+  color: #fff;
+}
+.sidebar .info p {
+  margin: 0;
+}
+.sidebar .info a {
+  font-size: 0.8em;
+}
 
 /* Global Styles */
-table.records thead th, table.records tbody td { text-align: center; vertical-align: middle; }
-table.records thead th:last-of-type { width: 50px; }
-div.records > div.dataTables_wrapper > div.row:first-of-type { margin: 0 0.5em 0 0.5em; }
-div.records > div.dataTables_wrapper > div.row:last-of-type { margin: 0.4em 0.5em 0.4em 0.5em; }
-div.records > div.dataTables_wrapper table.dataTable { margin: 0 !important; }
+/* stylelint-disable selector-class-pattern, declaration-block-single-line-max-declarations */
+table.records thead th,
+table.records tbody td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+table.records thead th:last-of-type {
+  width: 50px;
+}
+
+div.records > div.dataTables_wrapper > div.row:first-of-type {
+  margin: 0 0.5em 0 0.5em;
+}
+
+div.records > div.dataTables_wrapper > div.row:last-of-type {
+  margin: 0.4em 0.5em 0.4em 0.5em;
+}
+
+div.records > div.dataTables_wrapper table.dataTable {
+  margin: 0 !important;
+}
+/* stylelint-enable selector-class-pattern, declaration-block-single-line-max-declarations */
 
 .diff {
-    font-family: monospace;
-    padding: 0 0.2em;
+  font-family: monospace;
+  padding: 0 0.2em;
 }
 .diff::before {
-    content: "\00a0";
-    padding-right: 0.1em;
+  content: "\00a0";
+  padding-right: 0.1em;
 }
 
 .diff-deletion {
-    background-color: lightcoral;
+  background-color: lightcoral;
 }
 .diff-deletion::before {
-    content: "-";
+  content: "-";
 }
 
 .diff-addition {
-    background-color: lightgreen;
+  background-color: lightgreen;
 }
 .diff-addition::before {
-    content: "+";
+  content: "+";
 }

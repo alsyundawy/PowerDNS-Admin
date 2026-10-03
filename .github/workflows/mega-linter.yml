@@ -30,6 +30,9 @@ env:
   # If APPLY_FIXES is used, defines if the fixes are directly committed (commit)
   # or posted in a PR (pull_request)
   APPLY_FIXES_MODE: commit
+  APPLY_FIXES_IF: "false"
+  APPLY_FIXES_IF_PR: "false"
+  APPLY_FIXES_IF_COMMIT: "false"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -63,7 +66,7 @@ jobs:
           #   - Manually re-run the workflow from the GitHub Actions tab, or
           #   - Push another commit on the branch to trigger workflows again.
           # Only define `secrets.PAT` if you fully understand the trade-off.
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: false # Comment this line and uncomment the next one if you use APPLY_FIXES
           # persist-credentials: true # zizmor: ignore[artipacked]
 
@@ -139,12 +142,12 @@ jobs:
       - name: Set APPLY_FIXES_IF_* vars
         run: |
           printf 'APPLY_FIXES_IF_PR=%s\n' "${{
-            env.APPLY_FIXES_IF == 'true' &&
-            env.APPLY_FIXES_MODE == 'pull_request'
+            env['APPLY_FIXES_IF'] == 'true' &&
+            env['APPLY_FIXES_MODE'] == 'pull_request'
           }}" >> "${GITHUB_ENV}"
           printf 'APPLY_FIXES_IF_COMMIT=%s\n' "${{
-            env.APPLY_FIXES_IF == 'true' &&
-            env.APPLY_FIXES_MODE == 'commit' &&
+            env['APPLY_FIXES_IF'] == 'true' &&
+            env['APPLY_FIXES_MODE'] == 'commit' &&
             (!contains(fromJSON('["refs/heads/main", "refs/heads/master"]'), github.ref))
           }}" >> "${GITHUB_ENV}"
 
@@ -153,19 +156,19 @@ jobs:
       - name: Create Pull Request with applied fixes
         uses: peter-evans/create-pull-request@v7
         id: cpr
-        if: env.APPLY_FIXES_IF_PR == 'true'
+        if: env['APPLY_FIXES_IF_PR'] == 'true'
         with:
           # SECURITY NOTE: see the warning on the checkout step above —
           # using `secrets.PAT` is NOT recommended for security reasons.
           # Prefer manually re-running the workflow or pushing another
           # commit on the branch to trigger workflows again.
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "[MegaLinter] Apply linters automatic fixes"
           title: "[MegaLinter] Apply linters automatic fixes"
           labels: bot
 
       - name: Create PR output
-        if: env.APPLY_FIXES_IF_PR == 'true'
+        if: env['APPLY_FIXES_IF_PR'] == 'true'
         env:
           PR_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
           PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
@@ -176,12 +179,12 @@ jobs:
       # Push new commit if applicable
       # (for now works only on PR from same repository, not from forks)
       - name: Prepare commit
-        if: env.APPLY_FIXES_IF_COMMIT == 'true'
+        if: env['APPLY_FIXES_IF_COMMIT'] == 'true'
         run: sudo chown -Rc $UID .git/
 
       - name: Commit and push applied linter fixes
         uses: stefanzweifel/git-auto-commit-action@v7
-        if: env.APPLY_FIXES_IF_COMMIT == 'true'
+        if: env['APPLY_FIXES_IF_COMMIT'] == 'true'
         with:
           branch: >-
             ${{

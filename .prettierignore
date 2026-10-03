@@ -1,0 +1,3 @@
+# Ignore Jinja2 HTML templates from Prettier to prevent syntax corruption
+powerdnsadmin/templates/**
+*.html

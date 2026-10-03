@@ -5,7 +5,7 @@
 #
 # Source repository: https://github.com/actions/dependency-review-action
 # Public documentation: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review#dependency-review-enforcement
-name: 'Dependency review'
+name: Dependency review
 
 # DISABLED - Uncomment untuk mengaktifkan kembali
 # on:
@@ -23,5 +23,5 @@ jobs:
   dependency-review-disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Workflow Disabled'
+      - name: Workflow Disabled
         run: echo "Dependency Review workflow disabled due to recurring errors. Re-enable in workflow file when ready."

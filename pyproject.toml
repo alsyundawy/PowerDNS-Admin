@@ -1,8 +1,56 @@
+[project]
+name = "powerdns-admin"
+version = "0.4.4-alsyundawy"
+description = "A PowerDNS web interface with advanced features"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Alsyundawy" }]
+dependencies = [
+    "flask>=3.0.0",
+    "flask-sqlalchemy>=3.1.1",
+    "sqlalchemy>=1.4.0",
+]
+
 [tool.ruff]
 target-version = "py310"
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "venv",
+    ".venv",
+    "build",
+    "dist",
+    "migrations",
+    "node_modules",
+    ".trunk",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501", "E266"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"powerdnsadmin/models/__init__.py" = ["F401"]
+"powerdnsadmin/routes/__init__.py" = ["F401"]
 
 [tool.black]
 target-version = ["py310"]
+line-length = 120
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | migrations
+  | node_modules
+  | \.trunk
+)/
+'''
 
 [tool.pyright]
 pythonVersion = "3.10"
+include = ["powerdnsadmin"]
+exclude = ["migrations", "venv", ".venv", "tests"]

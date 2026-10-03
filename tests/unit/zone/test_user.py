@@ -1,13 +1,13 @@
 import json
-import pytest
-from unittest.mock import patch, MagicMock
 from collections import namedtuple
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 import powerdnsadmin
-from powerdnsadmin.models.user import User
-from powerdnsadmin.models.domain import Domain
-from powerdnsadmin.lib.validators import validate_zone
 from powerdnsadmin.lib.schema import DomainSchema
+from powerdnsadmin.lib.validators import validate_zone
+from powerdnsadmin.models.domain import Domain
 from tests.conftest import load_data
 
 
@@ -16,47 +16,39 @@ class TestUnitApiZoneUser(object):
     def common_data_mock(self, app, initial_data):
 
         self.google_setting_patcher = patch(
-            'powerdnsadmin.services.google.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.services.google.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.github_setting_patcher = patch(
-            'powerdnsadmin.services.github.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.services.github.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.azure_setting_patcher = patch(
-            'powerdnsadmin.services.azure.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.services.azure.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.oidc_setting_patcher = patch(
-            'powerdnsadmin.services.oidc.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.services.oidc.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.helpers_setting_patcher = patch(
-            'powerdnsadmin.lib.helper.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.lib.helper.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.models_setting_patcher = patch(
-            'powerdnsadmin.models.setting.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.models.setting.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.domain_model_setting_patcher = patch(
-            'powerdnsadmin.models.domain.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.models.domain.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.record_model_setting_patcher = patch(
-            'powerdnsadmin.models.record.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.models.record.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
         self.server_model_setting_patcher = patch(
-            'powerdnsadmin.models.server.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
-        self.mock_user_patcher = patch(
-            'powerdnsadmin.decorators.User',
-            spec=powerdnsadmin.models.user.User)
-        self.mock_hist_patcher = patch(
-            'powerdnsadmin.routes.api.History',
-            spec=powerdnsadmin.models.history.History)
-        self.mock_setting_patcher = patch(
-            'powerdnsadmin.routes.api.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
+            "powerdnsadmin.models.server.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
+        self.mock_user_patcher = patch("powerdnsadmin.decorators.User", spec=powerdnsadmin.models.user.User)
+        self.mock_hist_patcher = patch("powerdnsadmin.routes.api.History", spec=powerdnsadmin.models.history.History)
+        self.mock_setting_patcher = patch("powerdnsadmin.routes.api.Setting", spec=powerdnsadmin.models.setting.Setting)
         self.mock_decorators_setting_patcher = patch(
-            'powerdnsadmin.decorators.Setting',
-            spec=powerdnsadmin.models.setting.Setting)
-        self.base_route_user_patcher = patch(
-            'powerdnsadmin.routes.base.User',
-            spec=powerdnsadmin.models.user.User)
+            "powerdnsadmin.decorators.Setting", spec=powerdnsadmin.models.setting.Setting
+        )
+        self.base_route_user_patcher = patch("powerdnsadmin.routes.base.User", spec=powerdnsadmin.models.user.User)
 
         with app.app_context():
             self.mock_google_setting = self.google_setting_patcher.start()
@@ -66,12 +58,9 @@ class TestUnitApiZoneUser(object):
             self.mock_base_route_user = self.base_route_user_patcher.start()
             self.mock_helpers_setting = self.helpers_setting_patcher.start()
             self.mock_models_setting = self.models_setting_patcher.start()
-            self.mock_domain_model_setting = self.domain_model_setting_patcher.start(
-            )
-            self.mock_record_model_setting = self.record_model_setting_patcher.start(
-            )
-            self.mock_server_model_setting = self.server_model_setting_patcher.start(
-            )
+            self.mock_domain_model_setting = self.domain_model_setting_patcher.start()
+            self.mock_record_model_setting = self.record_model_setting_patcher.start()
+            self.mock_server_model_setting = self.server_model_setting_patcher.start()
             self.mock_user = self.mock_user_patcher.start()
             self.mock_hist = self.mock_hist_patcher.start()
             self.mock_setting = self.mock_setting_patcher.start()
@@ -117,34 +106,34 @@ class TestUnitApiZoneUser(object):
         ]:
             patcher.stop()
 
-
-    def test_create_zone(self, client, common_data_mock, zone_data,
-                         basic_auth_user_headers, created_zone_data):
-        with patch('powerdnsadmin.lib.helper.requests.request') as mock_post, \
-                patch('powerdnsadmin.routes.api.Domain') as mock_domain:
+    def test_create_zone(self, client, common_data_mock, zone_data, basic_auth_user_headers, created_zone_data):
+        with (
+            patch("powerdnsadmin.lib.helper.requests.request") as mock_post,
+            patch("powerdnsadmin.routes.api.Domain") as mock_domain,
+        ):
             mock_post.return_value.status_code = 201
             mock_post.return_value.content = json.dumps(created_zone_data)
             mock_post.return_value.headers = {}
             mock_domain.return_value.update.return_value = True
 
-            res = client.post("/api/v1/pdnsadmin/zones",
-                              headers=basic_auth_user_headers,
-                              data=json.dumps(zone_data),
-                              content_type="application/json")
+            res = client.post(
+                "/api/v1/pdnsadmin/zones",
+                headers=basic_auth_user_headers,
+                data=json.dumps(zone_data),
+                content_type="application/json",
+            )
             data = res.get_json(force=True)
-            data['rrsets'] = []
+            data["rrsets"] = []
 
             validate_zone(data)
             assert res.status_code == 201
 
-    def test_get_multiple_zones(self, client, common_data_mock, zone_data,
-                                basic_auth_user_headers):
-        with patch('powerdnsadmin.routes.api.get_user_domains') as mock_user_domains:
-            test_domain = Domain(1, name=zone_data['name'].rstrip("."))
+    def test_get_multiple_zones(self, client, common_data_mock, zone_data, basic_auth_user_headers):
+        with patch("powerdnsadmin.routes.api.get_user_domains") as mock_user_domains:
+            test_domain = Domain(1, name=zone_data["name"].rstrip("."))
             mock_user_domains.return_value = [test_domain]
 
-            res = client.get("/api/v1/pdnsadmin/zones",
-                             headers=basic_auth_user_headers)
+            res = client.get("/api/v1/pdnsadmin/zones", headers=basic_auth_user_headers)
             data = res.get_json(force=True)
 
             fake_domain = namedtuple("Domain", data[0].keys())(*data[0].values())
@@ -153,20 +142,22 @@ class TestUnitApiZoneUser(object):
             json.dumps(domain_schema.dump([fake_domain]))
             assert res.status_code == 200
 
-    def test_delete_zone(self, client, common_data_mock, zone_data,
-                         basic_auth_user_headers):
-        with patch('powerdnsadmin.lib.helper.requests.request') as mock_delete, \
-                patch('powerdnsadmin.routes.api.Domain') as mock_domain, \
-                patch('powerdnsadmin.routes.api.get_user_domains') as mock_user_domains:
-            test_domain = Domain(1, name=zone_data['name'].rstrip("."))
+    def test_delete_zone(self, client, common_data_mock, zone_data, basic_auth_user_headers):
+        with (
+            patch("powerdnsadmin.lib.utils.requests.request") as mock_delete,
+            patch("powerdnsadmin.routes.api.Domain") as mock_domain,
+            patch("powerdnsadmin.routes.api.get_user_domains") as mock_user_domains,
+        ):
+            test_domain = Domain(1, name=zone_data["name"].rstrip("."))
 
             mock_domain.return_value.update.return_value = True
+            mock_domain.query.filter.return_value.first.return_value = test_domain
             mock_user_domains.return_value = [test_domain]
             mock_delete.return_value.status_code = 204
-            mock_delete.return_value.content = ''
+            mock_delete.return_value.content = ""
 
             zone_url_format = "/api/v1/pdnsadmin/zones/{0}"
-            zone_url = zone_url_format.format(zone_data['name'].rstrip("."))
+            zone_url = zone_url_format.format(zone_data["name"].rstrip("."))
             res = client.delete(zone_url, headers=basic_auth_user_headers)
 
             assert res.status_code == 204

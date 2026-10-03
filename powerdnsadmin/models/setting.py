@@ -1,10 +1,12 @@
 import sys
-import traceback
-import pytimeparse
 from ast import literal_eval
+
+import pytimeparse
 from flask import current_app
-from .base import db
+
 from powerdnsadmin.lib.settings import AppSettings
+
+from .base import db
 
 
 class Setting(db.Model):
@@ -12,21 +14,26 @@ class Setting(db.Model):
     name = db.Column(db.String(64), unique=True, index=True)
     value = db.Column(db.Text())
 
-    ZONE_TYPE_FORWARD = 'forward'
-    ZONE_TYPE_REVERSE = 'reverse'
+    ZONE_TYPE_FORWARD = "forward"
+    ZONE_TYPE_REVERSE = "reverse"
 
-    def __init__(self, id=None, name=None, value=None):
-        self.id = id
+    def __init__(self, setting_id=None, name=None, value=None, id=None):
+        record_id = setting_id if setting_id is not None else id
+        if isinstance(record_id, str) and value is None and name is not None:
+            # Defensive fallback if called positionally as Setting(name, value)
+            value = str(name)
+            name = record_id
+            record_id = None
+        self.id = record_id
         self.name = name
         self.value = value
 
     def set_maintenance(self, mode):
-        maintenance = Setting.query.filter(
-            Setting.name == 'maintenance').first()
+        maintenance = Setting.query.filter(Setting.name == "maintenance").first()
 
         if maintenance is None:
-            value = AppSettings.defaults['maintenance']
-            maintenance = Setting(name='maintenance', value=str(value))
+            value = AppSettings.defaults["maintenance"]
+            maintenance = Setting(name="maintenance", value=str(value))
             db.session.add(maintenance)
 
         mode = str(mode)
@@ -37,9 +44,7 @@ class Setting(db.Model):
                 db.session.commit()
             return True
         except Exception as e:
-            current_app.logger.error('Cannot set maintenance to {0}. DETAIL: {1}'.format(
-                mode, e))
-            current_app.logger.debug(traceback.format_exc())
+            current_app.logger.exception("Cannot set maintenance to {0}. DETAIL: {1}".format(mode, e))
             db.session.rollback()
             return False
 
@@ -59,14 +64,13 @@ class Setting(db.Model):
             db.session.commit()
             return True
         except Exception as e:
-            current_app.logger.error('Cannot toggle setting {0}. DETAIL: {1}'.format(
-                setting, e))
-            current_app.logger.debug(traceback.format_exc())
+            current_app.logger.exception("Cannot toggle setting {0}. DETAIL: {1}".format(setting, e))
             db.session.rollback()
             return False
 
     def set(self, setting, value):
         import json
+
         current_setting = Setting.query.filter(Setting.name == setting).first()
 
         if current_setting is None:
@@ -83,44 +87,41 @@ class Setting(db.Model):
             db.session.commit()
             return True
         except Exception as e:
-            current_app.logger.error('Cannot edit setting {0}. DETAIL: {1}'.format(setting, e))
-            current_app.logger.debug(traceback.format_exc())
+            current_app.logger.exception("Cannot edit setting {0}. DETAIL: {1}".format(setting, e))
             db.session.rollback()
             return False
 
+    def _resolve_raw_setting(self, setting):
+        if setting.upper() in current_app.config:
+            return current_app.config[setting.upper()]
+        return self.query.filter(Setting.name == setting).first()
+
     def get(self, setting):
-        if setting in AppSettings.defaults:
+        if setting not in AppSettings.defaults:
+            current_app.logger.error("Unknown setting queried: {0}".format(setting))
+            return None
 
-            if setting.upper() in current_app.config:
-                result = current_app.config[setting.upper()]
-            else:
-                result = self.query.filter(Setting.name == setting).first()
+        result = self._resolve_raw_setting(setting)
+        if result is None:
+            return AppSettings.defaults[setting]
 
-            if result is not None:
-                if hasattr(result, 'value'):
-                    result = result.value
+        if hasattr(result, "value"):
+            result = result.value
 
-                result = AppSettings.convert_type(setting, result)
-                if setting in ('forward_records_allow_edit',
-                               'reverse_records_allow_edit'):
-                    if not isinstance(result, dict):
-                        # A blank or malformed stored value would otherwise
-                        # propagate and break every record type lookup.
-                        current_app.logger.warning(
-                            'Setting {0} is not a mapping, falling back to '
-                            'the defaults'.format(setting))
-                        return dict(AppSettings.defaults[setting])
-                    # Keep saved administrator choices while making record
-                    # types introduced by newer releases available to opt in.
-                    result = {
-                        **AppSettings.defaults[setting],
-                        **result,
-                    }
-                return result
-            else:
-                return AppSettings.defaults[setting]
-        else:
-            current_app.logger.error('Unknown setting queried: {0}'.format(setting))
+        result = AppSettings.convert_type(setting, result)
+        if setting in ("forward_records_allow_edit", "reverse_records_allow_edit"):
+            defaults_val = AppSettings.defaults.get(setting, {})
+            default_map = defaults_val if isinstance(defaults_val, dict) else {}
+            if not isinstance(result, dict):
+                current_app.logger.warning(
+                    "Setting {0} is not a mapping, falling back to " "the defaults".format(setting)
+                )
+                return dict(default_map)
+            result = {
+                **default_map,
+                **result,
+            }
+        return result
 
     def get_group(self, group):
         if not isinstance(group, list):
@@ -136,16 +137,19 @@ class Setting(db.Model):
 
     def get_records_allow_to_edit(self):
         return list(
-            set(self.get_supported_record_types(self.ZONE_TYPE_FORWARD) +
-                self.get_supported_record_types(self.ZONE_TYPE_REVERSE)))
+            set(
+                self.get_supported_record_types(self.ZONE_TYPE_FORWARD)
+                + self.get_supported_record_types(self.ZONE_TYPE_REVERSE)
+            )
+        )
 
     def get_supported_record_types(self, zone_type):
         setting_value = []
 
         if zone_type == self.ZONE_TYPE_FORWARD:
-            setting_value = self.get('forward_records_allow_edit')
+            setting_value = self.get("forward_records_allow_edit")
         elif zone_type == self.ZONE_TYPE_REVERSE:
-            setting_value = self.get('reverse_records_allow_edit')
+            setting_value = self.get("reverse_records_allow_edit")
 
         records = literal_eval(setting_value) if isinstance(setting_value, str) else setting_value
         types = [r for r in records if records[r]]
@@ -157,5 +161,4 @@ class Setting(db.Model):
         return types
 
     def get_ttl_options(self):
-        return [(pytimeparse.parse(ttl), ttl)
-                for ttl in self.get('ttl_options').split(',')]
+        return [(pytimeparse.parse(ttl), ttl) for ttl in self.get("ttl_options").split(",")]

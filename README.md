@@ -1,6 +1,6 @@
 # ⚡ PowerDNS-Admin — Modified by Alsyundawy
 
-[![Version](https://img.shields.io/badge/version-0.4.3--alsyundawy-brightgreen?style=for-the-badge)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
+[![Version](https://img.shields.io/badge/version-0.4.4--alsyundawy-brightgreen?style=for-the-badge)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Latest Release](https://img.shields.io/github/v/release/alsyundawy/PowerDNS-Admin?style=for-the-badge&logo=github)](https://github.com/alsyundawy/PowerDNS-Admin/releases)
 [![License](https://img.shields.io/github/license/alsyundawy/PowerDNS-Admin?style=for-the-badge)](LICENSE)
@@ -24,20 +24,22 @@ A **modern, secure, and feature-rich** Web Management Interface for [PowerDNS](h
 
 ## 🌟 Key Features
 
-| Category | Features |
-| :--- | :--- |
-| 🌐 **Zone Management** | Forward & Reverse DNS (IPv4/IPv6 PTR), Zone Templating, IDN/Punycode, DNSSEC Management |
-| 🔐 **Authentication** | Local, SAML 2.0, LDAP (OpenLDAP/Active Directory), OAuth2 (Google, GitHub, Azure, OpenID) |
-| 🛡️ **Security** | TOTP 2FA with Replay Protection, RBAC, API Key Isolation, CSRF Protection, SSRF Prevention |
-| 📊 **Monitoring** | Real-time PowerDNS Stats, Activity Logging, Audit Trail, Zone Change History |
-| ⚡ **Automation** | RESTful API for Zone/Record Automation, DynDNS2 Protocol, Docker & Compose Ready |
-| 🐍 **Compatibility** | Python 3.10–3.13, Flask 3.x, SQLAlchemy 1.4+, PostgreSQL / MySQL / SQLite |
+| Category               | Features                                                                                   |
+| :--------------------- | :----------------------------------------------------------------------------------------- |
+| 🌐 **Zone Management** | Forward & Reverse DNS (IPv4/IPv6 PTR), Zone Templating, IDN/Punycode, DNSSEC Management    |
+| 🔐 **Authentication**  | Local, SAML 2.0, LDAP (OpenLDAP/Active Directory), OAuth2 (Google, GitHub, Azure, OpenID)  |
+| 🛡️ **Security**        | TOTP 2FA with Replay Protection, RBAC, API Key Isolation, CSRF Protection, SSRF Prevention |
+| 📊 **Monitoring**      | Real-time PowerDNS Stats, Activity Logging, Audit Trail, Zone Change History               |
+| ⚡ **Automation**      | RESTful API for Zone/Record Automation, DynDNS2 Protocol, Docker & Compose Ready           |
+| 🐍 **Compatibility**   | Python 3.10–3.13, Flask 3.x, SQLAlchemy 1.4+, PostgreSQL / MySQL / SQLite                  |
 
 ---
 
-## 🚀 Quick Start
+## 📦 Installation & Setup Instructions
 
-### Option 1 — Docker *(Recommended)*
+### Option 1 — Docker _(Recommended)_
+
+Pull and run the official Docker container:
 
 ```bash
 docker run -d \
@@ -48,9 +50,9 @@ docker run -d \
   alsyundawy/powerdns-admin:latest
 ```
 
-Access the interface at `http://localhost:9191`.
-
 ### Option 2 — Docker Compose
+
+Clone the repository and spin up with Docker Compose:
 
 ```bash
 git clone https://github.com/alsyundawy/PowerDNS-Admin.git
@@ -58,19 +60,48 @@ cd PowerDNS-Admin
 docker-compose up -d
 ```
 
+### Option 3 — Manual Setup
+
+```bash
+git clone https://github.com/alsyundawy/PowerDNS-Admin.git
+cd PowerDNS-Admin
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+npm install
+flask db upgrade
+```
+
+---
+
+## 🏃 Run & Usage Instructions
+
+Once installed, start the PowerDNS-Admin web application:
+
+```bash
+# Development mode
+flask run --host=0.0.0.0 --port=9191
+
+# Production mode with Gunicorn
+./docker/entrypoint.sh gunicorn
+```
+
+Access the interface in your browser at `http://localhost:9191`.
+Default credentials on first boot will prompt for administrator account creation.
+
 ---
 
 ## ⚙️ Configuration & Environment Variables
 
 PowerDNS-Admin supports configuration via environment variables or custom config files (`docker_config.py` / `config.py`):
 
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `SECRET_KEY` | Secret key for session encryption | *(Required)* |
-| `SQLALCHEMY_DATABASE_URI` | Database connection URI | `sqlite:////data/pdns.db` |
-| `PDNS_STATS_URL` | PowerDNS API endpoint URL | `http://127.0.0.1:8081` |
-| `PDNS_API_KEY` | PowerDNS API Key | `""` |
-| `CAPTCHA_ENABLE` | Enable CAPTCHA on registration page | `True` |
+| Variable                  | Description                         | Default                   |
+| :------------------------ | :---------------------------------- | :------------------------ |
+| `SECRET_KEY`              | Secret key for session encryption   | _(Required)_              |
+| `SQLALCHEMY_DATABASE_URI` | Database connection URI             | `sqlite:////data/pdns.db` |
+| `PDNS_STATS_URL`          | PowerDNS API endpoint URL           | `http://127.0.0.1:8081`   |
+| `PDNS_API_KEY`            | PowerDNS API Key                    | `""`                      |
+| `CAPTCHA_ENABLE`          | Enable CAPTCHA on registration page | `True`                    |
 
 ---
 
@@ -81,6 +112,29 @@ PowerDNS-Admin supports configuration via environment variables or custom config
 ---
 
 ## 📋 Changelog Summary
+
+### 🚀 [0.4.4-alsyundawy] — 2026-10-03
+
+> Production-grade CI/CD and MegaLinter hardening, 13-pillar code quality verification, logic bug fixes, POSIX shell compliance, and Jinja2 template parser resilience.
+
+#### 🛡️ CI/CD & MegaLinter Infrastructure Hardening
+
+- **Curated MegaLinter Configuration** — Removed `.mega-linter.yml` from `.gitignore` and configured valid MegaLinter v9 syntax with explicit `ENABLE_LINTERS`, cutting CI runtime by over 80%.
+- **Super-Linter & Action Upgrades** — Upgraded GitHub Actions to Node 20 runners (`docker/build-push-action@v6`, `dessant/lock-threads@v5`) and guarded Docker Hub auth against missing fork secrets.
+- **Unified Linting System** — Standardized Flake8 (`setup.cfg`), Ruff & Black (`pyproject.toml`), Yamllint (`.yamllint.yml`), and Markdownlint (`.markdownlint.json`).
+
+#### 🐛 Code & Logic Defect Remediation
+
+- **Admin Template Creation Logic** — Resolved `truthy-function` logic bug in `powerdnsadmin/routes/admin.py` where builtin `type` was checked in boolean context.
+- **Test Fixture Environment Defaults** — Hardened `tests/conftest.py` with `os.environ.get()` defaults to eliminate `KeyError` crashes in standalone environments.
+- **POSIX Shell Script Hardening** — Fixed `docker/entrypoint.sh` for strict POSIX compliance (`set -eu`, `[ "$1" = "gunicorn" ]`) and resolved Hadolint warnings.
+- **Package Metadata Specification** — Added standard npm package metadata (`name`, `version`, `private`) to `package.json`.
+
+#### 🎨 Jinja2 Template & Theme Stability
+
+- **Jinja2 Comment Parser Bug Fix** — Fixed premature comment closures in `login.html` and `register.html` that caused template parser syntax errors.
+- **HTML5 Structural Compliance** — Relocated Jinja2 comment blocks cleanly inside `<head>` to maintain standard DOM hierarchy.
+- **Footer Repository Links** — Synchronized footer repository links and version display across all base and authentication templates.
 
 ### 🚀 [0.4.3-alsyundawy] — 2026-08-11
 
@@ -143,7 +197,7 @@ Comprehensive security & CodeQL remediation release. Commit: `789c185`.
 
 ---
 
-### 📦 [0.4.2] — 2022-01-31 *(Upstream)*
+### 📦 [0.4.2] — 2022-01-31 _(Upstream)_
 
 SQLAlchemy 1.4 upgrade (`postgresql://` URI required), OAuth auto-config, case-insensitive user lookup.
 
@@ -151,12 +205,12 @@ SQLAlchemy 1.4 upgrade (`postgresql://` URI required), OAuth auto-config, case-i
 
 ## 📖 Documentation & Resources
 
-| Resource | Link |
-| :--- | :--- |
-| 📄 API Reference | [docs/API.md](docs/API.md) |
-| 🔑 OAuth Setup Guide | [docs/oauth.md](docs/oauth.md) |
-| 📋 Full Changelog | [CHANGELOG.md](CHANGELOG.md) |
-| 📝 Technical Notes | [docnote/changelog.md](docnote/changelog.md) |
+| Resource              | Link                                         |
+| :-------------------- | :------------------------------------------- |
+| 📄 API Reference      | [docs/API.md](docs/API.md)                   |
+| 🔑 OAuth Setup Guide  | [docs/oauth.md](docs/oauth.md)               |
+| 📋 Full Changelog     | [CHANGELOG.md](CHANGELOG.md)                 |
+| 📝 Technical Notes    | [docnote/changelog.md](docnote/changelog.md) |
 | 🤝 Contribution Guide | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 
 ---
