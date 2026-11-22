@@ -1,14 +1,19 @@
-from .base import (
-    captcha, csrf, login_manager, handle_bad_request, handle_unauthorized_access,
-    handle_access_forbidden, handle_page_not_found, handle_internal_server_error
-)
-
-from .index import index_bp
-from .user import user_bp
-from .dashboard import dashboard_bp
-from .domain import domain_bp
 from .admin import admin_bp
 from .api import api_bp, apilist_bp
+from .base import (
+    captcha,
+    csrf,
+    handle_access_forbidden,
+    handle_bad_request,
+    handle_internal_server_error,
+    handle_page_not_found,
+    handle_unauthorized_access,
+    login_manager,
+)
+from .dashboard import dashboard_bp
+from .domain import domain_bp
+from .index import index_bp
+from .user import user_bp
 
 
 def init_app(app):

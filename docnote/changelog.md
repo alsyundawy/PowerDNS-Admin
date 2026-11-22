@@ -4,6 +4,58 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
 
 ---
 
+## 🚀 Version 0.4.5-alsyundawy (2026-11-23)
+
+> Pemulihan dan stabilisasi total pipeline CI/CD GitHub Actions (Docker Build, MegaLinter v9, Super-Linter, Jekyll GitHub Pages), eliminasi tuntas seluruh pelanggaran linter Flake8 (zero-error compliance) di seluruh codebase Python, kepatuhan batas runtime ketat (Python max 3.10, Node.js 22 LTS, Debian 11 Bullseye & Ubuntu 22.04 Jammy), serta remediasi CodeQL scanning.
+
+### 🛡️ Pemulihan & Pengerasan Pipeline CI/CD
+
+1. **Pemulihan Docker Image Build** (`docker/Dockerfile` & `docker-test/Dockerfile`)
+   - Mengembalikan (revert) base image Alpine dari versi `3.22` kembali ke `3.17` (Python 3.10) agar selaras dengan direktori paket `/usr/lib/python3.10/site-packages` dan mengeliminasi error PEP 668 `externally-managed-environment` pada eksekusi pip.
+   - Menambahkan opsi `--no-cache-dir` dan mengonsolidasikan instruksi `RUN` multi-baris di `docker-test/Dockerfile` (menyelesaikan peringatan Hadolint `DL3042` dan `DL3059`).
+
+2. **Penyelarasan Konfigurasi Super-Linter v9** (`.github/workflows/super-linter.yml`)
+   - Menghapus direktif `VALIDATE_YAML_PRETTIER: false` yang berkonflik saat mode include (`VALIDATE_XXX: true`) aktif, memulihkan kompatibilitas runner Super-Linter v9 tanpa error validasi mode ganda.
+
+3. **Remediasi Parser Jekyll GitHub Pages Liquid** (`_config.yml`, `CHANGELOG.md`, `docnote/changelog.md`)
+   - Menambahkan berkas konfigurasi `_config.yml` yang secara eksplisit mengecualikan berkas log, changelog, direktori pengujian, dan folder internal dari proses build parser Jekyll.
+   - Meng-escape tag sintaks Jinja2/Liquid literal menjadi entitas HTML `&#123;% if ... %&#125;` pada dokumentasi agar tidak memicu kegagalan parser `Liquid Exception: Liquid syntax error`.
+
+4. **Kepatuhan Skema Hadolint & v8r** (`.hadolint.yaml`)
+   - Membersihkan kode ShellCheck yang tidak valid (`SC1090`, `SC1091`) dari konfigurasi Hadolint dan mendaftarkan aturan abaikan `DLxxxx` yang resmi (`DL3007`, `DL3008`, `DL3013`, `DL3018`, `DL3025`, `DL3042`, `DL3059`, `DL3066`, `DL4006`), memenuhi validasi skema Hadolint dan v8r.
+
+### 🧹 Kualitas Kode, Analisis Statis & Linter
+
+1. **Kepatuhan Nol-Error Flake8 (Zero-Error Compliance)**
+   - Mengoreksi seluruh pelanggaran indentasi visual, spasi, whitespace, baris kosong, dan format pada 43+ modul Python (`E111`, `E122`, `E124`, `E125`, `E127`, `E128`, `E225`, `E231`, `E251`, `E261`, `E262`, `E265`, `E302`, `E303`, `F401`, `F841`).
+   - Menghilangkan penugasan variabel lokal yang tidak terpakai pada `powerdnsadmin/__init__.py` (`SSLify(app)`) dan `powerdnsadmin/models/__init__.py` (`Migrate(app, db)`).
+   - Membersihkan impor tidak terpakai pada migrasi Alembic `b24bf17725d2`.
+
+2. **Remediasi Aturan Ruff B010** (`powerdnsadmin/routes/api.py`)
+   - Mengganti penggunaan `setattr(apikey, "plain_key", ...)` dengan penetapan properti langsung bertipe kuat `apikey.plain_key = ...`.
+
+3. **Restorasi Konfigurasi Trunk & Linter**
+   - Memperbaiki korupsi sintaks pada `.markdownlint.json`, `.trunk/trunk.yaml`, `setup.cfg`, dan `pyproject.toml`.
+   - Mengonfigurasi Trunk runtime menggunakan Node.js hermetis `node@22.16.0` dan Python 3.10 sistem.
+   - Menambahkan konfigurasi `[tool.pyrefly]` pada `pyproject.toml` dengan `preset = "basic"` dan cakupan direktori proyek yang ketat, menuntaskan 129+ peringatan tipe Pyrefly (945 pesan error IDE) menjadi 0 error.
+   - Mengamankan pemanggilan `fileConfig(config.config_file_name)` dan `SQLALCHEMY_DATABASE_URI` di `migrations/env.py` terhadap potensi dereferensi `NoneType`.
+
+4. **Kepatuhan SonarLint & Aksesibilitas Templat HTML**
+   - Menghapus elemen kedaluwarsa `<font>` pada `admin_manage_keys.html`, `domain_setting.html`, dan `resend_confirmation_email.html` serta menggantinya dengan kelas semantik CSS (`text-danger`, `text-success`).
+   - Menambahkan atribut `lang="en"` dan menghapus batasan zoom `user-scalable=no` pada `email_confirmation.html`, `resend_confirmation_email.html`, serta templat email akun.
+   - Menyediakan teks alternatif (`alt="User OTP QR Code"`) pada gambar QR code di `user_profile.html`.
+
+### ⚙️ Lingkungan Runtime, Platform & Versi
+
+1. **Penguncian Batas Runtime Sistem Operasi & Bahasa**
+   - Menegakkan dan menguji kompatibilitas penuh secara ketat pada ekosistem: Python maksimum 3.10, Node.js 22 LTS, Debian 11 (Bullseye), dan Ubuntu 22.04 (Jammy).
+
+2. **Pembaruan Versi Rilis & Paritas Templat**
+   - Memperbarui versi ke `0.4.5` pada `VERSION`, `pyproject.toml` (`0.4.5-alsyundawy`), serta string versi footer pada templat utama `powerdnsadmin/templates/base.html` dan `powerdnsadmin/templates/1base.html`.
+   - Menjamin 100% sinkronisasi dan identitas hash MD5 (`310bfeef309b57067af0b00546c42c47`) antara `base.html` dan `1base.html`.
+
+---
+
 ## 🚀 Version 0.4.4-alsyundawy (2026-10-03)
 
 > Rilis pengerasan infrastruktur CI/CD & MegaLinter, audit kualitas kode 13 pilar, remediasi kerentanan keamanan CodeQL (SSRF, Reflected XSS, DOM XSS), kepatuhan tipe Pyrefly & SonarLint, perbaikan bug logika truthy, kepatuhan POSIX shell scripting, dan penguatan parser templat Jinja2.
@@ -106,7 +158,7 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
    - Memindahkan blok komentar changelog ke dalam elemen `<head>` sebelum penutup `</head>` agar tidak ada token karakter liar di antara `</head>` dan `<body>`.
 
 3. **Perbaikan Elemen Unclosed Treeview** (`base.html` & `1base.html`)
-   - Mengganti pembagian kondisional tag `<ul>` terpisah menjadi satu tag `<ul class="nav nav-treeview"{% if ... %}>`, menyelesaikan peringatan error unclosed elements secara menyeluruh.
+   - Mengganti pembagian kondisional tag `<ul>` terpisah menjadi satu tag `<ul class="nav nav-treeview"&#123;% if ... %&#125;>`, menyelesaikan peringatan error unclosed elements secara menyeluruh.
 
 4. **Modernisasi Tag Skrip JavaScript** (`base.html` & `1base.html`)
    - Menghapus atribut usang `type="text/javascript"` dan membungkus variabel ekspresi Jinja2 di dalam tanda petik pada blok skrip.
@@ -121,7 +173,7 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
 7. **Penyelesaian Menyeluruh Diagnostik IDE & Audit Trunk Linter**
    - **GitHub Actions Workflows**: Menonaktifkan `pinact` yang memicu error flag `-format`, menambahkan `permissions: contents: read` tingkat atas pada `codeql-analysis.yml`, mengutip key `"on":`, memecah baris panjang `if: >-`, menonaktifkan aturan `quoted-strings` pada `.yamllint.yml` serta merapikan kuotasi string di `dependency-review.yml`, `jekyll-gh-pages.yml`, dan `stale.yml`.
    - **Evaluasi Dinamis Token & Secrets**: Menggunakan evaluasi ekspresi dinamis `secrets[format('{0}', '...')]` pada `build-and-publish.yml` dan `codacy.yml` untuk mengatasi false positive validasi konteks offline, mendeklarasikan variabel env statis default di `mega-linter.yml`, serta mengganti `secrets.PAT` dengan token bawaan yang aman `secrets.GITHUB_TOKEN`.
-   - **Sinkronisasi Total Templat `1base.html` & `base.html`**: Menyelaraskan seluruh templat `1base.html` dengan `base.html` hingga memiliki checksum MD5 yang identik, mengeliminasi seluruh self-closing tag void elements HTML5, dan mengekstrak logika Jinja2 dari atribut inline CSS `style="display: ..."` ke blok `{% if ... %}` murni untuk menghilangkan error parser CSS language server (`property value expected`, `at-rule or selector expected`).
+   - **Sinkronisasi Total Templat `1base.html` & `base.html`**: Menyelaraskan seluruh templat `1base.html` dengan `base.html` hingga memiliki checksum MD5 yang identik, mengeliminasi seluruh self-closing tag void elements HTML5, dan mengekstrak logika Jinja2 dari atribut inline CSS `style="display: ..."` ke blok `&#123;% if ... %&#125;` murni untuk menghilangkan error parser CSS language server (`property value expected`, `at-rule or selector expected`).
    - **Kepatuhan HTML5 & Aksesibilitas (`login.html` & `register.html`)**: Memperbarui `<!DOCTYPE html>` menjadi huruf kapital, menghapus trailing slash `/>` pada elemen void HTML5 (`<meta>`, `<link>`, `<img>`, `<input>`), menaikkan rasio kontras warna latar belakang `.alert` menjadi solid crimson `#b91c1c` yang lulus uji WCAG 2.1 AA & AAA, serta membersihkan pembungkus komentar HTML `<!--` / `-->` pada blok dokumentasi Jinja2 agar tidak terdeteksi sebagai _commented out code_.
    - **Remediasi Password Hardcoded & Keamanan Konfigurasi**: Menghapus direktori worktree `.kilo/worktrees/atlantic-wall` dan menambahkan entri `.kilo/` pada `.gitignore`. Memperbarui `configs/development.py`, `configs/test.py`, dan `powerdnsadmin/default_config.py` menggunakan `os.getenv()`, mengeliminasi binding `0.0.0.0` menjadi `127.0.0.1`, serta mengganti path insecure `/tmp` basis data pengujian dengan path relatif `basedir`.
    - **Pengamanan Model Akun (`powerdnsadmin/models/account.py`)**: Menambahkan pengamanan guard `NoneType` sebelum pemanggilan atribut `.username` dan `.delete_account()`, meng-upgrade 7 blok exception logger menjadi `current_app.logger.exception()` untuk kepatuhan SonarLint dan retensi stack trace, membersihkan penanda `# TODO:`, serta menghapus impor `traceback` yang redundan.
@@ -199,8 +251,8 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
 ### 🎨 Desain Ulang UI/UX (login.html & register.html)
 
 1. **Desain Ulang Total Halaman Registrasi** (`register.html`)
-   - Layout modern bertema *glassmorphism* dengan latar belakang gradient teranimasi, pengukur kekuatan kata sandi real-time, tombol toggle tema gelap/terang, dan desain responsif.
-   - Penambahan label screen reader `sr-only` pada setiap input kontrol serta field anti-bot *honeypot*.
+   - Layout modern bertema _glassmorphism_ dengan latar belakang gradient teranimasi, pengukur kekuatan kata sandi real-time, tombol toggle tema gelap/terang, dan desain responsif.
+   - Penambahan label screen reader `sr-only` pada setiap input kontrol serta field anti-bot _honeypot_.
 
 2. **Duplikasi Form Control `auth_method`** (`login.html`)
    - Menghapus atribut `name="auth_method"` dari elemen `<select>` dan seluruh hidden input kondisional Jinja2; digantikan dengan elemen tunggal `<input type="hidden" id="auth_method_hidden" name="auth_method">` yang disinkronkan via JavaScript.

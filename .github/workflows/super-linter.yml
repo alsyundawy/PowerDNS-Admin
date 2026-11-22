@@ -54,7 +54,6 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_JSON: true
           VALIDATE_YAML: true
-          VALIDATE_YAML_PRETTIER: false
           VALIDATE_MARKDOWN: true
           VALIDATE_GITHUB_ACTIONS: true
           PYTHON_RUFF_CONFIG_FILE: pyproject.toml

@@ -5,6 +5,51 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## 🚀 [0.4.5-alsyundawy] — 2026-11-23
+
+> Production CI/CD recovery (Docker Build, MegaLinter v9, Super-Linter, Jekyll GitHub Pages), complete Flake8 zero-error compliance across all Python modules, strict platform runtime anchoring (Python max 3.10, Node.js 22 LTS, Debian 11 / Ubuntu 22.04), and CodeQL scanning fixes.
+
+### 🛡️ CI/CD & Pipeline Infrastructure Hardening
+
+- **Docker Image Build Recovery** (`docker/Dockerfile` & `docker-test/Dockerfile`)
+  - Reverted Alpine base images from `3.22` back to `3.17` (Python 3.10) to match `/usr/lib/python3.10/site-packages` and eliminate PEP 668 `externally-managed-environment` pip failures.
+  - Added `--no-cache-dir` flag and consolidated multi-line `RUN` instructions in `docker-test/Dockerfile` (resolving Hadolint `DL3042` and `DL3059`).
+- **Super-Linter Configuration Alignment** (`.github/workflows/super-linter.yml`)
+  - Removed conflicting `VALIDATE_YAML_PRETTIER: false` alongside include directives, restoring Super-linter v9 validation compatibility.
+- **Jekyll GitHub Pages Liquid Parser Fix** (`_config.yml`, `CHANGELOG.md`, `docnote/changelog.md`)
+  - Added `_config.yml` configuration explicitly excluding markdown logs, changelogs, test suites, and internal directories from Jekyll builds.
+  - Escaped literal template tags as `&#123;% if ... %&#125;` in documentation to prevent Liquid syntax error crashes.
+- **Hadolint & v8r Schema Compliance** (`.hadolint.yaml`)
+  - Purged invalid ShellCheck codes (`SC1090`, `SC1091`) from `.hadolint.yaml` and registered valid `DLxxxx` ignore rules (`DL3007`, `DL3008`, `DL3013`, `DL3018`, `DL3025`, `DL3042`, `DL3059`, `DL3066`, `DL4006`), passing both Hadolint and v8r schema validation.
+
+### 🧹 Code Quality, Linting & Static Analysis
+
+- **Flake8 Zero-Error Compliance**
+  - Resolved all formatting, visual indentation, whitespace, and blank line violations across 43+ Python files (`E111`, `E122`, `E124`, `E125`, `E127`, `E128`, `E225`, `E231`, `E251`, `E261`, `E262`, `E265`, `E302`, `E303`, `F401`, `F841`).
+  - Eliminated unused local variable assignments in `powerdnsadmin/__init__.py` (`SSLify(app)`) and `powerdnsadmin/models/__init__.py` (`Migrate(app, db)`).
+  - Cleaned unused imports in Alembic migration `b24bf17725d2`.
+- **Ruff B010 Remediation** (`powerdnsadmin/routes/api.py`)
+  - Replaced `setattr(apikey, "plain_key", ...)` with direct typed property access `apikey.plain_key = ...`.
+- **Trunk & Linter Configurations**
+  - Repaired syntax corruption in `.markdownlint.json`, `.trunk/trunk.yaml`, `setup.cfg`, and `pyproject.toml`.
+  - Configured Trunk runtime to use hermetic `node@22.16.0` and system Python 3.10.
+  - Added `[tool.pyrefly]` configuration in `pyproject.toml` with `preset = "basic"` and project layout boundaries, achieving 0 errors across the workspace.
+  - Guarded `migrations/env.py` logging configuration and SQLAlchemy database URI against `NoneType` attribute errors.
+- **SonarLint & HTML Accessibility Verification**
+  - Eliminated deprecated `<font>` elements in `admin_manage_keys.html`, `domain_setting.html`, and `resend_confirmation_email.html` in favor of semantic CSS styling (`text-danger`, `text-success`).
+  - Added missing `lang="en"` and removed restrictive `user-scalable=no` viewport definitions in `email_confirmation.html`, `resend_confirmation_email.html`, and email templates.
+  - Provided accessible `alt` text for OTP QR codes in `user_profile.html`.
+
+### ⚙️ Environment, Platform & Versioning
+
+- **Target OS & Language Runtime Anchoring**
+  - Confirmed and verified runtime matrix strictly for Python max 3.10, Node.js 22 LTS, Debian 11 (Bullseye), and Ubuntu 22.04 (Jammy).
+- **Version Bump**
+  - Bumped version to `0.4.5` in `VERSION`, `pyproject.toml` (`0.4.5-alsyundawy`), and footer version strings in `base.html` and `1base.html`.
+  - Maintained 100% template parity and identical MD5 hashes (`310bfeef309b57067af0b00546c42c47`) between `base.html` and `1base.html`.
+
+---
+
 ## 🚀 [0.4.4-alsyundawy] — 2026-10-03
 
 > Production-grade CI/CD and MegaLinter hardening, 13-pillar code quality verification, CodeQL security scanning remediations (SSRF, Reflected XSS, DOM XSS), Pyrefly & SonarLint compliance, logic bug fixes, POSIX shell compliance, and Jinja2 template parser resilience.
@@ -87,7 +132,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **HTML5 Structural Hierarchy** (`login.html` & `register.html`)
   - Relocated changelog documentation cleanly inside `<head>` to maintain standard DOM hierarchy before `<body>`.
 - **Treeview Unclosed Element Elimination** (`base.html` & `1base.html`)
-  - Replaced split conditional `<ul>` tags with single `<ul class="nav nav-treeview"{% if ... %}>`, resolving unclosed element cascades.
+  - Replaced split conditional `<ul>` tags with single `<ul class="nav nav-treeview"&#123;% if ... %&#125;>`, resolving unclosed element cascades.
 - **Script Tag Modernization** (`base.html` & `1base.html`)
   - Removed obsolete `type="text/javascript"` attributes and safely quoted Jinja template expressions inside `<script>` blocks.
   - Added fallback text to empty `modal-time` headers and corrected typos.

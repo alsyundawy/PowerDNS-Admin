@@ -446,7 +446,6 @@ def manage_keys():
     elif request.method == "POST":
         jdata = request.json
         if jdata["action"] == "delete_key":
-
             apikey = ApiKey.query.get(jdata["data"])
             if not apikey:
                 return make_response(jsonify({"status": "error", "msg": "Key not found."}), 404)
@@ -1148,7 +1147,6 @@ def history_table():  # ajax call data
         if user_name is not None and current_user.role.name not in ["Administrator", "Operator"]:
             histories = []
         elif domain_name is not None:
-
             if not changelog_only:
                 histories = (
                     base_query.filter(
@@ -1247,7 +1245,6 @@ def history_table():  # ajax call data
             "Administrator",
             "Operator",
         ]:  # only admins can see the user login-logouts
-
             histories = (
                 base_query.filter(
                     db.and_(
@@ -1718,7 +1715,7 @@ def global_search():
                     .with_entities(Domain.name)
                     .all()
                 )
-                allowed_domains = [value for value, in allowed_domains]
+                allowed_domains = [value for (value,) in allowed_domains]
                 results = list(filter(lambda r: r["zone_id"][:-1] in allowed_domains, results))
 
             # Format the search result

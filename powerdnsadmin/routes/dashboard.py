@@ -1,29 +1,38 @@
 import datetime
 from collections import namedtuple
-from flask import Blueprint, render_template, url_for, current_app, request, jsonify, redirect, g, session, abort
-from flask_login import login_required, current_user, login_manager
+
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    g,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from flask_login import current_user, login_manager, login_required
 from sqlalchemy import not_
 
 from ..decorators import operator_role_required
-from ..models.user import Anonymous
 from ..models.account import Account
 from ..models.account_user import AccountUser
+from ..models.base import db
 from ..models.domain import Domain
 from ..models.domain_user import DomainUser
-from ..models.setting import Setting
 from ..models.sessions import clean_up_expired_sessions_if_due
-from ..models.base import db
+from ..models.setting import Setting
+from ..models.user import Anonymous
 
-dashboard_bp = Blueprint('dashboard',
-                         __name__,
-                         template_folder='templates',
-                         url_prefix='/dashboard')
+dashboard_bp = Blueprint("dashboard", __name__, template_folder="templates", url_prefix="/dashboard")
 
 
 class ZoneTabs:
     """Config data for the zone tabs on the dashboard."""
 
-    TabInfo = namedtuple('TabInfo', ['display_name', 'filter_pattern'])
+    TabInfo = namedtuple("TabInfo", ["display_name", "filter_pattern"])
     """Info about a single tab.
 
     `display_name` is the name on the tab.
@@ -35,13 +44,13 @@ class ZoneTabs:
     """
 
     tabs = {
-        'forward': TabInfo("", None),
-        'reverse_ipv4': TabInfo("in-addr.arpa", '%.in-addr.arpa'),
-        'reverse_ipv6': TabInfo("ip6.arpa", '%.ip6.arpa'),
+        "forward": TabInfo("", None),
+        "reverse_ipv4": TabInfo("in-addr.arpa", "%.in-addr.arpa"),
+        "reverse_ipv6": TabInfo("ip6.arpa", "%.ip6.arpa"),
     }
     """Dict of unique tab id to a TabInfo."""
 
-    order = ['forward', 'reverse_ipv4', 'reverse_ipv6']
+    order = ["forward", "reverse_ipv4", "reverse_ipv6"]
     """List of tab ids in the order they will appear."""
 
 
@@ -52,52 +61,45 @@ def before_request():
     login_manager.anonymous_user = Anonymous
 
     # Check site is in maintenance mode
-    maintenance = Setting().get('maintenance')
-    if maintenance and current_user.is_authenticated and current_user.role.name not in [
-        'Administrator', 'Operator'
-    ]:
-        return render_template('maintenance.html')
+    maintenance = Setting().get("maintenance")
+    if maintenance and current_user.is_authenticated and current_user.role.name not in ["Administrator", "Operator"]:
+        return render_template("maintenance.html")
 
     # Manage session timeout
     session.permanent = True
-    current_app.permanent_session_lifetime = datetime.timedelta(
-        minutes=int(Setting().get('session_timeout')))
+    current_app.permanent_session_lifetime = datetime.timedelta(minutes=int(Setting().get("session_timeout")))
     session.modified = True
 
     # Clean up expired sessions in the database
     clean_up_expired_sessions_if_due()
 
 
-@dashboard_bp.route('/domains-custom/<path:tab_id>', methods=['GET'])
+@dashboard_bp.route("/domains-custom/<path:tab_id>", methods=["GET"])
 @login_required
 def domains_custom(tab_id):
     if tab_id not in ZoneTabs.tabs:
         abort(404)
 
-    if current_user.role.name in ['Administrator', 'Operator']:
+    if current_user.role.name in ["Administrator", "Operator"]:
         domains = Domain.query
     else:
         # Get query for domain to which the user has access permission.
         # This includes direct domain permission AND permission through
         # account membership
-        domains = db.session.query(Domain) \
-            .outerjoin(DomainUser, Domain.id == DomainUser.domain_id) \
-            .outerjoin(Account, Domain.account_id == Account.id) \
-            .outerjoin(AccountUser, Account.id == AccountUser.account_id) \
-            .filter(
-            db.or_(
-                DomainUser.user_id == current_user.id,
-                AccountUser.user_id == current_user.id
-            ))
+        domains = (
+            db.session.query(Domain)
+            .outerjoin(DomainUser, Domain.id == DomainUser.domain_id)
+            .outerjoin(Account, Domain.account_id == Account.id)
+            .outerjoin(AccountUser, Account.id == AccountUser.account_id)
+            .filter(db.or_(DomainUser.user_id == current_user.id, AccountUser.user_id == current_user.id))
+        )
 
     template = current_app.jinja_env.get_template("dashboard_domain.html")
     render = template.make_module(
-        vars={"current_user": current_user, "allow_user_view_history": Setting().get('allow_user_view_history')})
+        vars={"current_user": current_user, "allow_user_view_history": Setting().get("allow_user_view_history")}
+    )
 
-    columns = [
-        Domain.name, Domain.dnssec, Domain.type, Domain.serial, Domain.master,
-        Domain.account_id
-    ]
+    columns = [Domain.name, Domain.dnssec, Domain.type, Domain.serial, Domain.master, Domain.account_id]
 
     order_by = []
     for i in range(len(columns)):
@@ -131,34 +133,36 @@ def domains_custom(tab_id):
         start = "" if search.startswith("^") else "%"
         end = "" if search.endswith("$") else "%"
 
-        if current_user.role.name in ['Administrator', 'Operator']:
+        if current_user.role.name in ["Administrator", "Operator"]:
             domains = domains.outerjoin(Account).filter(
                 Domain.name.ilike(start + search.strip("^$") + end)
                 | Account.name.ilike(start + search.strip("^$") + end)
-                | Account.description.ilike(start + search.strip("^$") + end))
+                | Account.description.ilike(start + search.strip("^$") + end)
+            )
         else:
-            domains = domains.filter(
-                Domain.name.ilike(start + search.strip("^$") + end))
+            domains = domains.filter(Domain.name.ilike(start + search.strip("^$") + end))
 
     filtered_count = domains.count()
 
     start = int(request.args.get("start", 0))
-    length = min(int(request.args.get("length", 0)), max(100, int(Setting().get('default_domain_table_size'))))
+    length = min(int(request.args.get("length", 0)), max(100, int(Setting().get("default_domain_table_size"))))
 
     if length != -1:
-        domains = domains[start:start + length]
+        domains = domains[start : start + length]
 
     data = []
     for domain in domains:
-        data.append([
-            render.name(domain),
-            render.dnssec(domain),
-            render.type(domain),
-            render.serial(domain),
-            render.master(domain),
-            render.account(domain),
-            render.actions(domain),
-        ])
+        data.append(
+            [
+                render.name(domain),
+                render.dnssec(domain),
+                render.type(domain),
+                render.serial(domain),
+                render.master(domain),
+                render.account(domain),
+                render.actions(domain),
+            ]
+        )
 
     response_data = {
         "draw": int(request.args.get("draw", 0)),
@@ -169,36 +173,37 @@ def domains_custom(tab_id):
     return jsonify(response_data)
 
 
-@dashboard_bp.route('/', methods=['GET', 'POST'])
+@dashboard_bp.route("/", methods=["GET", "POST"])
 @login_required
 def dashboard():
-    if not Setting().get('pdns_api_url') or not Setting().get(
-            'pdns_api_key') or not Setting().get('pdns_version'):
-        return redirect(url_for('admin.setting_pdns'))
+    if not Setting().get("pdns_api_url") or not Setting().get("pdns_api_key") or not Setting().get("pdns_version"):
+        return redirect(url_for("admin.setting_pdns"))
 
-    BG_DOMAIN_UPDATE = Setting().get('bg_domain_updates')
+    BG_DOMAIN_UPDATE = Setting().get("bg_domain_updates")
     if not BG_DOMAIN_UPDATE:
-        current_app.logger.info('Updating zones in foreground...')
+        current_app.logger.info("Updating zones in foreground...")
         Domain().update()
     else:
-        current_app.logger.info('Updating zones in background...')
+        current_app.logger.info("Updating zones in background...")
 
     show_bg_domain_button = BG_DOMAIN_UPDATE
-    if BG_DOMAIN_UPDATE and current_user.role.name not in ['Administrator', 'Operator']:
+    if BG_DOMAIN_UPDATE and current_user.role.name not in ["Administrator", "Operator"]:
         show_bg_domain_button = False
 
     # Add custom boxes to render_template
-    return render_template('dashboard.html',
-                           zone_tabs=ZoneTabs,
-                           show_bg_domain_button=show_bg_domain_button,
-                           pdns_version=Setting().get('pdns_version'))
+    return render_template(
+        "dashboard.html",
+        zone_tabs=ZoneTabs,
+        show_bg_domain_button=show_bg_domain_button,
+        pdns_version=Setting().get("pdns_version"),
+    )
 
 
-@dashboard_bp.route('/domains-updater', methods=['GET', 'POST'])
+@dashboard_bp.route("/domains-updater", methods=["GET", "POST"])
 @login_required
 @operator_role_required
 def domains_updater():
-    current_app.logger.debug('Update zones in background')
+    current_app.logger.debug("Update zones in background")
     d = Domain().update()
 
     response_data = {

@@ -458,7 +458,7 @@ def api_generate_apikey():
         current_app.logger.error("Error: {0}".format(e))
         raise ApiKeyCreateFail(message="Api key create failed") from e
 
-    setattr(apikey, "plain_key", b64encode(apikey.plain_key.encode("utf-8")).decode("utf-8"))
+    apikey.plain_key = b64encode(apikey.plain_key.encode("utf-8")).decode("utf-8")
     return jsonify(apikey_plain_schema.dump(apikey)), 201
 
 
@@ -952,7 +952,7 @@ def api_create_account():
     account_exists = Account.query.filter(Account.name == sanitized_name).all()
 
     if len(account_exists) > 0:
-        msg = ("Requested Account {} would be translated to {}" " which already exists").format(name, sanitized_name)
+        msg = ("Requested Account {} would be translated to {} which already exists").format(name, sanitized_name)
         current_app.logger.debug(msg)
         raise AccountCreateDuplicate(message=msg)
 
@@ -1281,7 +1281,7 @@ def api_server_config_forward(server_id):
 def sync_domains():
     authenticated_role = g.apikey.role.name if hasattr(g, "apikey") else current_user.role.name
     if authenticated_role not in ["Administrator", "Operator"]:
-        raise NotEnoughPrivileges(message="Only Administrator and Operator credentials may " "synchronize zones")
+        raise NotEnoughPrivileges(message="Only Administrator and Operator credentials may synchronize zones")
     domain = Domain()
     domain.update()
     return "Finished synchronization in background", 200

@@ -1,22 +1,22 @@
 from flask_migrate import Migrate
 
-from .base import db
-from .user import User
-from .role import Role
 from .account import Account
 from .account_user import AccountUser
-from .server import Server
-from .history import History
 from .api_key import ApiKey
 from .api_key_account import ApiKeyAccount
-from .setting import Setting
+from .base import db
 from .domain import Domain
 from .domain_setting import DomainSetting
-from .domain_user import DomainUser
 from .domain_template import DomainTemplate
 from .domain_template_record import DomainTemplateRecord
+from .domain_user import DomainUser
+from .history import History
 from .record import Record
 from .record_entry import RecordEntry
+from .role import Role
+from .server import Server
+from .setting import Setting
+from .user import User
 
 __all__ = [
     "db",
@@ -42,4 +42,4 @@ __all__ = [
 
 def init_app(app):
     db.init_app(app)
-    _migrate = Migrate(app, db)  # lgtm [py/unused-local-variable]
+    Migrate(app, db)

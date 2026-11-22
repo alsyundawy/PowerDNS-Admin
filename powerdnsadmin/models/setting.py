@@ -113,9 +113,7 @@ class Setting(db.Model):
             defaults_val = AppSettings.defaults.get(setting, {})
             default_map = defaults_val if isinstance(defaults_val, dict) else {}
             if not isinstance(result, dict):
-                current_app.logger.warning(
-                    "Setting {0} is not a mapping, falling back to " "the defaults".format(setting)
-                )
+                current_app.logger.warning("Setting {0} is not a mapping, falling back to the defaults".format(setting))
                 return dict(default_map)
             result = {
                 **default_map,

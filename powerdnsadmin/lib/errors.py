@@ -8,13 +8,13 @@ class StructuredException(Exception):
 
     def to_dict(self):
         rv = dict()
-        msg = ''
+        msg = ""
         if self.name:
-            msg = '{0} {1}'.format(self.message, self.name)
+            msg = "{0} {1}".format(self.message, self.name)
         else:
             msg = self.message
 
-        rv['msg'] = msg
+        rv["msg"] = msg
         return rv
 
 
@@ -44,6 +44,7 @@ class DomainAccessForbidden(StructuredException):
         self.message = message
         self.name = name
 
+
 class DomainOverrideForbidden(StructuredException):
     status_code = 409
 
@@ -51,6 +52,7 @@ class DomainOverrideForbidden(StructuredException):
         StructuredException.__init__(self)
         self.message = message
         self.name = name
+
 
 class ApiKeyCreateFail(StructuredException):
     status_code = 500
@@ -64,11 +66,7 @@ class ApiKeyCreateFail(StructuredException):
 class ApiKeyNotUsable(StructuredException):
     status_code = 400
 
-    def __init__(
-        self,
-        name=None,
-        message=("Api key must have zones or accounts"
-                 " or an administrative role")):
+    def __init__(self, name=None, message=("Api key must have zones or accounts or an administrative role")):
         StructuredException.__init__(self)
         self.message = message
         self.name = name
@@ -136,6 +134,7 @@ class AccountNotExists(StructuredException):
         self.message = message
         self.name = name
 
+
 class InvalidAccountNameException(StructuredException):
     status_code = 400
 
@@ -143,6 +142,7 @@ class InvalidAccountNameException(StructuredException):
         StructuredException.__init__(self)
         self.message = message
         self.name = name
+
 
 class UserCreateFail(StructuredException):
     status_code = 500
@@ -152,6 +152,7 @@ class UserCreateFail(StructuredException):
         self.message = message
         self.name = name
 
+
 class UserCreateDuplicate(StructuredException):
     status_code = 409
 
@@ -159,6 +160,7 @@ class UserCreateDuplicate(StructuredException):
         StructuredException.__init__(self)
         self.message = message
         self.name = name
+
 
 class UserUpdateFail(StructuredException):
     status_code = 500
@@ -168,6 +170,7 @@ class UserUpdateFail(StructuredException):
         self.message = message
         self.name = name
 
+
 class UserUpdateFailEmail(StructuredException):
     status_code = 409
 
@@ -175,6 +178,7 @@ class UserUpdateFailEmail(StructuredException):
         StructuredException.__init__(self)
         self.message = message
         self.name = name
+
 
 class UserDeleteFail(StructuredException):
     status_code = 500
@@ -184,6 +188,7 @@ class UserDeleteFail(StructuredException):
         self.message = message
         self.name = name
 
+
 class RecordTypeNotAllowed(StructuredException):
     status_code = 400
 
@@ -191,6 +196,7 @@ class RecordTypeNotAllowed(StructuredException):
         StructuredException.__init__(self)
         self.message = message
         self.name = name
+
 
 class RecordTTLNotAllowed(StructuredException):
     status_code = 400

@@ -1,50 +1,51 @@
 import json
-import requests
 from urllib.parse import urlsplit
+
+import requests
 from flask import Response, current_app, jsonify, request
 
 from ..models import Setting
 
 
 def forward_request():
-    pdns_api_url = Setting().get('pdns_api_url')
-    pdns_api_key = Setting().get('pdns_api_key')
+    pdns_api_url = Setting().get("pdns_api_url")
+    pdns_api_key = Setting().get("pdns_api_key")
     headers = {}
     data = None
 
     msg_str = "Sending request to powerdns API {0}"
 
-    if request.method != 'GET' and request.method != 'DELETE':
+    if request.method != "GET" and request.method != "DELETE":
         msg = msg_str.format(request.get_json(force=True, silent=True))
         current_app.logger.debug(msg)
         data = request.get_json(force=True, silent=True)
 
-    verify = Setting().get('verify_ssl_connections')
+    verify = Setting().get("verify_ssl_connections")
 
     headers = {
-        'user-agent': 'powerdns-admin/api',
-        'pragma': 'no-cache',
-        'cache-control': 'no-cache',
-        'accept': 'application/json; q=1',
-        'X-API-KEY': pdns_api_key
+        "user-agent": "powerdns-admin/api",
+        "pragma": "no-cache",
+        "cache-control": "no-cache",
+        "accept": "application/json; q=1",
+        "X-API-KEY": pdns_api_key,
     }
 
     # Validate and sanitize the target backend URL against SSRF
     base_parsed = urlsplit(pdns_api_url or "")
     if base_parsed.scheme not in ("http", "https") or not base_parsed.netloc:
-        return Response(response='{"error":"invalid backend API configuration"}',
-                        status=500,
-                        mimetype="application/json")
+        return Response(
+            response='{"error":"invalid backend API configuration"}', status=500, mimetype="application/json"
+        )
 
     # Sanitize incoming path to prevent protocol-relative host redirection
     req_path = request.path
-    if not req_path.startswith('/'):
-        req_path = '/' + req_path
-    while req_path.startswith('//'):
+    if not req_path.startswith("/"):
+        req_path = "/" + req_path
+    while req_path.startswith("//"):
         req_path = req_path[1:]
 
-    base_prefix = base_parsed.path.rstrip('/')
-    clean_path = req_path.lstrip('/')
+    base_prefix = base_parsed.path.rstrip("/")
+    clean_path = req_path.lstrip("/")
     target_path = f"{base_prefix}/{clean_path}" if base_prefix else f"/{clean_path}"
 
     query_str = ""
@@ -57,15 +58,9 @@ def forward_request():
     # Verify that the target URL strictly matches the trusted backend scheme and host
     parsed_target = urlsplit(url)
     if parsed_target.scheme != base_parsed.scheme or parsed_target.netloc != base_parsed.netloc:
-        return Response(response='{"error":"invalid request target"}',
-                        status=400,
-                        mimetype="application/json")
+        return Response(response='{"error":"invalid request target"}', status=400, mimetype="application/json")
 
-    resp = requests.request(request.method,
-                            url,
-                            headers=headers,
-                            verify=verify,
-                            json=data)
+    resp = requests.request(request.method, url, headers=headers, verify=verify, json=data)
 
     return resp
 

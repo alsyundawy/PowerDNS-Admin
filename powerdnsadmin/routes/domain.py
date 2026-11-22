@@ -355,7 +355,6 @@ def add():
 
             ### Test if a record same as the domain already exists in an upper level domain
             if Setting().get("deny_domain_override"):
-
                 upper_domain = None
                 domain_override = False
                 domain_override_toggle = False

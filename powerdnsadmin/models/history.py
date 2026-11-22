@@ -1,7 +1,7 @@
 import traceback
+from datetime import datetime
 
 from flask import current_app
-from datetime import datetime
 
 from .base import db
 
@@ -14,9 +14,7 @@ class History(db.Model):
     detail = db.Column(db.Text())
     created_by = db.Column(db.String(128))
     created_on = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    domain_id = db.Column(db.Integer,
-                          db.ForeignKey('domain.id'),
-                          nullable=True)
+    domain_id = db.Column(db.Integer, db.ForeignKey("domain.id"), nullable=True)
 
     def __init__(self, id=None, msg=None, detail=None, created_by=None, domain_id=None):
         self.id = id
@@ -26,7 +24,7 @@ class History(db.Model):
         self.domain_id = domain_id
 
     def __repr__(self):
-        return '<History {0}>'.format(self.msg)
+        return "<History {0}>".format(self.msg)
 
     def add(self):
         """

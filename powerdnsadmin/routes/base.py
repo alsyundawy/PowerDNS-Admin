@@ -95,7 +95,6 @@ def login_via_authorization_header_or_remote_user(request):
     # Try to login using Basic Authentication
     auth_header = request.headers.get("Authorization")
     if auth_header:
-
         if not auth_header.startswith("Basic "):
             return None
 

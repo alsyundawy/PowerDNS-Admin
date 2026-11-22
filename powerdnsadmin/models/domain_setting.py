@@ -6,10 +6,10 @@ from .base import db
 
 
 class DomainSetting(db.Model):
-    __tablename__ = 'domain_setting'
+    __tablename__ = "domain_setting"
     id = db.Column(db.Integer, primary_key=True)
-    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'))
-    domain = db.relationship('Domain', back_populates='settings')
+    domain_id = db.Column(db.Integer, db.ForeignKey("domain.id"))
+    domain = db.relationship("Domain", back_populates="settings")
     setting = db.Column(db.String(255), nullable=False)
     value = db.Column(db.String(255))
 
@@ -19,7 +19,7 @@ class DomainSetting(db.Model):
         self.value = value
 
     def __repr__(self):
-        return '<DomainSetting {0} for {1}>'.format(self.setting, self.domain.name)
+        return "<DomainSetting {0} for {1}>".format(self.setting, self.domain.name)
 
     def __eq__(self, other):
         return type(self) is type(other) and self.setting == other.setting
@@ -30,8 +30,7 @@ class DomainSetting(db.Model):
             db.session.commit()
             return True
         except Exception as e:
-            current_app.logger.error(
-                'Unable to set DomainSetting value. DETAIL: {0}'.format(e))
+            current_app.logger.error("Unable to set DomainSetting value. DETAIL: {0}".format(e))
             current_app.logger.debug(traceback.format_exc())
             db.session.rollback()
             return False

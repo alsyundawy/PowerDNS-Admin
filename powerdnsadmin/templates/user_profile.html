@@ -139,7 +139,7 @@
                                             {% if current_user.otp_secret %}
                                                 <div id="token_information">
                                                     <p>
-                                                        <img id="qrcode" src="{{ url_for('user.qrcode') }}">
+                                                        <img id="qrcode" src="{{ url_for('user.qrcode') }}" alt="User OTP QR Code">
                                                     </p>
                                                     <div style="position: relative; left: 15px">
                                                         Your secret key is:

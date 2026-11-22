@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Resend Confirmation Email - {{ SITE_NAME }}</title>
     <link rel="icon" href="/static/img/favicon.png">
     <!-- Tell the browser to be responsive to screen width -->
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     {% assets "css_login" -%}
         <link rel="stylesheet" href="{{ ASSET_URL }}">
     {%- endassets %}
@@ -48,11 +48,11 @@
             <div class="form-group">
                 <p>
                     {% if status == 0 %}
-                        <font color="red">Email not found!</font>
+                        <span class="text-danger">Email not found!</span>
                     {% elif status == 1 %}
-                        <font color="red">Email already confirmed!</font>
+                        <span class="text-danger">Email already confirmed!</span>
                     {% elif status == 2 %}
-                        <font color="green">Confirmation email sent!</font>
+                        <span class="text-success">Confirmation email sent!</span>
                     {% endif %}
                 </p>
             </div>

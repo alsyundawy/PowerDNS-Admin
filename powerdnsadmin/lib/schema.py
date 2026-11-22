@@ -1,4 +1,4 @@
-from lima import fields, Schema
+from lima import Schema, fields
 
 
 class DomainSchema(Schema):
@@ -15,6 +15,7 @@ class AccountSummarySchema(Schema):
     id = fields.Integer()
     name = fields.String()
     domains = fields.Embed(schema=DomainSchema, many=True)
+
 
 class ApiKeySummarySchema(Schema):
     id = fields.Integer()
@@ -46,6 +47,7 @@ class UserSchema(Schema):
     email = fields.String()
     role = fields.Embed(schema=RoleSchema)
 
+
 class UserDetailedSchema(Schema):
     id = fields.Integer()
     username = fields.String()
@@ -54,6 +56,7 @@ class UserDetailedSchema(Schema):
     email = fields.String()
     role = fields.Embed(schema=RoleSchema)
     accounts = fields.Embed(schema=AccountSummarySchema, many=True)
+
 
 class AccountSchema(Schema):
     id = fields.Integer()

@@ -195,7 +195,6 @@ class Domain(db.Model):
             or domain.dnssec != data["dnssec"]
             or domain.account_id != account_id
         ):
-
             domain.master = str(data["masters"])
             domain.type = data["kind"]
             domain.serial = data["serial"]

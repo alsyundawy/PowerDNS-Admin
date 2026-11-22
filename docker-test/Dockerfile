@@ -38,8 +38,8 @@ RUN apt-get update -y \
 COPY ./requirements.txt /app/requirements.txt
 
 WORKDIR /app
-RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
 COPY . /app
 

@@ -1,0 +1,13 @@
+theme: jekyll-theme-primer
+title: PowerDNS-Admin
+description: A PowerDNS web interface with advanced features
+exclude:
+  - CHANGELOG.md
+  - docnote
+  - docker-test
+  - docker
+  - tests
+  - venv
+  - .venv
+  - .github
+  - node_modules

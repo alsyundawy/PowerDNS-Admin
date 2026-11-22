@@ -1,6 +1,6 @@
 [project]
 name = "powerdns-admin"
-version = "0.4.4-alsyundawy"
+version = "0.4.5-alsyundawy"
 description = "A PowerDNS web interface with advanced features"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -54,3 +54,8 @@ exclude = '''
 pythonVersion = "3.10"
 include = ["powerdnsadmin"]
 exclude = ["migrations", "venv", ".venv", "tests"]
+
+[tool.pyrefly]
+preset = "basic"
+project-includes = ["powerdnsadmin/**/*.py"]
+project-excludes = ["migrations/**", "venv/**", ".venv/**", "tests/**"]

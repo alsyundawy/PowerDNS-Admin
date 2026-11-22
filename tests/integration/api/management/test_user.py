@@ -4,13 +4,17 @@ from . import IntegrationApiManagement
 
 
 class TestIntegrationApiManagementUser(IntegrationApiManagement):
-
     def test_accounts_empty_get(self, initial_data, client, basic_auth_user_headers):  # noqa: F811  # noqa: F811
         res = client.get("/api/v1/pdnsadmin/accounts", headers=basic_auth_user_headers)
         assert res.status_code == 401
 
     def test_users_empty_get(
-        self, initial_data, client, test_admin_user, test_user, basic_auth_user_headers  # noqa: F811  # noqa: F811
+        self,
+        initial_data,
+        client,
+        test_admin_user,
+        test_user,
+        basic_auth_user_headers,  # noqa: F811  # noqa: F811
     ):  # noqa: F811
         res = client.get("/api/v1/pdnsadmin/users", headers=basic_auth_user_headers)
         assert res.status_code == 401
@@ -22,7 +26,11 @@ class TestIntegrationApiManagementUser(IntegrationApiManagement):
         assert data
 
     def test_create_account_fail(
-        self, client, initial_data, account_data, basic_auth_user_headers  # noqa: F811
+        self,
+        client,
+        initial_data,
+        account_data,
+        basic_auth_user_headers,  # noqa: F811
     ):  # noqa: F811
 
         # Create account (should fail)
@@ -35,7 +43,12 @@ class TestIntegrationApiManagementUser(IntegrationApiManagement):
         assert res.status_code == 401
 
     def test_create_account_as_admin(
-        self, app, initial_data, client, account_data, basic_auth_admin_headers  # noqa: F811
+        self,
+        app,
+        initial_data,
+        client,
+        account_data,
+        basic_auth_admin_headers,  # noqa: F811
     ):  # noqa: F811
         self.client = client
         self.basic_auth_admin_headers = basic_auth_admin_headers
@@ -100,7 +113,11 @@ class TestIntegrationApiManagementUser(IntegrationApiManagement):
         assert res.status_code == 401
 
     def test_delete_account_as_admin(
-        self, client, initial_data, account_data, basic_auth_admin_headers  # noqa: F811  # noqa: F811
+        self,
+        client,
+        initial_data,
+        account_data,
+        basic_auth_admin_headers,  # noqa: F811  # noqa: F811
     ):  # noqa: F811
         self.client = client
         self.basic_auth_admin_headers = basic_auth_admin_headers

@@ -1,7 +1,4 @@
-
-
 class IntegrationApiManagement(object):
-
     def get_account(self, account_name, status_code=200):
         res = self.client.get(
             "/api/v1/pdnsadmin/accounts/{}".format(account_name),
@@ -16,7 +13,7 @@ class IntegrationApiManagement(object):
             data = res.get_json(force=True)
             assert isinstance(data, dict)
             assert len(data) == 7
-            assert data.get('id', None)
+            assert data.get("id", None)
             return data
         return None
 
@@ -41,7 +38,7 @@ class IntegrationApiManagement(object):
             data = res.get_json(force=True)
             assert isinstance(data, dict)
             assert len(data) == 7
-            assert data.get('id', None)
+            assert data.get("id", None)
             return data
         return None
 
@@ -49,10 +46,13 @@ class IntegrationApiManagement(object):
         if data is None:
             data = self.get_user(cmpdata["username"])
         for key, value in data.items():
-            if key in ('username', 'firstname', 'lastname', 'email'):
+            if key in ("username", "firstname", "lastname", "email"):
                 assert cmpdata[key] == value
-            elif key == 'role':
-                assert data[key]['name'] == cmpdata['role_name']
+            elif key == "role":
+                assert data[key]["name"] == cmpdata["role_name"]
             else:
-                assert key in ("id","accounts",)
+                assert key in (
+                    "id",
+                    "accounts",
+                )
         return data

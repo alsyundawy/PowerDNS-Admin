@@ -1,20 +1,28 @@
 import datetime
 import hashlib
 
-from flask import Blueprint, request, render_template, make_response, jsonify, redirect, url_for, g, session, \
-    current_app, after_this_request, abort
-from flask_login import current_user, login_required, login_manager
+from flask import (
+    Blueprint,
+    abort,
+    after_this_request,
+    current_app,
+    g,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from flask_login import current_user, login_manager, login_required
 
-from ..models.user import User, Anonymous
-from ..models.setting import Setting
 from ..models.sessions import clean_up_expired_sessions_if_due
+from ..models.setting import Setting
+from ..models.user import Anonymous, User
 from .index import password_policy_check
 
-
-user_bp = Blueprint('user',
-                    __name__,
-                    template_folder='templates',
-                    url_prefix='/user')
+user_bp = Blueprint("user", __name__, template_folder="templates", url_prefix="/user")
 
 
 @user_bp.before_request
@@ -24,102 +32,117 @@ def before_request():
     login_manager.anonymous_user = Anonymous
 
     # Check site is in maintenance mode
-    maintenance = Setting().get('maintenance')
-    if maintenance and current_user.is_authenticated and current_user.role.name not in [
-            'Administrator', 'Operator'
-    ]:
-        return render_template('maintenance.html')
+    maintenance = Setting().get("maintenance")
+    if maintenance and current_user.is_authenticated and current_user.role.name not in ["Administrator", "Operator"]:
+        return render_template("maintenance.html")
 
     # Manage session timeout
     session.permanent = True
-    current_app.permanent_session_lifetime = datetime.timedelta(
-        minutes=int(Setting().get('session_timeout')))
+    current_app.permanent_session_lifetime = datetime.timedelta(minutes=int(Setting().get("session_timeout")))
     session.modified = True
 
     # Clean up expired sessions in the database
     clean_up_expired_sessions_if_due()
 
 
-@user_bp.route('/profile', methods=['GET', 'POST'])
+@user_bp.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    if request.method == 'GET':
-        return render_template('user_profile.html')
-    if request.method == 'POST':
-        if session['authentication_type'] == 'LOCAL':
-            firstname = request.form.get('firstname', '').strip()
-            lastname = request.form.get('lastname', '').strip()
-            email = request.form.get('email', '').strip()
-            new_password = request.form.get('password', '')
+    if request.method == "GET":
+        return render_template("user_profile.html")
+    if request.method == "POST":
+        if session["authentication_type"] == "LOCAL":
+            firstname = request.form.get("firstname", "").strip()
+            lastname = request.form.get("lastname", "").strip()
+            email = request.form.get("email", "").strip()
+            new_password = request.form.get("password", "")
         else:
-            firstname = lastname = email = new_password = ''
+            firstname = lastname = email = new_password = ""
             current_app.logger.warning(
-                'Authenticated externally. User {0} information will not allowed to update the profile'
-                .format(current_user.username))
+                "Authenticated externally. User {0} information will not allowed to update the profile".format(
+                    current_user.username
+                )
+            )
 
         if request.data:
             jdata = request.json
-            data = jdata['data']
-            if jdata['action'] == 'enable_otp':
-                if session['authentication_type'] in ['LOCAL', 'LDAP']:
-                    enable_otp = data['enable_otp']
+            data = jdata["data"]
+            if jdata["action"] == "enable_otp":
+                if session["authentication_type"] in ["LOCAL", "LDAP"]:
+                    enable_otp = data["enable_otp"]
                     user = User(username=current_user.username)
                     user.update_profile(enable_otp=enable_otp)
                     return make_response(
-                        jsonify({
-                            'status':
-                            'ok',
-                            'msg':
-                            'Change OTP Authentication successfully. Status: {0}'
-                            .format(enable_otp)
-                        }), 200)
+                        jsonify(
+                            {
+                                "status": "ok",
+                                "msg": "Change OTP Authentication successfully. Status: {0}".format(enable_otp),
+                            }
+                        ),
+                        200,
+                    )
                 else:
                     return make_response(
-                        jsonify({
-                            'status':
-                            'error',
-                            'msg':
-                            'User {0} is externally. You are not allowed to update the OTP'
-                            .format(current_user.username)
-                        }), 400)
+                        jsonify(
+                            {
+                                "status": "error",
+                                "msg": "User {0} is externally. You are not allowed to update the OTP".format(
+                                    current_user.username
+                                ),
+                            }
+                        ),
+                        400,
+                    )
 
-        (password_policy_pass, password_policy) = password_policy_check(current_user.get_user_info_by_username(), new_password)
+        password_policy_pass, password_policy = password_policy_check(
+            current_user.get_user_info_by_username(), new_password
+        )
         if not password_policy_pass:
             if request.data:
                 return make_response(
-                    jsonify({
-                        'status': 'error',
-                        'msg': password_policy['password'],
-                    }), 400)
-            return render_template('user_profile.html', error_messages=password_policy)
+                    jsonify(
+                        {
+                            "status": "error",
+                            "msg": password_policy["password"],
+                        }
+                    ),
+                    400,
+                )
+            return render_template("user_profile.html", error_messages=password_policy)
 
-        user = User(username=current_user.username,
-                    plain_text_password=new_password,
-                    firstname=firstname,
-                    lastname=lastname,
-                    email=email,
-                    reload_info=False)
+        user = User(
+            username=current_user.username,
+            plain_text_password=new_password,
+            firstname=firstname,
+            lastname=lastname,
+            email=email,
+            reload_info=False,
+        )
 
         user.update_profile()
 
-        return render_template('user_profile.html')
+        return render_template("user_profile.html")
 
 
-@user_bp.route('/qrcode')
+@user_bp.route("/qrcode")
 @login_required
 def qrcode():
     if not current_user:
-        return redirect(url_for('index'))
+        return redirect(url_for("index"))
 
-    return current_user.get_qrcode_value(), 200, {
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-    }
+    return (
+        current_user.get_qrcode_value(),
+        200,
+        {
+            "Content-Type": "image/svg+xml",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
-@user_bp.route('/image', methods=['GET'])
+@user_bp.route("/image", methods=["GET"])
 @login_required
 def image():
     """Returns the user profile image or avatar."""
@@ -136,46 +159,45 @@ def image():
         """Return the given binary image content. Guess the type if not given."""
         if not content_type:
             signatures = (
-                (b'\xff\xd8\xff', 'image/jpeg'),
-                (b'\x89PNG\r\n\x1a\n', 'image/png'),
-                (b'GIF87a', 'image/gif'),
-                (b'GIF89a', 'image/gif'),
-                (b'BM', 'image/bmp'),
+                (b"\xff\xd8\xff", "image/jpeg"),
+                (b"\x89PNG\r\n\x1a\n", "image/png"),
+                (b"GIF87a", "image/gif"),
+                (b"GIF89a", "image/gif"),
+                (b"BM", "image/bmp"),
             )
             content_type = next(
-                (mime_type for signature, mime_type in signatures
-                 if content.startswith(signature)),
-                'application/octet-stream')
-            if (content.startswith(b'RIFF') and len(content) >= 12
-                    and content[8:12] == b'WEBP'):
-                content_type = 'image/webp'
+                (mime_type for signature, mime_type in signatures if content.startswith(signature)),
+                "application/octet-stream",
+            )
+            if content.startswith(b"RIFF") and len(content) >= 12 and content[8:12] == b"WEBP":
+                content_type = "image/webp"
 
-        return content, 200, {'Content-Type': content_type}
+        return content, 200, {"Content-Type": content_type}
 
     # To prevent "cache poisoning", the username query parameter is required
-    if request.args.get('username', None) != current_user.username:
+    if request.args.get("username", None) != current_user.username:
         abort(400)
 
     setting = Setting()
 
-    if session['authentication_type'] == 'LDAP':
-        search_filter = '(&({0}={1}){2})'.format(setting.get('ldap_filter_username'),
-                                                 current_user.username,
-                                                 setting.get('ldap_filter_basic'))
-        result = User().ldap_search(search_filter, setting.get('ldap_base_dn'))
+    if session["authentication_type"] == "LDAP":
+        search_filter = "(&({0}={1}){2})".format(
+            setting.get("ldap_filter_username"), current_user.username, setting.get("ldap_filter_basic")
+        )
+        result = User().ldap_search(search_filter, setting.get("ldap_base_dn"))
         if result and result[0] and result[0][0] and result[0][0][1]:
             user_obj = result[0][0][1]
-            for key in ['jpegPhoto', 'thumbnailPhoto']:
+            for key in ["jpegPhoto", "thumbnailPhoto"]:
                 if key in user_obj and user_obj[key] and user_obj[key][0]:
-                    current_app.logger.debug(f'Return {key} from ldap as user image')
+                    current_app.logger.debug(f"Return {key} from ldap as user image")
                     return return_image(user_obj[key][0])
 
     email = current_user.email
-    if email and setting.get('gravatar_enabled'):
-        hash_ = hashlib.md5(email.strip().lower().encode('utf-8'), usedforsecurity=False).hexdigest()
-        url = f'https://s.gravatar.com/avatar/{hash_}?s=100'
-        current_app.logger.debug('Redirect user image request to gravatar')
+    if email and setting.get("gravatar_enabled"):
+        hash_ = hashlib.md5(email.strip().lower().encode("utf-8"), usedforsecurity=False).hexdigest()
+        url = f"https://s.gravatar.com/avatar/{hash_}?s=100"
+        current_app.logger.debug("Redirect user image request to gravatar")
         return redirect(url, 307)
 
     # Fallback to the local default image
-    return current_app.send_static_file('img/user_image.png')
+    return current_app.send_static_file("img/user_image.png")

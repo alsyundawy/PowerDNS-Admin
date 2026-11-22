@@ -103,7 +103,6 @@ class SAML(object):
         settings["sp"]["entityId"] = current_app.config["SAML_SP_ENTITY_ID"]
 
         if ("SAML_CERT" in current_app.config) and ("SAML_KEY" in current_app.config):
-
             saml_cert_file = current_app.config["SAML_CERT"]
             saml_key_file = current_app.config["SAML_KEY"]
 
@@ -115,7 +114,6 @@ class SAML(object):
                 settings["sp"]["privateKey"] = "".join(key)
 
         else:
-
             if (os.path.isfile(CERT_FILE)) and (os.path.isfile(KEY_FILE)):
                 cert = open(CERT_FILE, "r").readlines()
                 key = open(KEY_FILE, "r").readlines()
