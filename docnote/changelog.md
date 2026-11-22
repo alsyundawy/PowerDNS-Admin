@@ -6,7 +6,28 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
 
 ## 🚀 Version 0.4.4-alsyundawy (2026-10-03)
 
-> Rilis pengerasan infrastruktur CI/CD & MegaLinter, audit kualitas kode 13 pilar, perbaikan bug logika truthy, kepatuhan POSIX shell scripting, dan penguatan parser templat Jinja2.
+> Rilis pengerasan infrastruktur CI/CD & MegaLinter, audit kualitas kode 13 pilar, remediasi kerentanan keamanan CodeQL (SSRF, Reflected XSS, DOM XSS), kepatuhan tipe Pyrefly & SonarLint, perbaikan bug logika truthy, kepatuhan POSIX shell scripting, dan penguatan parser templat Jinja2.
+
+### 🛡️ Pengerasan Keamanan & Remediasi CodeQL Scanning
+
+1. **Pencegahan Full Server-Side Request Forgery (SSRF)** (`powerdnsadmin/lib/helper.py`)
+   - Memvalidasi dan mengunci URL backend API PowerDNS secara ketat terhadap skema (`http`/`https`) dan netloc/host yang dikonfigurasi, mencegah manipulasi host atau protokol relatif (CodeQL Alert #59).
+   - Menghapus penggunaan `urljoin` yang rentan terhadap bypass path traversal/host injection, membersihkan awalan slash ganda (`//`), dan memvalidasi ulang kecocokan skema serta host tujuan sebelum eksekusi HTTP request.
+
+2. **Remediasi Reflected XSS pada Rute Proxy API** (`powerdnsadmin/routes/api.py` & `powerdnsadmin/lib/helper.py`)
+   - Mengimplementasikan `helper.make_forward_response(resp)` untuk memformat respons backend PowerDNS menjadi payload JSON eksplisit (`jsonify`) dengan mimetype `application/json`, mengeliminasi refleksi data mentah yang dapat dieksploitasi untuk XSS (CodeQL Alerts #50–#58).
+
+3. **Pengerasan DOM-based XSS pada Templat Utama** (`powerdnsadmin/templates/base.html` & `powerdnsadmin/templates/1base.html`)
+   - Menambahkan fungsi sanitasi URL `sanitizeUrl(v, fallback)` yang memvalidasi protokol redirect hanya mengizinkan `http:` dan `https:`, mencegah eksekusi skema berbahaya seperti `javascript:` saat redirect DOM (CodeQL Alerts #46–#49).
+
+4. **Kepatuhan Tipe Data, Pyrefly & SQLAlchemy 2.0 Mapping** (`powerdnsadmin/models/api_key.py` & `powerdnsadmin/routes/api.py`)
+   - Memperbaiki penanganan `NoneType` pada atribut role dan plain key.
+   - Mengoreksi pemanggilan relasi `.join(Domain)` pada query SQLAlchemy.
+   - Menambahkan deklarasi `__allow_unmapped__ = True` pada model `ApiKey` untuk mencegah error pemetaan deklaratif SQLAlchemy.
+
+5. **Aksesibilitas Web & Kepatuhan SonarLint** (`powerdnsadmin/templates/`)
+   - Menentukan properti transisi CSS yang eksplisit (`css:S9449`) pada `login.html` dan `register.html` guna mencegah efek animasi yang tidak diinginkan.
+   - Menambahkan atribut `lang="en"`, konfigurasi viewport yang mengizinkan zoom pengguna, role ARIA yang ramah pembaca layar, dan atribut teks alternatif (`alt`) pada gambar di `register_otp.html`.
 
 ### 🛡️ Pengerasan Infrastruktur CI/CD & MegaLinter
 
@@ -108,6 +129,13 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
    - **Konfigurasi Ignore Trunk**: Mengecualikan file lockfile (`package-lock.json`, `yarn.lock`) dari scanner kerentanan pihak ketiga pada `.trunk/trunk.yaml` sehingga hasil audit linter berstatus 100% bersih (`✔ No issues` pada 55 file termodifikasi).
    - **Resolusi Dependensi Proyek & Standarisasi Lingkungan**: Menambahkan tabel metadata PEP 621 `[project]` pada `pyproject.toml`, file templat `.env.example`, `.hadolint.yaml`, serta melengkapi seksi instruksi instalasi dan penggunaan pada `README.md`.
 
+### 📦 Pembaruan Dependensi
+
+- Pembaruan paket keamanan `werkzeug` dari `2.3.8` ke `3.1.9`.
+- Pembaruan `summernote`, `moment`, dan paket npm/yarn frontend terkait.
+
+---
+
 ## 🚀 Version 0.4.3-alsyundawy (2026-08-11)
 
 > Rilis pemeliharaan utama mencakup perbaikan bug, peningkatan keamanan, idempotensi migrasi database, desain ulang UI/UX halaman login & registrasi, serta kompatibilitas Python 3.12+/3.13 — berbasis `0.4.2-alsyundawy-fix`.
@@ -138,57 +166,58 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
    - `Role.get_id_by_name(name)` secara otomatis mendaftarkan role default (`User`, `Administrator`, `Operator`) jika tabel `role` masih kosong. Mencegah `AttributeError: 'NoneType' object has no attribute 'id'`.
 
 2. **Migrasi Database Idempoten & Auto-Stamp** (`migrations/env.py` & `versions/787bdba9e147_init_db.py`)
-   - `787bdba9e147_init_db.py` memeriksa keberadaan tabel sebelum mengeksekusi `CREATE TABLE account`.
-   - `migrations/env.py` men-stamp `alembic_version` ke revisi `head` (`d2e3f4a5b6c7`) secara otomatis jika skema database sudah ada, mengeliminasi error `table ... already exists`.
+   - Migrasi `787bdba9e147_init_db.py` memeriksa keberadaan tabel sebelum eksekusi `CREATE TABLE account`.
+   - `env.py` melakukan auto-stamp revisi alembic ke `head` (`d2e3f4a5b6c7`) apabila tabel sudah ada sebelumnya, menghindari kegagalan migrasi `Table ... already exists`.
 
 3. **Kompatibilitas Flask-Session 0.6+** (`powerdnsadmin/__init__.py` & `models/sessions.py`)
-   - `SESSION_SQLALCHEMY = models.db` diikat sebelum `Session(app)` diinisialisasi; model `Sessions` menggunakan `extend_existing = True`.
+   - Mengikat `SESSION_SQLALCHEMY = models.db` sebelum inisialisasi `Session(app)`.
+   - Menggunakan konfigurasi `extend_existing = True` pada model `Sessions`.
 
-### 🐛 Perbaikan Bug & Stabilitas UI
+### 🐛 Perbaikan Bug & Stabilitas Antarmuka
 
-1. **Perbaikan Redirect Autentikasi** (`routes/index.py`)
-   - `authenticate_user()` kini mengarahkan pengguna ke `dashboard.dashboard` setelah login berhasil.
+1. **Koreksi Pengalihan Halaman Login** (`routes/index.py`)
+   - `authenticate_user()` kini mengarahkan pengguna ke `dashboard.dashboard` secara konsisten saat login berhasil.
 
-2. **Validasi CAPTCHA Kondisional** (`routes/index.py`)
-   - Kondisi diubah menjadi `if CAPTCHA_ENABLE and not captcha.validate():` agar pendaftaran berhasil saat fitur CAPTCHA dinonaktifkan.
+2. **Validasi CAPTCHA Bersyarat** (`routes/index.py`)
+   - Form pendaftaran tidak lagi memvalidasi CAPTCHA jika konfigurasi `CAPTCHA_ENABLE = False`.
 
-3. **Context Processor Versi** (`powerdnsadmin/__init__.py` & `base.html`)
-   - `@app.context_processor` `inject_pdns_version` didaftarkan secara global untuk mencegah `TypeError: Object of type Undefined is not JSON serializable` pada seluruh sub-menu dashboard.
+3. **Context Processor Global** (`powerdnsadmin/__init__.py` & `base.html`)
+   - Mendaftarkan context processor `inject_pdns_version` di tingkat aplikasi, mencegah `TypeError` saat rendering sub-menu dashboard.
 
-4. **Identitas Footer Rilis** (`base.html` & `1base.html`)
-   - Footer diubah menjadi **Version 0.4.3 Modified By Alsyundawy**.
+4. **String Versi Footer** (`base.html` & `1base.html`)
+   - Memperbarui string versi footer menjadi **Version 0.4.3 Modified By Alsyundawy**.
 
-5. **Preservasi Custom Headers** (`lib/utils.py`)
-   - `fetch_remote` tidak lagi membuang header kustom dari pemanggil (contoh: `X-API-Key`).
+5. **Pelestarian Header Kustom** (`lib/utils.py`)
+   - `fetch_remote` tidak lagi menghapus header kustom dari pemanggil (misalnya `X-API-Key`).
 
-6. **Pemeriksaan Tipe Response Hapus DNSSEC** (`models/domain.py`)
-   - Guard `isinstance(jdata, dict)` ditambahkan pada respons `delete_dnssec_key`.
+6. **Penghapusan Kunci DNSSEC** (`models/domain.py`)
+   - Menambahkan guard `isinstance(jdata, dict)` pada respons `delete_dnssec_key` sebelum membaca kode status.
 
-7. **Kelas Karakter Kebijakan Password** (`routes/index.py`)
-   - Pemeriksaan kelas karakter diperbaiki menggunakan `ascii_lowercase`, `ascii_uppercase`, dan `punctuation`.
+7. **Pemeriksaan Karakter Kebijakan Kata Sandi** (`routes/index.py`)
+   - Mengoreksi penamaan kelas karakter string ke `ascii_lowercase`, `ascii_uppercase`, dan `punctuation`.
 
 ### 🎨 Desain Ulang UI/UX (login.html & register.html)
 
-1. **Desain Ulang Halaman Registrasi** (`register.html`)
-   - Tampilan modern dengan kartu glassmorphism, latar animasi gradien, indikator kekuatan password real-time, dan toggle tema gelap/terang.
-   - Penambahan label `sr-only` untuk semua kontrol form (aksesibilitas screen-reader) dan field honeypot anti-bot.
+1. **Desain Ulang Total Halaman Registrasi** (`register.html`)
+   - Layout modern bertema *glassmorphism* dengan latar belakang gradient teranimasi, pengukur kekuatan kata sandi real-time, tombol toggle tema gelap/terang, dan desain responsif.
+   - Penambahan label screen reader `sr-only` pada setiap input kontrol serta field anti-bot *honeypot*.
 
-2. **Duplikat Kontrol Form `auth_method`** (`login.html`)
-   - Menghapus `name="auth_method"` dari `<select>` dan semua hidden input Jinja2 kondisional. Diganti dengan satu `<input type="hidden" id="auth_method_hidden" name="auth_method">` yang disinkronkan via JS saat halaman dimuat dan pada event `change`.
+2. **Duplikasi Form Control `auth_method`** (`login.html`)
+   - Menghapus atribut `name="auth_method"` dari elemen `<select>` dan seluruh hidden input kondisional Jinja2; digantikan dengan elemen tunggal `<input type="hidden" id="auth_method_hidden" name="auth_method">` yang disinkronkan via JavaScript.
 
-3. **Kontras Teks Alert WCAG 2.1 AA** (`login.html` & `register.html`)
-   - Warna teks `.alert` diubah dari `#ff9999` / `#fca5a5` menjadi `#ffffff` dengan background `rgba(239,68,68,0.20)` untuk memenuhi rasio kontras ≥ 4.5:1.
+3. **Kontras Peringatan WCAG 2.1 AA** (`login.html` & `register.html`)
+   - Mengubah warna teks alert menjadi `#ffffff` dengan background `rgba(239,68,68,0.20)`, memenuhi rasio kontras ≥ 4.5:1.
 
-4. **Penanganan Exception `safeSrc()`** (`login.html` & `register.html`)
-   - `void urlErr;` ditambahkan di dalam blok `catch (urlErr)` pada fungsi `safeSrc()` agar exception yang ditangkap diakui secara eksplisit, memenuhi aturan linter _"Handle this exception or don't catch it at all"_.
+4. **Penanganan Eksepsi `safeSrc()`** (`login.html` & `register.html`)
+   - Menambahkan `void urlErr;` di dalam blok `catch (urlErr)` untuk memenuhi aturan SonarLint penanganan exception.
 
-### 🔧 Kualitas Kode, CI/CD & Pembaruan
+### 🔧 Kualitas Kode & CI/CD
 
 1. **Kompatibilitas Python 3.12+/3.13**
-   - Mengganti `distutils` yang sudah dihapus dengan helper lokal `version_tuple` dan `strtobool`.
-   - Mengganti `imghdr` yang sudah deprecated dengan deteksi berbasis magic-byte signature.
+   - Menghapus modul usang `distutils` dan menggantinya dengan fungsi utilitas `version_tuple`/`strtobool`.
+   - Mengganti modul `imghdr` dengan deteksi tipe gambar melalui magic bytes.
 
-2. **Jekyll GitHub Pages CI/CD**
+2. **CI/CD Jekyll GitHub Pages**
    - Menambahkan workflow `.github/workflows/jekyll-gh-pages.yml` untuk deployment otomatis situs dokumentasi ke GitHub Pages.
 
 3. **Pembenahan Linter**

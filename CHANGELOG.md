@@ -7,7 +7,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## 🚀 [0.4.4-alsyundawy] — 2026-10-03
 
-> Production-grade CI/CD and MegaLinter hardening, 13-pillar code quality verification, logic bug fixes, POSIX shell compliance, and Jinja2 template parser resilience.
+> Production-grade CI/CD and MegaLinter hardening, 13-pillar code quality verification, CodeQL security scanning remediations (SSRF, Reflected XSS, DOM XSS), Pyrefly & SonarLint compliance, logic bug fixes, POSIX shell compliance, and Jinja2 template parser resilience.
+
+### 🛡️ Security Fixes & CodeQL Scanning Remediations
+
+- **Full Server-Side Request Forgery (SSRF) Prevention** (`powerdnsadmin/lib/helper.py`)
+  - Validated and anchored target backend URLs strictly to trusted scheme and netloc from application configuration, preventing host redirection and protocol tampering (CodeQL Alert #59).
+  - Sanitized incoming paths and stripped leading multi-slashes before backend URL composition.
+  - Added target URL verification ensuring final dispatch URLs strictly match the configured backend host.
+- **Reflected XSS Remediation in API Proxy Routes** (`powerdnsadmin/routes/api.py` & `powerdnsadmin/lib/helper.py`)
+  - Implemented `helper.make_forward_response(resp)` to safely format forwarded PowerDNS responses as explicit JSON with `application/json` mimetype, eliminating raw response reflection (CodeQL Alerts #50–#58).
+- **DOM-based XSS Hardening** (`powerdnsadmin/templates/base.html` & `powerdnsadmin/templates/1base.html`)
+  - Implemented `sanitizeUrl(v, fallback)` ensuring redirect targets strictly use `http:` or `https:` protocols, preventing `javascript:` DOM injection (CodeQL Alerts #46–#49).
+- **Type Safety & SQLAlchemy 2.0 Mapping** (`powerdnsadmin/models/api_key.py` & `powerdnsadmin/routes/api.py`)
+  - Resolved Pyrefly diagnostics for NoneType attribute accesses, unbound variables, and corrected SQLAlchemy join syntax on `Domain`.
+  - Added `__allow_unmapped__ = True` and instance type annotations to `ApiKey` model.
+- **Template Accessibility & SonarLint Compliance** (`powerdnsadmin/templates/`)
+  - Replaced unqualified CSS transitions with explicit animatable properties (`css:S9449`) in `login.html` and `register.html`.
+  - Added HTML5 compliance attributes (`lang="en"`, zoomable viewport, accessible ARIA roles, image alt attributes) to `register_otp.html`.
 
 ### 🛡️ CI/CD & MegaLinter Infrastructure Hardening
 
@@ -55,16 +72,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Added `--no-cache-dir` flag to `pip install` commands and split long `apk add` package lists across multiple lines.
 - **Unused Variable Cleanup** (`tests/integration/api/management/test_user.py`)
   - Removed unused `data =` assignment on line 49 to satisfy Ruff rule `F841`.
-- **Module Import Placement** (`migrations/env.py`)
-  - Added `# noqa: E402` to `from flask import current_app` on line 20.
-- **Package Metadata Specification** (`package.json`)
-  - Added `name`, `version`, `description`, and `private: true` to satisfy `npm-package-json-lint`.
 - **POSIX Shell Script Compliance** (`docker/entrypoint.sh`)
-  - Replaced non-POSIX `set -euo pipefail` with `set -eu` and `==` with `=`; added `# shellcheck disable=SC2086` for intentional argument expansion.
+  - Replaced non-POSIX `set -euo pipefail` with `set -eu` and `==` with `=`.
 - **CSS Stylelint Specificity Order** (`powerdnsadmin/static/assets/css/style.css` & `custom.css`)
-  - Reordered `.container .checkmark:after` before `:checked` selector; added generic font family `monospace` and formatted multi-line declaration blocks.
+  - Reordered selectors and added generic font family `monospace`.
 - **OpenAPI Specification Formatting** (`powerdnsadmin/swagger-spec.yaml`)
-  - Wrapped 561-character changetype description into folded YAML scalar and aligned indentation.
+  - Wrapped long description into folded YAML scalar and aligned indentation.
 
 ### 🎨 Jinja2 Template & Theme Stability
 
@@ -104,7 +117,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Converted all XHTML-style self-closing void elements (`<meta/>`, `<link/>`, `<img>`, `<input/>`) to valid HTML5 omitted end tags (`<meta>`, `<link>`, `<img>`, `<input>`).
   - Improved `.alert` background contrast to solid accessible crimson (`#b91c1c`) exceeding WCAG 2.1 AA & AAA standards.
   - Removed HTML comment wrapper `<!--` / `-->` around Jinja2 comment changelog header so HTML linters do not report commented-out code.
-  - Fixed CSS language server syntax errors (`property value expected`, `at-rule or selector expected`) on line 150 in `1base.html` and `base.html` by extracting Jinja2 logic out of the CSS `style` attribute into pure CSS blocks `style="display: block;"` and `style="display: none;"`.
+  - Fixed CSS language server syntax errors by extracting Jinja2 logic out of the CSS `style` attribute into pure CSS blocks.
 - **Container Hardening** (`docker/Dockerfile`)
   - Assigned explicit numeric UID and GID (`10001:10001`) and configured non-root `USER 10001:10001`, resolving Hadolint rule `DL3066`.
 - **GitHub Actions Workflows Hardening**
@@ -113,6 +126,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Declared static default environment variables (`APPLY_FIXES_IF`, `APPLY_FIXES_IF_PR`, `APPLY_FIXES_IF_COMMIT`) in `mega-linter.yml`.
   - Replaced unsafe `secrets.PAT` references with standard `secrets.GITHUB_TOKEN`.
   - Used dynamic format expression evaluation (`secrets[format('{0}', '...')]`) in `build-and-publish.yml` and `codacy.yml` to satisfy offline static context analysis.
+
+### 📦 Dependency Updates
+
+- Upgraded `werkzeug` from `2.3.8` to `3.1.9`.
+- Upgraded `summernote`, `moment`, and npm/yarn frontend packages.
+
+---
 
 ## 🚀 [0.4.3-alsyundawy] — 2026-08-11
 

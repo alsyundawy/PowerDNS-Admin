@@ -1,5 +1,5 @@
 import requests
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urlsplit
 from flask import Response, current_app, jsonify, request
 
 from ..models import Setting
@@ -28,20 +28,37 @@ def forward_request():
         'X-API-KEY': pdns_api_key
     }
 
-    # Build a safe relative path from the incoming request path and query string
-    parsed_path = urlsplit(request.path)
-    if parsed_path.scheme or parsed_path.netloc:
-        return Response(response='{"error":"invalid request path"}',
-                        status=400,
+    # Validate and sanitize the target backend URL against SSRF
+    base_parsed = urlsplit(pdns_api_url or "")
+    if base_parsed.scheme not in ("http", "https") or not base_parsed.netloc:
+        return Response(response='{"error":"invalid backend API configuration"}',
+                        status=500,
                         mimetype="application/json")
 
-    safe_path = request.path.lstrip("/")
-    relative_path = safe_path
+    # Sanitize incoming path to prevent protocol-relative host redirection
+    req_path = request.path
+    if not req_path.startswith('/'):
+        req_path = '/' + req_path
+    while req_path.startswith('//'):
+        req_path = req_path[1:]
+
+    base_prefix = base_parsed.path.rstrip('/')
+    clean_path = req_path.lstrip('/')
+    target_path = f"{base_prefix}/{clean_path}" if base_prefix else f"/{clean_path}"
+
+    query_str = ""
     if request.query_string:
         # request.query_string is bytes; decode safely to str
-        relative_path = relative_path + "?" + request.query_string.decode("utf-8", "ignore")
+        query_str = "?" + request.query_string.decode("utf-8", "ignore")
 
-    url = urljoin(pdns_api_url.rstrip("/") + "/", relative_path)
+    url = f"{base_parsed.scheme}://{base_parsed.netloc}{target_path}{query_str}"
+
+    # Verify that the target URL strictly matches the trusted backend scheme and host
+    parsed_target = urlsplit(url)
+    if parsed_target.scheme != base_parsed.scheme or parsed_target.netloc != base_parsed.netloc:
+        return Response(response='{"error":"invalid request target"}',
+                        status=400,
+                        mimetype="application/json")
 
     resp = requests.request(request.method,
                             url,
@@ -53,6 +70,8 @@ def forward_request():
 
 
 def make_forward_response(resp):
+    if isinstance(resp, Response):
+        return resp
     if resp.status_code == 204 or not resp.content:
         return "", resp.status_code
     try:
