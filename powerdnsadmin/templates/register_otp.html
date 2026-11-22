@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Welcome - {{ SITE_NAME }}</title>
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
     <!-- Tell the browser to be responsive to screen width -->
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     {% assets "css_login" -%}
         <link rel="stylesheet" href="{{ ASSET_URL }}">
     {%- endassets %}
@@ -22,49 +22,51 @@
     <div class="register-box-body">
         {% if error %}
             <div class="alert alert-danger alert-dismissible">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
                 {{ error }}
             </div>
         {% endif %}
-        Welcome, {{ user.firstname }}! <br/>
-        You will need a Token on login. <br/>
+        Welcome, {{ user.firstname }}! <br>
+        You will need a Token on login. <br>
         Your QR code is:
         <div id="token_information">
             {% if qrcode_image == None %}
-                <p><img id="qrcode" src="{{ url_for('user.qrcode') }}"></p>
+                <p><img id="qrcode" src="{{ url_for('user.qrcode') }}" alt="OTP QR Code"></p>
             {% else %}
-                <p><img id="qrcode" src="data:image/svg+xml;utf8;base64, {{ qrcode_image }}"></p>
+                <p><img id="qrcode" src="data:image/svg+xml;utf8;base64, {{ qrcode_image }}" alt="OTP QR Code"></p>
             {% endif %}
-            <p>
-                Your secret key is: <br/>
+            <p>Your secret key is:</p>
             <form>
-                <input type=text id="otp_secret" value={{ user.otp_secret }} readonly>
-                <button type=button style="position:relative; right:28px" onclick="copy_otp_secret_to_clipboard()"><i
-                    class="fa fa-clipboard"></i></button>
-                <br/><font color="red" id="copy_tooltip" style="visibility:collapse">Copied.</font>
+                <label for="otp_secret" class="sr-only">OTP Secret Key</label>
+                <input type="text" id="otp_secret" value="{{ user.otp_secret }}" readonly aria-label="OTP Secret Key">
+                <button type="button" aria-label="Copy secret key to clipboard" style="position:relative; right:28px" onclick="copy_otp_secret_to_clipboard()"><i
+                    class="fa fa-clipboard" aria-hidden="true"></i></button>
+                <br><span id="copy_tooltip" style="color: red; visibility: collapse;">Copied.</span>
             </form>
+            <p>
+            You can use Google Authenticator (<a target="_blank" rel="noopener noreferrer"
+                                                 href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Google Authenticator for Android</a>
+            - <a target="_blank" rel="noopener noreferrer"
+                 href="https://apps.apple.com/us/app/google-authenticator/id388497605">Google Authenticator for iOS</a>)
+            <br>
+            or FreeOTP (<a target="_blank" rel="noopener noreferrer"
+                           href="https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp&amp;hl=en">FreeOTP for Android</a>
+            - <a target="_blank" rel="noopener noreferrer"
+                 href="https://itunes.apple.com/en/app/freeotp-authenticator/id872559395?mt=8">FreeOTP for iOS</a>)
+            on your smartphone <br> to scan the QR code or type the secret key.
             </p>
-            You can use Google Authenticator (<a target="_blank"
-                                                 href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a>
-            - <a target="_blank"
-                 href="https://apps.apple.com/us/app/google-authenticator/id388497605">iOS</a>)
-            <br/>
-            or FreeOTP (<a target="_blank"
-                           href="https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp&hl=en">Android</a>
-            - <a target="_blank"
-                 href="https://itunes.apple.com/en/app/freeotp-authenticator/id872559395?mt=8">iOS</a>)
-            on your smartphone <br/> to scan the QR code or type the secret key.
-            <br/> <br/>
-            <font color="red"><strong><i>Make sure only you can see this QR Code <br/>
-                and secret key, and nobody can capture them.</i></strong></font>
+            <p style="color: red;"><strong><em>Make sure only you can see this QR Code <br>
+                and secret key, and nobody can capture them.</em></strong></p>
         </div>
-        </br>
-        Please input your OTP token to continue, to ensure the seed has been scanned correctly.
+        <p>Please input your OTP token to continue, to ensure the seed has been scanned correctly.</p>
         <form action="" method="post" data-toggle="validator">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
-                <input type="text" class="form-control" placeholder="OTP Token" name="otptoken"
-                       data-error="Please input your OTP token" required>
+                <label for="otptoken" class="sr-only">OTP Token</label>
+                <input type="text" id="otptoken" class="form-control" placeholder="OTP Token" name="otptoken"
+                       data-error="Please input your OTP token" required aria-label="OTP Token">
             </div>
             <div class="row">
                 <div class="col-xs-4">
@@ -75,15 +77,15 @@
     </div>
     <!-- /.register-box-body -->
     <div class="text-center">
-        <p>Powered by <a href="https://powerdnsadmin.org" target="_blank">PowerDNS-Admin</a></p>
+        <p>Powered by <a href="https://powerdnsadmin.org" target="_blank" rel="noopener noreferrer">PowerDNS-Admin</a></p>
     </div>
 </div>
 <!-- /.register-box -->
-</body>
 {% assets "js_login" -%}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
 {%- endassets %}
 {% assets "js_validation" -%}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
 {%- endassets %}
+</body>
 </html>

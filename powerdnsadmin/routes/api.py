@@ -113,7 +113,7 @@ def get_user_apikeys(domain_name=None):
     info = []
     apikey_query = (
         db.session.query(ApiKey)
-        .join(Domain.apikeys)
+        .join(Domain)
         .outerjoin(DomainUser, Domain.id == DomainUser.domain_id)
         .outerjoin(Account, Domain.account_id == Account.id)
         .outerjoin(AccountUser, Account.id == AccountUser.account_id)
@@ -458,7 +458,7 @@ def api_generate_apikey():
         current_app.logger.error("Error: {0}".format(e))
         raise ApiKeyCreateFail(message="Api key create failed") from e
 
-    apikey.plain_key = b64encode(apikey.plain_key.encode("utf-8")).decode("utf-8")
+    setattr(apikey, "plain_key", b64encode(apikey.plain_key.encode("utf-8")).decode("utf-8"))
     return jsonify(apikey_plain_schema.dump(apikey)), 201
 
 
@@ -606,9 +606,12 @@ def api_update_apikey(apikey_id):
 
     current_app.logger.debug("Updating apikey with id {0}".format(apikey_id))
 
+    target_domains = [item.name for item in apikey.domains] if apikey.domains else []
+    target_accounts = [item.name for item in apikey.accounts] if apikey.accounts else []
+
     if target_role == "User":
-        current_domains = [item.name for item in apikey.domains]
-        current_accounts = [item.name for item in apikey.accounts]
+        current_domains = list(target_domains)
+        current_accounts = list(target_accounts)
 
         if domains is not None:
             domain_obj_list = Domain.query.filter(Domain.name.in_(domains)).all()
@@ -759,6 +762,9 @@ def api_create_user():
         current_app.logger.debug("Invalid role {}/{}".format(role_name, role_id))
         abort(400)
     role = db.session.get(Role, role_id)
+    if not role:
+        current_app.logger.debug("Role not found for id {}".format(role_id))
+        abort(400)
     authorization_error = user_update_authorization_error(
         current_user,
         requested_role_name=role.name,
@@ -1108,7 +1114,7 @@ def api_remove_account_user(account_id, user_id):
 @csrf.exempt
 def api_zone_cryptokeys(server_id, zone_id):
     resp = helper.forward_request()
-    return resp.content, resp.status_code, resp.headers.items()
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route(
@@ -1121,7 +1127,7 @@ def api_zone_cryptokeys(server_id, zone_id):
 @csrf.exempt
 def api_zone_cryptokey(server_id, zone_id, cryptokey_id):
     resp = helper.forward_request()
-    return resp.content, resp.status_code, resp.headers.items()
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route(
@@ -1133,7 +1139,7 @@ def api_zone_cryptokey(server_id, zone_id, cryptokey_id):
 @csrf.exempt
 def api_zone_subpath_forward(server_id, zone_id, subpath):
     resp = helper.forward_request()
-    return resp.content, resp.status_code, resp.headers.items()
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route("/servers/<string:server_id>/zones/<string:zone_id>", methods=["GET", "PUT", "PATCH", "DELETE"])
@@ -1187,7 +1193,7 @@ def api_zone_forward(server_id, zone_id):
                     domain_id=Domain().get_id_by_name(zone_id.rstrip(".")),
                 )
                 history.add()
-    return resp.content, resp.status_code, resp.headers.items()
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route("/servers/<path:subpath>", methods=["GET", "PUT"])
@@ -1196,7 +1202,7 @@ def api_zone_forward(server_id, zone_id):
 @csrf.exempt
 def api_server_sub_forward(subpath):
     resp = helper.forward_request()
-    return resp.content, resp.status_code, resp.headers.items()
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route("/servers/<string:server_id>/zones", methods=["POST"])
@@ -1227,7 +1233,7 @@ def api_create_zone(server_id):
         )
         history.add()
 
-    return resp.content, resp.status_code, resp.headers.items()
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route("/servers/<string:server_id>/zones", methods=["GET"])
@@ -1247,14 +1253,10 @@ def api_get_zones(server_id):
             accounts_domains = [d.name for a in g.apikey.accounts for d in a.domains]
             allowed_domains = set(domain_list + accounts_domains)
             current_app.logger.debug("Account zones: {}".format("/".join(accounts_domains)))
-            content = json.dumps([i for i in json.loads(resp.content) if i["name"].rstrip(".") in allowed_domains])
-            response = make_response(content, resp.status_code)
-            response.headers["Content-Type"] = "application/json"
-            return response
+            filtered_zones = [i for i in json.loads(resp.content) if i["name"].rstrip(".") in allowed_domains]
+            return jsonify(filtered_zones), resp.status_code
         else:
-            response = make_response(resp.content, resp.status_code)
-            response.headers["Content-Type"] = "application/json"
-            return response
+            return helper.make_forward_response(resp)
 
 
 @api_bp.route("/servers", methods=["GET"])
@@ -1262,9 +1264,7 @@ def api_get_zones(server_id):
 @apikey_is_admin
 def api_server_forward():
     resp = helper.forward_request()
-    response = make_response(resp.content, resp.status_code)
-    response.headers["Content-Type"] = "application/json"
-    return response
+    return helper.make_forward_response(resp)
 
 
 @api_bp.route("/servers/<string:server_id>", methods=["GET"])
@@ -1272,9 +1272,7 @@ def api_server_forward():
 @apikey_is_admin
 def api_server_config_forward(server_id):
     resp = helper.forward_request()
-    response = make_response(resp.content, resp.status_code)
-    response.headers["Content-Type"] = "application/json"
-    return response
+    return helper.make_forward_response(resp)
 
 
 # The endpoint to synchronize Domains in background

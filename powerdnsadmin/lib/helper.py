@@ -1,6 +1,6 @@
 import requests
 from urllib.parse import urljoin
-from flask import request, current_app
+from flask import Response, current_app, jsonify, request
 
 from ..models import Setting
 
@@ -43,3 +43,13 @@ def forward_request():
                             json=data)
 
     return resp
+
+
+def make_forward_response(resp):
+    if resp.status_code == 204 or not resp.content:
+        return "", resp.status_code
+    try:
+        data = resp.json()
+        return jsonify(data), resp.status_code
+    except Exception:
+        return Response(response=resp.content, status=resp.status_code, mimetype="application/json")

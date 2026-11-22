@@ -243,11 +243,20 @@
     {% if SETTING.get('warn_session_timeout') and current_user.is_authenticated %}
     <script>
         (function () {
+            function sanitizeUrl(v, fallback) {
+                if (typeof v !== 'string' || !v) return fallback || '/logout';
+                try {
+                    var u = new URL(v, window.location.href);
+                    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+                } catch (e) {}
+                return fallback || '/logout';
+            }
+
             const sessionConfig = JSON.parse(document.getElementById('pda-session-config').textContent || '{}');
             const sessionTimeoutSec = Number(sessionConfig.session_timeout_sec || 7200);
-            const pingUrl = sessionConfig.ping_url || '/ping';
-            const logoutUrl = sessionConfig.logout_url || '/logout';
-            const loginUrl = sessionConfig.login_url || '/login';
+            const pingUrl = sanitizeUrl(sessionConfig.ping_url, '/ping');
+            const logoutUrl = sanitizeUrl(sessionConfig.logout_url, '/logout');
+            const loginUrl = sanitizeUrl(sessionConfig.login_url, '/login');
 
             // close the session warning popup when receive a broadcast message
             var bc = new BroadcastChannel('powerdnsadmin');
@@ -271,7 +280,7 @@
 
             // Sign Out button click event
             $(document.body).on("click", ".button_sign_out", function () {
-                window.location.replace(logoutUrl);
+                window.location.replace(sanitizeUrl(logoutUrl, '/logout'));
             });
 
             // Things happen when session warning popup shown
@@ -315,7 +324,7 @@
                     },
 
                     onTimeout: function () {
-                        window.location.replace(logoutUrl);
+                        window.location.replace(sanitizeUrl(logoutUrl, '/logout'));
                     },
 
                     onPriorCallback: function () {

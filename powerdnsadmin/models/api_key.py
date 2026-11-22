@@ -10,6 +10,7 @@ from ..models.account import Account
 
 class ApiKey(db.Model):
     __tablename__ = "apikey"
+    __allow_unmapped__ = True
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(255), unique=True, nullable=False)
     description = db.Column(db.String(255))
@@ -21,6 +22,8 @@ class ApiKey(db.Model):
     accounts = db.relationship("Account",
                                secondary="apikey_account",
                                back_populates="apikeys")
+    plain_key: str = ""
+    plain_text_password: str | None = None
 
     def __init__(self, key=None, desc=None, role_name=None, domains=None, accounts=None):
         self.id = None
@@ -28,19 +31,23 @@ class ApiKey(db.Model):
         self.role_name = role_name
         self.domains[:] = domains if domains is not None else []
         self.accounts[:] = accounts if accounts is not None else []
+        self.plain_text_password = None
         if not key:
             rand_key = ''.join(
                 secrets.choice(string.ascii_letters + string.digits)
                 for _ in range(15))
             self.plain_key = rand_key
-            self.key = self.get_hashed_password(rand_key).decode('utf-8')
+            hashed = self.get_hashed_password(rand_key)
+            self.key = hashed.decode('utf-8') if hashed else ""
             current_app.logger.debug("Hashed key: {0}".format(self.key))
         else:
             self.key = key
 
     def create(self):
         try:
-            self.role = Role.query.filter(Role.name == self.role_name).first()
+            role = Role.query.filter(Role.name == self.role_name).first()
+            if role is not None:
+                self.role = role
             db.session.add(self)
             db.session.commit()
         except Exception as e:
@@ -62,7 +69,8 @@ class ApiKey(db.Model):
         try:
           if role_name:
               role = Role.query.filter(Role.name == role_name).first()
-              self.role_id = role.id
+              if role is not None:
+                  self.role_id = role.id
 
           if description:
               self.description = description
@@ -89,13 +97,13 @@ class ApiKey(db.Model):
     def get_hashed_password(self, plain_text_password=None):
         # Hash a password for the first time
         #   (Using bcrypt, the salt is saved into the hash itself)
-        if plain_text_password is None:
-            return plain_text_password
-
-        if plain_text_password:
+        if plain_text_password is not None:
             pw = plain_text_password
         else:
             pw = self.plain_text_password
+
+        if not pw:
+            return None
 
         # The salt value is currently re-used here intentionally because
         # the implementation relies on just the API key's value itself
@@ -106,8 +114,8 @@ class ApiKey(db.Model):
         # cryptographically secure fashion, as this then makes
         # expendable as an exception the otherwise vital protection of
         # proper salting as provided by bcrypt.gensalt().
-        return bcrypt.hashpw(pw.encode('utf-8'),
-                             current_app.config.get('SALT').encode('utf-8'))
+        salt = current_app.config.get('SALT') or '$2b$12$yLUMTIfl21FKJQpTkRQXCu'
+        return bcrypt.hashpw(pw.encode('utf-8'), salt.encode('utf-8'))
 
     def check_password(self, hashed_password):
         # Check hashed password. Using bcrypt,
@@ -122,7 +130,13 @@ class ApiKey(db.Model):
         Validate user credential
         """
         if method == 'LOCAL':
+            if not self.plain_text_password:
+                raise Exception("Unauthorized")
+
             passw_hash = self.get_hashed_password(self.plain_text_password)
+            if not passw_hash:
+                raise Exception("Unauthorized")
+
             apikey = ApiKey.query \
                            .filter(ApiKey.key == passw_hash.decode('utf-8')) \
                            .first()
