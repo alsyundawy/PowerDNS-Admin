@@ -1,3 +1,4 @@
+import json
 import requests
 from urllib.parse import urlsplit
 from flask import Response, current_app, jsonify, request
@@ -75,7 +76,9 @@ def make_forward_response(resp):
     if resp.status_code == 204 or not resp.content:
         return "", resp.status_code
     try:
-        data = resp.json()
+        content_str = resp.content.decode("utf-8") if isinstance(resp.content, bytes) else str(resp.content)
+        data = json.loads(content_str)
         return jsonify(data), resp.status_code
     except Exception:
-        return Response(response=resp.content, status=resp.status_code, mimetype="application/json")
+        content_str = resp.content.decode("utf-8", "replace") if isinstance(resp.content, bytes) else str(resp.content)
+        return Response(response=content_str, status=resp.status_code, mimetype="application/json")
