@@ -1,5 +1,5 @@
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from flask import Response, current_app, jsonify, request
 
 from ..models import Setting
@@ -28,13 +28,20 @@ def forward_request():
         'X-API-KEY': pdns_api_key
     }
 
-    # Build a relative path from the incoming request path and query string
-    relative_path = request.path
+    # Build a safe relative path from the incoming request path and query string
+    parsed_path = urlsplit(request.path)
+    if parsed_path.scheme or parsed_path.netloc:
+        return Response(response='{"error":"invalid request path"}',
+                        status=400,
+                        mimetype="application/json")
+
+    safe_path = request.path.lstrip("/")
+    relative_path = safe_path
     if request.query_string:
         # request.query_string is bytes; decode safely to str
         relative_path = relative_path + "?" + request.query_string.decode("utf-8", "ignore")
 
-    url = urljoin(pdns_api_url, relative_path)
+    url = urljoin(pdns_api_url.rstrip("/") + "/", relative_path)
 
     resp = requests.request(request.method,
                             url,
