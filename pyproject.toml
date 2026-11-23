@@ -7,8 +7,8 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Alsyundawy" }]
 dependencies = [
-    "flask>=3.0.0",
-    "flask-sqlalchemy>=3.1.1",
+    "flask>=2.2.5",
+    "flask-sqlalchemy>=2.5.1",
     "sqlalchemy>=1.4.0",
 ]
 

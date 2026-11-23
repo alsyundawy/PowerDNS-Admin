@@ -61,9 +61,12 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
 1. **Penguncian Batas Runtime Sistem Operasi & Bahasa**
    - Menegakkan dan menguji kompatibilitas penuh secara ketat pada ekosistem: Python maksimum 3.10, Node.js 22 LTS, Debian 11 (Bullseye), dan Ubuntu 22.04 (Jammy).
 
-2. **Pembaruan Versi Rilis & Paritas Templat**
-   - Memperbarui versi ke `0.4.5` pada `VERSION`, `pyproject.toml` (`0.4.5-alsyundawy`), serta string versi footer pada templat utama `powerdnsadmin/templates/base.html` dan `powerdnsadmin/templates/1base.html`.
+2. **Pembaruan Versi Rilis, Sinkronisasi Manifest & Perbaikan Deployment**
+   - Memperbarui versi ke `0.4.5` pada `VERSION`, `pyproject.toml` (`0.4.5-alsyundawy`), `package.json` (`0.4.5-alsyundawy`), serta string versi footer pada templat utama `powerdnsadmin/templates/base.html` dan `powerdnsadmin/templates/1base.html`.
    - Menjamin 100% sinkronisasi dan identitas hash MD5 (`310bfeef309b57067af0b00546c42c47`) antara `base.html` dan `1base.html`.
+   - Mengoreksi pola vendoring `.gitattributes` mengarah ke `powerdnsadmin/static/*` agar GitHub Linguist mengenali aset pihak ketiga secara presisi.
+   - Memperbaiki bug logika counter retry pada `docker-test/wait-for-pdns.sh` (`LOOPS=0` dengan increment dinamis) sehingga polling backend berjalan hingga 10 siklus penuh.
+   - Menyelaraskan namespace manifest Kubernetes `service.yml` dengan `deployment.yml`, serta menonaktifkan `SQLALCHEMY_TRACK_MODIFICATIONS` di `configs/development.py` untuk mengeliminasi pemborosan alokasi memori.
 
 ---
 

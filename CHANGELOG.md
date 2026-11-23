@@ -55,9 +55,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Target OS & Language Runtime Anchoring**
   - Confirmed and verified runtime matrix strictly for Python max 3.10, Node.js 22 LTS, Debian 11 (Bullseye), and Ubuntu 22.04 (Jammy).
-- **Version Bump**
-  - Bumped version to `0.4.5` in `VERSION`, `pyproject.toml` (`0.4.5-alsyundawy`), and footer version strings in `base.html` and `1base.html`.
+- **Version Bump & Manifest Synchronization**
+  - Bumped version to `0.4.5` in `VERSION`, `pyproject.toml` (`0.4.5-alsyundawy`), `package.json` (`0.4.5-alsyundawy`), and footer version strings in `base.html` and `1base.html`.
   - Maintained 100% template parity and identical MD5 hashes (`310bfeef309b57067af0b00546c42c47`) between `base.html` and `1base.html`.
+  - Fixed Linguist static asset vendoring in `.gitattributes` targeting `powerdnsadmin/static/*`.
+  - Resolved `wait-for-pdns.sh` loop logic defect ensuring full 10-cycle retries on startup.
+  - Aligned Kubernetes Service manifest namespace and optimized development database memory overhead (`SQLALCHEMY_TRACK_MODIFICATIONS = False`).
 
 ---
 

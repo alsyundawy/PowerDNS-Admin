@@ -1,6 +1,6 @@
 {
   "name": "powerdns-admin",
-  "version": "0.4.4-alsyundawy",
+  "version": "0.4.5-alsyundawy",
   "description": "A PowerDNS web interface with advanced features",
   "private": true,
   "dependencies": {
