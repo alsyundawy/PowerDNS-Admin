@@ -36,7 +36,7 @@ def google_oauth():
 
     google = authlib_oauth_client.register("google", **authlib_params)
 
-    @current_app.route("/google/authorized")
+    @current_app.route("/google/authorized", methods=["GET"])
     def google_authorized():
         use_ssl = current_app.config.get("SERVER_EXTERNAL_SSL")
         params = {"_external": True}

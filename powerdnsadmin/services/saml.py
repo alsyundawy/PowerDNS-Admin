@@ -12,12 +12,16 @@ from ..lib.utils import urlparse
 class SAML(object):
     def __init__(self):
         if current_app.config["SAML_ENABLED"]:
-            from onelogin.saml2.auth import OneLogin_Saml2_Auth
-            from onelogin.saml2.idp_metadata_parser import (
+            from onelogin.saml2.auth import (
+                OneLogin_Saml2_Auth,  # type: ignore[import-not-found]
+            )
+            from onelogin.saml2.idp_metadata_parser import (  # type: ignore[import-not-found]
                 OneLogin_Saml2_IdPMetadataParser,
             )
 
             self.idp_timestamp = datetime.now()
+            self.onelogin_saml2_auth = OneLogin_Saml2_Auth
+            self.onelogin_saml2_idp_metadata_parser = OneLogin_Saml2_IdPMetadataParser
             self.OneLogin_Saml2_Auth = OneLogin_Saml2_Auth
             self.OneLogin_Saml2_IdPMetadataParser = OneLogin_Saml2_IdPMetadataParser
             self.idp_data = None

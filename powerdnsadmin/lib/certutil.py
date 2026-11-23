@@ -42,14 +42,15 @@ def create_self_signed_cert():
         ]
     )
 
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.utcnow())
-        .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=10 * 365))
+        .not_valid_before(now_utc)
+        .not_valid_after(now_utc + datetime.timedelta(days=10 * 365))
         .sign(key, hashes.SHA256())
     )
 

@@ -1,5 +1,4 @@
-This discribes how to debug the buildprocess 
-
+This discribes how to debug the buildprocess
 
 docker-compose.yml
 
@@ -33,7 +32,7 @@ Create a git folder in the location of the `docker-compose.yml` and clone the re
 
 ```
 mkdir git
-cd git 
+cd git
 git clone https://github.com/PowerDNS-Admin/PowerDNS-Admin.git .
 ```
 

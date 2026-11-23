@@ -1,7 +1,6 @@
 import datetime
 import json
 import re
-import traceback
 
 import dns.name
 import dns.reversename
@@ -136,7 +135,7 @@ def domain(domain_name):
         # Unsupported version
         abort(500)
 
-    if not re.search(r"ip6\.arpa|in-addr\.arpa$", domain_name):
+    if not re.search(r"(?:ip6|in-addr)\.arpa$", domain_name):
         editable_records = forward_records_allow_to_edit
     else:
         editable_records = reverse_records_allow_to_edit
@@ -337,8 +336,7 @@ def add():
             try:
                 domain_name = to_idna(domain_name, "encode")
             except Exception:
-                current_app.logger.error("Cannot encode the zone name {}".format(domain_name))
-                current_app.logger.debug(traceback.format_exc())
+                current_app.logger.exception("Cannot encode the zone name {}".format(domain_name))
                 return render_template("errors/400.html", msg="Please enter a valid zone name"), 400
 
             if domain_type == "slave":
@@ -450,9 +448,8 @@ def add():
                 return redirect(url_for("dashboard.dashboard"))
             else:
                 return render_template("errors/400.html", msg=result["msg"]), 400
-        except Exception as e:
-            current_app.logger.error("Cannot add zone. Error: {0}".format(e))
-            current_app.logger.debug(traceback.format_exc())
+        except Exception:
+            current_app.logger.exception("Cannot add zone")
             abort(500)
 
     # Get
@@ -674,9 +671,8 @@ def record_apply(domain_name):
             )
             history.add()
             return make_response(jsonify(result), 400)
-    except Exception as e:
-        current_app.logger.error("Cannot apply record changes. Error: {0}".format(e))
-        current_app.logger.debug(traceback.format_exc())
+    except Exception:
+        current_app.logger.exception("Cannot apply record changes")
         return make_response(jsonify({"status": "error", "msg": "Error when applying new changes"}), 500)
 
 
@@ -691,16 +687,15 @@ def record_update(domain_name):
     try:
         jdata = request.json
 
-        domain_name = jdata["domain"]
+        req_domain_name = jdata.get("domain", domain_name) if jdata else domain_name
         d = Domain()
-        result = d.update_from_master(domain_name)
+        result = d.update_from_master(req_domain_name)
         if result["status"] == "ok":
             return make_response(jsonify({"status": "ok", "msg": result["msg"]}), 200)
         else:
             return make_response(jsonify({"status": "error", "msg": result["msg"]}), 500)
-    except Exception as e:
-        current_app.logger.error("Cannot update record. Error: {0}".format(e))
-        current_app.logger.debug(traceback.format_exc())
+    except Exception:
+        current_app.logger.exception("Cannot update record")
         return make_response(jsonify({"status": "error", "msg": "Error when applying new changes"}), 500)
 
 
@@ -736,8 +731,8 @@ def dnssec_enable(domain_name):
         domain_object.dnssec = 1
         try:
             db.session.commit()
-        except Exception as e:
-            current_app.logger.error("Cannot update DNSSEC state for zone {0}. DETAIL: {1}".format(domain_name, e))
+        except Exception:
+            current_app.logger.exception("Cannot update DNSSEC state for zone {0}".format(domain_name))
             db.session.rollback()
     history = History(
         msg="DNSSEC was enabled for zone " + domain_name, created_by=current_user.username, domain_id=domain_object.id
@@ -773,8 +768,8 @@ def dnssec_disable(domain_name):
         domain_object.dnssec = 0
         try:
             db.session.commit()
-        except Exception as e:
-            current_app.logger.error("Cannot update DNSSEC state for zone {0}. DETAIL: {1}".format(domain_name, e))
+        except Exception:
+            current_app.logger.exception("Cannot update DNSSEC state for zone {0}".format(domain_name))
             db.session.rollback()
 
     history = History(
@@ -837,9 +832,8 @@ def admin_setdomainsetting(domain_name):
                         return make_response(jsonify({"status": "error", "msg": "Unable to create new setting."}))
             else:
                 return make_response(jsonify({"status": "error", "msg": "Action not supported."}), 400)
-        except Exception as e:
-            current_app.logger.error("Cannot change zone setting. Error: {0}".format(e))
-            current_app.logger.debug(traceback.format_exc())
+        except Exception:
+            current_app.logger.exception("Cannot change zone setting")
             return make_response(
                 jsonify({"status": "error", "msg": "There is something wrong, please contact Administrator."}), 400
             )

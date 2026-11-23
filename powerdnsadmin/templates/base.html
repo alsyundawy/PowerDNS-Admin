@@ -248,7 +248,9 @@
                 try {
                     var u = new URL(v, window.location.href);
                     if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
-                } catch (e) {}
+                } catch (_ignored) {
+                    /* Fallback to default logout/login URL if URL parsing fails */
+                }
                 return fallback || '/logout';
             }
 

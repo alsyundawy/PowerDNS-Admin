@@ -4,7 +4,6 @@ This is usually used to add ssl certificates and prepend a subdirectory
 
 The network_mode host settings is not neccessary but used for ldap availability in this case
 
-
 docker-compose.yml
 
 ```

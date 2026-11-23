@@ -3,6 +3,7 @@ How to run PowerDNS-Admin via WSGI and Apache2.4 using mod_wsgi.
 **Note**: You must install mod_wsgi by using pip3 instead of system default mod_wsgi!!!
 
 ### Ubuntu/Debian
+
 ```shell
 # apt install apache2-dev
 # virtualenv -p python3 flask
@@ -12,7 +13,9 @@ How to run PowerDNS-Admin via WSGI and Apache2.4 using mod_wsgi.
 (flask) # a2enmod wsgi
 (flask) # systemctl restart apache2
 ```
+
 ### CentOS
+
 ```shell
 # yum install httpd-devel
 # virtualenv -p python3 flask
@@ -21,7 +24,9 @@ How to run PowerDNS-Admin via WSGI and Apache2.4 using mod_wsgi.
 (flask) # mod_wsgi-express install-module > /etc/httpd/conf.modules.d/02-wsgi.conf
 (flask) # systemctl restart httpd
 ```
+
 ### Fedora
+
 ```bash
 # Install Apache's Development interfaces and package requirements
 dnf install httpd-devel gcc gc make
@@ -37,6 +42,7 @@ systemctl restart httpd
 ```
 
 Apache vhost configuration;
+
 ```apache
 <VirtualHost *:443>
         ServerName superawesomedns.foo.bar
@@ -70,16 +76,21 @@ Apache vhost configuration;
         </Directory>
 </VirtualHost>
 ```
+
 **In Fedora, you might want to change the following line:**
+
 ```apache
 WSGIDaemonProcess pdnsadmin socket-user=apache user=pdnsadmin group=pdnsadmin threads=5
 ```
+
 **And you should add the following line to `/etc/httpd/conf/httpd.conf`:**
+
 ```apache
 WSGISocketPrefix /var/run/wsgi
 ```
 
 Content of `/srv/vhosts/superawesomedns.foo.bar/powerdnsadmin.wsgi`;
+
 ```python
 #!/usr/bin/env python3
 import sys
@@ -87,7 +98,9 @@ sys.path.insert(0, '/srv/vhosts/superawesomedns.foo.bar')
 
 from app import app as application
 ```
-Starting from 0.2 version, the `powerdnsadmin.wsgi` file is slighty different : 
+
+Starting from 0.2 version, the `powerdnsadmin.wsgi` file is slighty different :
+
 ```python
 #!/usr/bin/env python3
 import sys

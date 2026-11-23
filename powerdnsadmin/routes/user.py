@@ -23,6 +23,7 @@ from ..models.user import Anonymous, User
 from .index import password_policy_check
 
 user_bp = Blueprint("user", __name__, template_folder="templates", url_prefix="/user")
+USER_PROFILE_TEMPLATE = "user_profile.html"
 
 
 @user_bp.before_request
@@ -49,7 +50,7 @@ def before_request():
 @login_required
 def profile():
     if request.method == "GET":
-        return render_template("user_profile.html")
+        return render_template(USER_PROFILE_TEMPLATE)
     if request.method == "POST":
         if session["authentication_type"] == "LOCAL":
             firstname = request.form.get("firstname", "").strip()
@@ -108,7 +109,7 @@ def profile():
                     ),
                     400,
                 )
-            return render_template("user_profile.html", error_messages=password_policy)
+            return render_template(USER_PROFILE_TEMPLATE, error_messages=password_policy)
 
         user = User(
             username=current_user.username,
@@ -121,13 +122,13 @@ def profile():
 
         user.update_profile()
 
-        return render_template("user_profile.html")
+        return render_template(USER_PROFILE_TEMPLATE)
 
 
-@user_bp.route("/qrcode")
+@user_bp.route("/qrcode", methods=["GET"])
 @login_required
 def qrcode():
-    if not current_user:
+    if not current_user.is_authenticated:
         return redirect(url_for("index"))
 
     return (

@@ -11,10 +11,6 @@ def azure_oauth():
     def fetch_azure_token():
         return session.get("azure_token")
 
-    def update_token(token):
-        session["azure_token"] = token
-        return token
-
     authlib_params = {
         "client_id": Setting().get("azure_oauth_key"),
         "client_secret": Setting().get("azure_oauth_secret"),
@@ -35,7 +31,7 @@ def azure_oauth():
 
     azure = authlib_oauth_client.register("azure", **authlib_params)
 
-    @current_app.route("/azure/authorized")
+    @current_app.route("/azure/authorized", methods=["GET"])
     def azure_authorized():
         use_ssl = current_app.config.get("SERVER_EXTERNAL_SSL")
         params = {"_external": True}

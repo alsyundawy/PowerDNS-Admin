@@ -7,7 +7,7 @@ class StructuredException(Exception):
         self.name = name
 
     def to_dict(self):
-        rv = dict()
+        rv = {}
         msg = ""
         if self.name:
             msg = "{0} {1}".format(self.message, self.name)

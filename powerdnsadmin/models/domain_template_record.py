@@ -30,7 +30,7 @@ class DomainTemplateRecord(db.Model):
     def apply(self):
         try:
             db.session.commit()
-        except Exception as e:
-            current_app.logger.error("Can not update zone template table. Error: {0}".format(e))
+        except Exception:
+            current_app.logger.exception("Can not update zone template table")
             db.session.rollback()
             return {"status": "error", "msg": "Can not update zone template table"}

@@ -6,6 +6,8 @@ from flask import Response, current_app, jsonify, request
 
 from ..models import Setting
 
+MIME_APPLICATION_JSON = "application/json"
+
 
 def forward_request():
     pdns_api_url = Setting().get("pdns_api_url")
@@ -34,7 +36,7 @@ def forward_request():
     base_parsed = urlsplit(pdns_api_url or "")
     if base_parsed.scheme not in ("http", "https") or not base_parsed.netloc:
         return Response(
-            response='{"error":"invalid backend API configuration"}', status=500, mimetype="application/json"
+            response='{"error":"invalid backend API configuration"}', status=500, mimetype=MIME_APPLICATION_JSON
         )
 
     # Sanitize incoming path to prevent protocol-relative host redirection
@@ -58,7 +60,7 @@ def forward_request():
     # Verify that the target URL strictly matches the trusted backend scheme and host
     parsed_target = urlsplit(url)
     if parsed_target.scheme != base_parsed.scheme or parsed_target.netloc != base_parsed.netloc:
-        return Response(response='{"error":"invalid request target"}', status=400, mimetype="application/json")
+        return Response(response='{"error":"invalid request target"}', status=400, mimetype=MIME_APPLICATION_JSON)
 
     resp = requests.request(request.method, url, headers=headers, verify=verify, json=data)
 
@@ -76,4 +78,4 @@ def make_forward_response(resp):
         return jsonify(data), resp.status_code
     except Exception:
         content_str = resp.content.decode("utf-8", "replace") if isinstance(resp.content, bytes) else str(resp.content)
-        return Response(response=content_str, status=resp.status_code, mimetype="application/json")
+        return Response(response=content_str, status=resp.status_code, mimetype=MIME_APPLICATION_JSON)

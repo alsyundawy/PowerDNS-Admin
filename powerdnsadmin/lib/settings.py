@@ -556,41 +556,47 @@ class AppSettings(object):
     }
 
     @staticmethod
-    def convert_type(name, value):
+    def _parse_json_value(name, value):
         import json
         from json import JSONDecodeError
 
-        if name in AppSettings.types:
-            var_type = AppSettings.types[name]
+        try:
+            return json.loads(value)
+        except JSONDecodeError:
+            # Provide backwards compatibility for legacy non-JSON format
+            value = value.replace("'", '"').replace("True", "true").replace("False", "false")
+            try:
+                return json.loads(value)
+            except JSONDecodeError as err:
+                raise ValueError("Cannot parse json {} for variable {}".format(value, name)) from err
 
-            # Handle boolean values
-            if var_type is bool and isinstance(value, str):
-                if value.lower() in ["True", "true", "1"] or value is True:
-                    return True
-                else:
-                    return False
+    @staticmethod
+    def convert_type(name, value):
+        if name not in AppSettings.types:
+            return value
 
-            # Handle float values
-            if var_type is float:
-                return float(value)
+        var_type = AppSettings.types[name]
 
-            # Handle integer values
-            if var_type is int:
-                return int(value)
+        # Handle boolean values
+        if var_type is bool and isinstance(value, str):
+            if value.lower() in ["true", "1"] or value is True:
+                return True
+            else:
+                return False
 
-            if (var_type is dict or var_type is list) and isinstance(value, str) and len(value) > 0:
-                try:
-                    return json.loads(value)
-                except JSONDecodeError:
-                    # Provide backwards compatibility for legacy non-JSON format
-                    value = value.replace("'", '"').replace("True", "true").replace("False", "false")
-                    try:
-                        return json.loads(value)
-                    except JSONDecodeError:
-                        raise ValueError("Cannot parse json {} for variable {}".format(value, name))
+        # Handle float values
+        if var_type is float:
+            return float(value)
 
-            if var_type is str:
-                return str(value)
+        # Handle integer values
+        if var_type is int:
+            return int(value)
+
+        if (var_type is dict or var_type is list) and isinstance(value, str) and len(value) > 0:
+            return AppSettings._parse_json_value(name, value)
+
+        if var_type is str:
+            return str(value)
 
         return value
 
@@ -599,7 +605,7 @@ class AppSettings(object):
         """Load app settings from environment variables when defined."""
         import os
 
-        for var_name, default_value in AppSettings.defaults.items():
+        for var_name, _default_value in AppSettings.defaults.items():
             env_name = var_name.upper()
             current_value = None
 
@@ -610,7 +616,6 @@ class AppSettings(object):
                     )
                 with open(os.environ[env_name + "_FILE"]) as f:
                     current_value = f.read()
-                f.close()
 
             elif env_name in os.environ:
                 current_value = os.environ[env_name]

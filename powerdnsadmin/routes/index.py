@@ -5,7 +5,6 @@ import json
 import os
 import re
 import string
-import traceback
 
 from flask import (
     Blueprint,
@@ -110,7 +109,7 @@ def ping():
     return make_response("ok")
 
 
-@index_bp.route("/google/login")
+@index_bp.route("/google/login", methods=["GET"])
 def google_login():
     if not Setting().get("google_oauth_enabled") or google is None:
         current_app.logger.error(
@@ -126,7 +125,7 @@ def google_login():
         return google.authorize_redirect(redirect_uri)
 
 
-@index_bp.route("/github/login")
+@index_bp.route("/github/login", methods=["GET"])
 def github_login():
     if not Setting().get("github_oauth_enabled") or github is None:
         current_app.logger.error(
@@ -142,7 +141,7 @@ def github_login():
         return github.authorize_redirect(redirect_uri)
 
 
-@index_bp.route("/azure/login")
+@index_bp.route("/azure/login", methods=["GET"])
 def azure_login():
     if not Setting().get("azure_oauth_enabled") or azure is None:
         current_app.logger.error(
@@ -158,7 +157,7 @@ def azure_login():
         return azure.authorize_redirect(redirect_uri)
 
 
-@index_bp.route("/oidc/login")
+@index_bp.route("/oidc/login", methods=["GET"])
 def oidc_login():
     if not Setting().get("oidc_oauth_enabled") or oidc is None:
         current_app.logger.error(
@@ -498,8 +497,7 @@ def login():
                 signin_history(user.username, auth_method, False)
                 return render_template("login.html", saml_enabled=SAML_ENABLED, error="Invalid credentials")
         except Exception as e:
-            current_app.logger.error("Cannot authenticate user. Error: {}".format(e))
-            current_app.logger.debug(traceback.format_exc())
+            current_app.logger.exception("Cannot authenticate user")
             return render_template("login.html", saml_enabled=SAML_ENABLED, error=e)
 
         # check if user enabled OPT authentication
@@ -671,7 +669,7 @@ def regenerate_session():
     session.modified = True
 
 
-@index_bp.route("/logout")
+@index_bp.route("/logout", methods=["GET"])
 def logout():
     if (
         current_app.config.get("SAML_ENABLED")
@@ -1016,9 +1014,8 @@ def dyndns_update():
                 .filter(db.or_(DomainUser.user_id == current_user.id, AccountUser.user_id == current_user.id))
                 .all()
             )
-    except Exception as e:
-        current_app.logger.error("DynDNS Error: {0}".format(e))
-        current_app.logger.debug(traceback.format_exc())
+    except Exception:
+        current_app.logger.exception("DynDNS Error")
         return render_template("dyndns.html", response="911"), 200
 
     domain = None
@@ -1129,11 +1126,13 @@ def dyndns_update():
 
 
 ### START SAML AUTHENTICATION ###
-@index_bp.route("/saml/login")
+@index_bp.route("/saml/login", methods=["GET"])
 def saml_login():
     if not current_app.config.get("SAML_ENABLED", False):
         abort(400)
-    from onelogin.saml2.utils import OneLogin_Saml2_Utils
+    from onelogin.saml2.utils import (
+        OneLogin_Saml2_Utils,  # type: ignore[import-not-found]
+    )
 
     req = saml.prepare_flask_request(request)
     auth = saml.init_saml_auth(req)
@@ -1141,7 +1140,7 @@ def saml_login():
     return redirect(auth.login(return_to=redirect_url))
 
 
-@index_bp.route("/saml/metadata")
+@index_bp.route("/saml/metadata", methods=["GET"])
 def saml_metadata():
     if not current_app.config.get("SAML_ENABLED", False):
         current_app.logger.error("SAML authentication is disabled.")
@@ -1167,7 +1166,9 @@ def saml_authorized():
     if not current_app.config.get("SAML_ENABLED", False):
         current_app.logger.error("SAML authentication is disabled.")
         abort(400)
-    from onelogin.saml2.utils import OneLogin_Saml2_Utils
+    from onelogin.saml2.utils import (
+        OneLogin_Saml2_Utils,  # type: ignore[import-not-found]
+    )
 
     req = saml.prepare_flask_request(request)
     auth = saml.init_saml_auth(req)
@@ -1302,7 +1303,7 @@ def uplift_to_operator(user):
         history.add()
 
 
-@index_bp.route("/saml/sls")
+@index_bp.route("/saml/sls", methods=["GET"])
 def saml_logout():
     req = saml.prepare_flask_request(request)
     auth = saml.init_saml_auth(req)
@@ -1327,11 +1328,10 @@ def saml_logout():
 def swagger_spec():
     try:
         spec_path = os.path.join(current_app.root_path, "swagger-spec.yaml")
-        spec = open(spec_path, "r")
-        loaded_spec = load(spec.read(), Loader)
-    except Exception as e:
-        current_app.logger.error("Cannot view swagger spec. Error: {0}".format(e))
-        current_app.logger.debug(traceback.format_exc())
+        with open(spec_path, "r", encoding="utf-8") as spec:
+            loaded_spec = load(spec.read(), Loader)
+    except Exception:
+        current_app.logger.exception("Cannot view swagger spec")
         abort(500)
 
     resp = make_response(json.dumps(loaded_spec), 200)

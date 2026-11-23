@@ -51,9 +51,9 @@ class Sessions(db.Model):
                 synchronize_session=False
             )
             db.session.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             db.session.rollback()
-            current_app.logger.error("Cannot clean up expired sessions. Error: {0}".format(e))
+            current_app.logger.exception("Cannot clean up expired sessions")
             return False
         return True
 

@@ -16,7 +16,7 @@ def handle_bad_request(e):
     return render_template("errors/400.html", code=400, message=e), 400
 
 
-def handle_unauthorized_access(e):
+def handle_unauthorized_access(_e=None):
     session["next"] = request.script_root + request.path
     return redirect(url_for("index.login"))
 
@@ -77,8 +77,8 @@ def load_if_valid(user, method, src_ip, trust_user=False):
         else:
             # login_user(user, remember=False)
             return User.query.filter(User.id == user.id).first()
-    except Exception as e:
-        current_app.logger.error("Error: {0}".format(e))
+    except Exception:
+        current_app.logger.exception("User validation failed")
         return None
 
 

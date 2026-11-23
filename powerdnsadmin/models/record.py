@@ -1,5 +1,4 @@
 import re
-import traceback
 from itertools import groupby
 from urllib.parse import quote_plus, urljoin
 
@@ -55,8 +54,8 @@ class Record(object):
                 headers=headers,
                 verify=Setting().get("verify_ssl_connections"),
             )
-        except Exception as e:
-            current_app.logger.error("Cannot fetch zone's record data from remote powerdns api. DETAIL: {0}".format(e))
+        except Exception:
+            current_app.logger.exception("Cannot fetch zone's record data from remote powerdns api")
             return []
 
         rrsets = []
@@ -112,8 +111,8 @@ class Record(object):
             )
             current_app.logger.debug(jdata)
             return {"status": "ok", "msg": "Record was added successfully"}
-        except Exception as e:
-            current_app.logger.error("Cannot add record to zone {}. Error: {}".format(domain_name, e))
+        except Exception:
+            current_app.logger.exception("Cannot add record to zone {}".format(domain_name))
             current_app.logger.debug("Submitted record rrset: \n{}".format(utils.pretty_json(rrset)))
             return {"status": "error", "msg": "There was something wrong, please contact administrator"}
 
@@ -125,7 +124,7 @@ class Record(object):
         and "comments"
         """
         if not rrsets:
-            raise Exception("Empty rrsets to merge")
+            raise ValueError("Empty rrsets to merge")
         elif len(rrsets) == 1:
             # It is unique rrset already
             return rrsets[0]
@@ -191,10 +190,9 @@ class Record(object):
 
             # Format the record content, it musts end
             # with a dot character if in following types
-            if (
-                record["record_type"] in ["MX", "CNAME", "SRV", "NS", "PTR"]
-                and record["record_data"].strip()[-1:] != "."
-            ):
+            if record["record_type"] in ["MX", "CNAME", "SRV", "NS", "PTR"] and not record[
+                "record_data"
+            ].strip().endswith("."):
                 record["record_data"] += "."
 
             record_content = {
@@ -369,9 +367,8 @@ class Record(object):
             self.update_db_serial(domain_name)
             current_app.logger.info("Record was applied successfully.")
             return {"status": "ok", "msg": "Record was applied successfully", "data": (new_rrsets, del_rrsets)}
-        except Exception as e:
-            current_app.logger.error("Cannot apply record changes to zone {0}. Error: {1}".format(domain_name, e))
-            current_app.logger.debug(traceback.format_exc())
+        except Exception:
+            current_app.logger.exception("Cannot apply record changes to zone {0}".format(domain_name))
             return {"status": "error", "msg": "There was something wrong, please contact administrator"}
 
     def auto_ptr(self, domain_name, new_rrsets, del_rrsets):
@@ -449,11 +446,8 @@ class Record(object):
                         rrset = {"rrsets": rrset_data}
                         self.add(domain_reverse_name, rrset)
                 return {"status": "ok", "msg": "Auto-PTR record was updated successfully"}
-            except Exception as e:
-                current_app.logger.error(
-                    "Cannot update auto-ptr record changes to zone {0}. Error: {1}".format(domain_name, e)
-                )
-                current_app.logger.debug(traceback.format_exc())
+            except Exception:
+                current_app.logger.exception("Cannot update auto-ptr record changes to zone {0}".format(domain_name))
                 return {
                     "status": "error",
                     "msg": "Auto-PTR creation failed. There was something wrong, please contact administrator.",
@@ -481,11 +475,9 @@ class Record(object):
             )
             current_app.logger.debug(jdata)
             return {"status": "ok", "msg": "Record was removed successfully"}
-        except Exception as e:
-            current_app.logger.error(
-                "Cannot remove record {0}/{1}/{2} from zone {3}. DETAIL: {4}".format(
-                    self.name, self.type, self.data, domain, e
-                )
+        except Exception:
+            current_app.logger.exception(
+                "Cannot remove record {0}/{1}/{2} from zone {3}".format(self.name, self.type, self.data, domain)
             )
             return {"status": "error", "msg": "There was something wrong, please contact administrator"}
 
@@ -552,11 +544,9 @@ class Record(object):
             )
             current_app.logger.debug("dyndns data: {0}".format(data))
             return {"status": "ok", "msg": "Record was updated successfully"}
-        except Exception as e:
-            current_app.logger.error(
-                "Cannot add record {0}/{1}/{2} to zone {3}. DETAIL: {4}".format(
-                    self.name, self.type, self.data, domain, e
-                )
+        except Exception:
+            current_app.logger.exception(
+                "Cannot add record {0}/{1}/{2} to zone {3}".format(self.name, self.type, self.data, domain)
             )
             return {"status": "error", "msg": "There was something wrong, please contact administrator"}
 

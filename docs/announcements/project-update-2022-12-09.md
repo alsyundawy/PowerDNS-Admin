@@ -53,7 +53,7 @@ standards and requirements, technology stack, and project structure.
 This was not an easy decision to come to but one must appreciate that there aren't as many people that can get very
 excited about working on the current project code base. The current project has many barriers to entry which I intend to
 drastically impact with future changes. The reality is that it's easier to gain contribution participation with a new
-build effort as it offers an opportunity to own a part of the project with impactful contributions. 
+build effort as it offers an opportunity to own a part of the project with impactful contributions.
 
 ### Project Enhancements
 

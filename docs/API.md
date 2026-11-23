@@ -8,7 +8,6 @@
 4. Click on the API Keys menu then click on teh "Add Key" button to add a new Administrator Key
 5. Keep the base64 encoded apikey somewhere safe as it won't be available in clear anymore
 
-
 #### Accessing the API
 
 PDA has its own API, that should not be confused with the PowerDNS API. Keep in mind that you have to enable PowerDNS API with a key that will be used by PDA to manage it. Therefore, you should use PDA created keys to browse PDA's API, on PDA's adress and port. They don't grant access to PowerDNS' API.
@@ -56,6 +55,7 @@ Creating an apikey which has the Administrator role:
 # Create the key
 curl -L -vvv -H 'Content-Type: application/json' -H 'Authorization: Basic YWRtaW46YWRtaW4=' -X POST http://localhost:9191/api/v1/pdnsadmin/apikeys --data '{"description": "masterkey","domains":[], "role": "Administrator"}'
 ```
+
 Example response (don't forget to save the plain key from the output)
 
 ```json

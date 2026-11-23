@@ -1,6 +1,6 @@
 Following is an example showing how to run PowerDNS-Admin with systemd, gunicorn and Apache:
 
-The systemd and gunicorn setup are the same as for with nginx.  This set of configurations assumes you have installed your PowerDNS-Admin under /opt/powerdns-admin and are running with a package-installed gunicorn.
+The systemd and gunicorn setup are the same as for with nginx. This set of configurations assumes you have installed your PowerDNS-Admin under /opt/powerdns-admin and are running with a package-installed gunicorn.
 
 ## Configure systemd service
 
@@ -51,7 +51,7 @@ d /run/powerdns-admin 0755 pdnsa pdnsa -
 
 Then `sudo systemctl daemon-reload; sudo systemctl start powerdns-admin.socket; sudo systemctl enable powerdns-admin.socket` to start the Powerdns-Admin service and make it run on boot.
 
-## Sample Apache configuration 
+## Sample Apache configuration
 
 This includes SSL redirect.
 
@@ -91,7 +91,8 @@ This includes SSL redirect.
 ```
 
 ## Notes
-* The above assumes your installation is under /opt/powerdns-admin
-* The hostname is assumed as dnsadmin.company.com
-* gunicorn is installed in /usr/bin via a package (as in the case with CentOS/Redhat 7) and you have Python 3.6 installed.  If you prefer to use flask then see the systemd configuration for nginx.
-* On Ubuntu / Debian systems, you may need to enable the "proxy_http" module with `a2enmod proxy_http`
+
+- The above assumes your installation is under /opt/powerdns-admin
+- The hostname is assumed as dnsadmin.company.com
+- gunicorn is installed in /usr/bin via a package (as in the case with CentOS/Redhat 7) and you have Python 3.6 installed. If you prefer to use flask then see the systemd configuration for nginx.
+- On Ubuntu / Debian systems, you may need to enable the "proxy_http" module with `a2enmod proxy_http`

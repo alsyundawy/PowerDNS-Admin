@@ -3,6 +3,7 @@ Following is an example showing how to run PowerDNS-Admin with systemd, gunicorn
 ## Configure PowerDNS-Admin
 
 Create PowerDNS-Admin config file and make the changes necessary for your use case. Make sure to change `SECRET_KEY` to a long random string that you generated yourself ([see Flask docs](https://flask.palletsprojects.com/en/1.1.x/config/#SECRET_KEY)), do not use the pre-defined one.
+
 ```
 $ cp /opt/web/powerdns-admin/configs/development.py /opt/web/powerdns-admin/configs/production.py
 $ vim /opt/web/powerdns-admin/configs/production.py
@@ -63,6 +64,7 @@ d /run/powerdns-admin 0755 pdns pdns -
 Then `sudo systemctl daemon-reload; sudo systemctl start powerdns-admin.socket; sudo systemctl enable powerdns-admin.socket` to start the Powerdns-Admin service and make it run on boot.
 
 ## Sample nginx configuration
+
 ```
 server {
   listen *:80;
@@ -112,8 +114,8 @@ server {
 <details>
 <summary>Sample Nginx-Configuration for SSL</summary>
 
-* Im binding this config to every dns-name with default_server...
-* but you can remove it and set your server_name.
+- Im binding this config to every dns-name with default_server...
+- but you can remove it and set your server_name.
 
 ```
 server {
@@ -173,9 +175,11 @@ server {
         }
 }
 ```
+
 </details>
 
 ## Note
-* `/opt/web/powerdns-admin` is the path to your powerdns-admin web directory
-* Make sure you have installed gunicorn in flask virtualenv already.
-* `powerdns-admin.local` just an example of your web domain name.
+
+- `/opt/web/powerdns-admin` is the path to your powerdns-admin web directory
+- Make sure you have installed gunicorn in flask virtualenv already.
+- `powerdns-admin.local` just an example of your web domain name.

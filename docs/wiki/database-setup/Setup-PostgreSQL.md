@@ -10,6 +10,7 @@ We assume the database is installed per your platform's directions (apt, yum, et
 We assume a default configuration and only the postgres user existing.
 
 ## Setup database
+
 The below will create a database called powerdnsadmindb and a user of powerdnsadmin.
 
 ```
@@ -21,12 +22,15 @@ postgres=# ALTER ROLE powerdnsadmin WITH PASSWORD 'powerdnsadmin_password';
 ```
 
 Note:
+
 - Please change the information above (db, user, password) to fit your setup.
 
 ### Setup Remote access to database:
+
 If your database is on a different server postgres does not allow remote connections by default.
 
 To change this follow the below directions:
+
 ```
 [root@host ~]$  sudo su - postgres
 # Edit /var/lib/pgsql/data/postgresql.conf
@@ -35,7 +39,7 @@ listen_addresses = 'localhost'
 # to:
 listen_addresses = '*'
 # Edit /var/lib/pgsql/data/pg_hba.conf
-# Add the following lines to the end of the 
+# Add the following lines to the end of the
 host    all             all              0.0.0.0/0                       md5
 host    all             all              ::/0                            md5
 
@@ -44,18 +48,23 @@ host    all             all              ::/0                            md5
 ```
 
 On debian based systems these files are located in:
+
 ```
 /etc/postgresql/<version>/main/
 ```
 
 ## Install required packages:
+
 ### Red-hat based systems:
+
 TODO: confirm this is correct
+
 ```
 sudo yum install postgresql-libs
 ```
 
 ### Debian based systems:
+
 ```
 apt install python3-psycopg2
 ```
@@ -64,16 +73,17 @@ apt install python3-psycopg2
 
 ** To fill in **
 
-
 ## Docker (TODO: to move to docker docs)
+
 TODO: Setup a local Docker postgres database ready to go (should probably move to the top).
+
 ```
-docker run --name pdnsadmin-test -e BIND_ADDRESS=0.0.0.0 
--e SECRET_KEY='a-very-secret-key' 
--e PORT='9191' 
--e SQLA_DB_USER='powerdns_admin_user' 
--e SQLA_DB_PASSWORD='exceptionallysecure' 
--e SQLA_DB_HOST='192.168.0.100' 
--e SQLA_DB_NAME='powerdns_admin_test' 
+docker run --name pdnsadmin-test -e BIND_ADDRESS=0.0.0.0
+-e SECRET_KEY='a-very-secret-key'
+-e PORT='9191'
+-e SQLA_DB_USER='powerdns_admin_user'
+-e SQLA_DB_PASSWORD='exceptionallysecure'
+-e SQLA_DB_HOST='192.168.0.100'
+-e SQLA_DB_NAME='powerdns_admin_test'
 -v /data/node_modules:/var/www/powerdns-admin/node_modules -d -p 9191:9191 ixpict/powerdns-admin-pgsql:latest
 ```

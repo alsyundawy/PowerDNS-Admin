@@ -31,16 +31,27 @@ Dokumen ini memuat catatan teknis perbaikan, peningkatan keamanan, perubahan UI/
    - Menghilangkan penugasan variabel lokal yang tidak terpakai pada `powerdnsadmin/__init__.py` (`SSLify(app)`) dan `powerdnsadmin/models/__init__.py` (`Migrate(app, db)`).
    - Membersihkan impor tidak terpakai pada migrasi Alembic `b24bf17725d2`.
 
-2. **Remediasi Aturan Ruff B010** (`powerdnsadmin/routes/api.py`)
+2. **Remediasi Diagnostik SonarQube / SonarLint & Aturan Ruff**
+   - **SonarLint S3776 & Ruff B904 / B007** (`powerdnsadmin/lib/settings.py`): Mengekstrak fungsi helper `_parse_json_value` untuk mereduksi kompleksitas kognitif, menerapkan exception chaining `raise ValueError(...) from err`, dan menandai variabel loop tak terpakai dengan `_default_value`.
+   - **SonarLint S5779, S2737, S112, Ruff B904 / B007** (`powerdnsadmin/lib/utils.py`): Mengganti `assert` pada kode produksi dengan validasi header eksplisit, menghapus blok try-except redundan, memperbaiki cakupan variabel loop, dan mengganti pengecualian generik `Exception` dengan `ValueError`.
+   - **SonarLint S8572 & Pembersihan Logging di Seluruh Model & Rute** (`powerdnsadmin/models/*.py`, `powerdnsadmin/routes/*.py`, `powerdnsadmin/services/*.py`): Mengganti pola logging multi-baris `logger.error` yang diikuti pemanggilan `traceback.format_exc()` dengan pemanggilan langsung `logger.exception(...)` yang aman dan otomatis menangkap konteks traceback.
+   - **SonarLint S6965 (Metode HTTP Eksplisit)**: Menambahkan deklarasi eksplisit `methods=["GET"]` pada dekorator rute Flask di `routes/user.py`, `routes/index.py`, `routes/api.py`, `services/azure.py`, `services/github.py`, `services/google.py`, dan `services/oidc.py`.
+   - **SonarLint S116, S117, S100 & Konvensi Penamaan PEP8** (`powerdnsadmin/models/user.py`, `routes/admin.py`, `services/saml.py`): Mengubah penamaan variabel dan fungsi camelCase menjadi snake_case dengan tetap mempertahankan alias kompatibilitas mundur (`check_if_domain_exists`, `check_if_account_exists`, `get_correct_entitlements`, `get_user_info`, `detailed_histories`, `change_set`, `to_dict`).
+   - **SonarLint S5850 & S1226** (`powerdnsadmin/routes/domain.py`): Mengklarifikasi preseden operator regex dengan grup `r"(?:ip6|in-addr)\.arpa$"`, dan mengeliminasi penetapan ulang nilai parameter fungsi.
+   - **SonarLint S6903, S7498 & S7494**: Memigrasi `datetime.utcnow()` usang ke timezone-aware `datetime.now(timezone.utc)` di `certutil.py`, mengadopsi dictionary comprehension di `domain.py`, dan mengganti konstruktor `dict()` dengan `{}` di `errors.py`.
+   - **SonarLint S1192**: Mengekstrak string literal yang berulang menjadi konstanta modul di `routes/user.py`, `lib/helper.py`, dan `models/domain.py`.
+   - **SonarLint S2486**: Mendokumentasikan blok penanganan error JavaScript di `base.html` dan `1base.html`.
+
+3. **Remediasi Aturan Ruff B010** (`powerdnsadmin/routes/api.py`)
    - Mengganti penggunaan `setattr(apikey, "plain_key", ...)` dengan penetapan properti langsung bertipe kuat `apikey.plain_key = ...`.
 
-3. **Restorasi Konfigurasi Trunk & Linter**
+4. **Restorasi Konfigurasi Trunk & Linter**
    - Memperbaiki korupsi sintaks pada `.markdownlint.json`, `.trunk/trunk.yaml`, `setup.cfg`, dan `pyproject.toml`.
    - Mengonfigurasi Trunk runtime menggunakan Node.js hermetis `node@22.16.0` dan Python 3.10 sistem.
    - Menambahkan konfigurasi `[tool.pyrefly]` pada `pyproject.toml` dengan `preset = "basic"` dan cakupan direktori proyek yang ketat, menuntaskan 129+ peringatan tipe Pyrefly (945 pesan error IDE) menjadi 0 error.
    - Mengamankan pemanggilan `fileConfig(config.config_file_name)` dan `SQLALCHEMY_DATABASE_URI` di `migrations/env.py` terhadap potensi dereferensi `NoneType`.
 
-4. **Kepatuhan SonarLint & Aksesibilitas Templat HTML**
+5. **Kepatuhan SonarLint & Aksesibilitas Templat HTML**
    - Menghapus elemen kedaluwarsa `<font>` pada `admin_manage_keys.html`, `domain_setting.html`, dan `resend_confirmation_email.html` serta menggantinya dengan kelas semantik CSS (`text-danger`, `text-success`).
    - Menambahkan atribut `lang="en"` dan menghapus batasan zoom `user-scalable=no` pada `email_confirmation.html`, `resend_confirmation_email.html`, serta templat email akun.
    - Menyediakan teks alternatif (`alt="User OTP QR Code"`) pada gambar QR code di `user_profile.html`.

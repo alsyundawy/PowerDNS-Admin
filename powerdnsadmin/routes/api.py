@@ -178,8 +178,11 @@ def handle_500(err):
 
 
 @api_bp.errorhandler(StructuredException)
-def handle_StructuredException(err):
+def handle_structured_exception(err):
     return jsonify(err.to_dict()), err.status_code
+
+
+handle_StructuredException = handle_structured_exception
 
 
 @api_bp.errorhandler(DomainNotExists)
@@ -462,8 +465,8 @@ def api_generate_apikey():
     return jsonify(apikey_plain_schema.dump(apikey)), 201
 
 
-@api_bp.route("/pdnsadmin/apikeys", defaults={"domain_name": None})
-@api_bp.route("/pdnsadmin/apikeys/<string:domain_name>")
+@api_bp.route("/pdnsadmin/apikeys", defaults={"domain_name": None}, methods=["GET"])
+@api_bp.route("/pdnsadmin/apikeys/<string:domain_name>", methods=["GET"])
 @api_basic_auth
 def api_get_apikeys(domain_name):
     apikeys = []
@@ -708,8 +711,8 @@ def api_update_apikey(apikey_id):
     return "", 204
 
 
-@api_bp.route("/pdnsadmin/users", defaults={"username": None})
-@api_bp.route("/pdnsadmin/users/<string:username>")
+@api_bp.route("/pdnsadmin/users", defaults={"username": None}, methods=["GET"])
+@api_bp.route("/pdnsadmin/users/<string:username>", methods=["GET"])
 @api_basic_auth
 @api_role_can("list users", allow_self=True)
 def api_list_users(username=None):
@@ -913,8 +916,8 @@ def api_delete_user(user_id):
     return "", 204
 
 
-@api_bp.route("/pdnsadmin/accounts", defaults={"account_name": None})
-@api_bp.route("/pdnsadmin/accounts/<string:account_name>")
+@api_bp.route("/pdnsadmin/accounts", defaults={"account_name": None}, methods=["GET"])
+@api_bp.route("/pdnsadmin/accounts/<string:account_name>", methods=["GET"])
 @api_basic_auth
 @api_role_can("list accounts")
 def api_list_accounts(account_name):

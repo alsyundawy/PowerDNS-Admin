@@ -28,14 +28,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Resolved all formatting, visual indentation, whitespace, and blank line violations across 43+ Python files (`E111`, `E122`, `E124`, `E125`, `E127`, `E128`, `E225`, `E231`, `E251`, `E261`, `E262`, `E265`, `E302`, `E303`, `F401`, `F841`).
   - Eliminated unused local variable assignments in `powerdnsadmin/__init__.py` (`SSLify(app)`) and `powerdnsadmin/models/__init__.py` (`Migrate(app, db)`).
   - Cleaned unused imports in Alembic migration `b24bf17725d2`.
+- **SonarQube / SonarLint & Ruff Diagnostics Hardening**
+  - **SonarLint S3776 & Ruff B904 / B007** (`powerdnsadmin/lib/settings.py`): Extracted `_parse_json_value` helper to decrease cognitive complexity, chained exceptions with `raise ValueError(...) from err`, and prefixed unused loop variables.
+  - **SonarLint S5779, S2737, S112, Ruff B904 / B007** (`powerdnsadmin/lib/utils.py`): Replaced runtime assertions with explicit content-type validations, eliminated redundant try-except re-raising, fixed loop variable scopes, and raised explicit `ValueError` instead of generic `Exception`.
+  - **SonarLint S8572 & Clean Logging Across All Models & Routes** (`powerdnsadmin/models/*.py`, `powerdnsadmin/routes/*.py`, `powerdnsadmin/services/*.py`): Replaced multi-line `logger.error` followed by redundant `traceback.format_exc()` debug logs with direct `logger.exception(...)` calls, automatically capturing stack traces safely.
+  - **SonarLint S6965 (Explicit HTTP Methods)**: Added explicit `methods=["GET"]` to route definitions across `routes/user.py`, `routes/index.py`, `routes/api.py`, `services/azure.py`, `services/github.py`, `services/google.py`, and `services/oidc.py`.
+  - **SonarLint S116, S117, S100 & PEP8 Naming** (`powerdnsadmin/models/user.py`, `routes/admin.py`, `services/saml.py`): Renamed non-standard camelCase variables and methods to snake_case while maintaining backward-compatible aliases (`check_if_domain_exists`, `check_if_account_exists`, `get_correct_entitlements`, `get_user_info`, `detailed_histories`, `change_set`, `to_dict`).
+  - **SonarLint S5850 & S1226** (`powerdnsadmin/routes/domain.py`): Clarified regex alternation precedence with `r"(?:ip6|in-addr)\.arpa$"`, and eliminated function parameter reassignment.
+  - **SonarLint S6903 & S7498 & S7494**: Migrated deprecated `datetime.utcnow()` to timezone-aware `datetime.now(timezone.utc)` in `certutil.py`, adopted dictionary comprehensions in `domain.py`, and replaced `dict()` calls with `{}` in `errors.py`.
+  - **SonarLint S1192**: Extracted repeated string literals to module-level constants in `routes/user.py`, `lib/helper.py`, and `models/domain.py`.
+  - **SonarLint S2486**: Documented JavaScript catch block fallback in `base.html` and `1base.html`.
 - **Ruff B010 Remediation** (`powerdnsadmin/routes/api.py`)
   - Replaced `setattr(apikey, "plain_key", ...)` with direct typed property access `apikey.plain_key = ...`.
 - **Trunk & Linter Configurations**
   - Repaired syntax corruption in `.markdownlint.json`, `.trunk/trunk.yaml`, `setup.cfg`, and `pyproject.toml`.
   - Configured Trunk runtime to use hermetic `node@22.16.0` and system Python 3.10.
   - Added `[tool.pyrefly]` configuration in `pyproject.toml` with `preset = "basic"` and project layout boundaries, achieving 0 errors across the workspace.
+  - Resolved `unused-coroutine` false positive in `routes/user.py` by verifying `current_user.is_authenticated`.
   - Guarded `migrations/env.py` logging configuration and SQLAlchemy database URI against `NoneType` attribute errors.
-- **SonarLint & HTML Accessibility Verification**
+- **HTML Accessibility Verification**
   - Eliminated deprecated `<font>` elements in `admin_manage_keys.html`, `domain_setting.html`, and `resend_confirmation_email.html` in favor of semantic CSS styling (`text-danger`, `text-success`).
   - Added missing `lang="en"` and removed restrictive `user-scalable=no` viewport definitions in `email_confirmation.html`, `resend_confirmation_email.html`, and email templates.
   - Provided accessible `alt` text for OTP QR codes in `user_profile.html`.

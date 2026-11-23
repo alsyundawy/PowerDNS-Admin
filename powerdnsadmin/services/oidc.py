@@ -36,7 +36,7 @@ def oidc_oauth():
 
     oidc = authlib_oauth_client.register("oidc", **authlib_params)
 
-    @current_app.route("/oidc/authorized")
+    @current_app.route("/oidc/authorized", methods=["GET"])
     def oidc_authorized():
         use_ssl = current_app.config.get("SERVER_EXTERNAL_SSL")
         params = {"_external": True}

@@ -199,7 +199,8 @@ class HistoryRecordEntry:
             change_type  # "*": edit or unchanged, "+" new tuple(name,type), "-" deleted (name,type) tuple
         )
         self.changed_fields = []  # contains a subset of : [ttl, name, type]
-        self.changeSet = []  # all changes for the records of this add_rrset-del_rrset pair
+        self.change_set = []  # all changes for the records of this add_rrset-del_rrset pair
+        self.changeSet = self.change_set
 
         if change_type == "+" or change_type == "-":
             self.changed_fields.append("name")
@@ -210,9 +211,10 @@ class HistoryRecordEntry:
             if add_rrset["ttl"] != del_rrset["ttl"]:
                 self.changed_fields.append("ttl")
 
-        self.changeSet = get_record_changes(del_rrset, add_rrset)
+        self.change_set = get_record_changes(del_rrset, add_rrset)
+        self.changeSet = self.change_set
 
-    def toDict(self):
+    def to_dict(self):
         return {
             "add_rrset": self.add_rrset,
             "del_rrset": self.del_rrset,
@@ -220,8 +222,10 @@ class HistoryRecordEntry:
             "created_on": self.history_entry.created_on,
             "created_by": self.history_entry.created_by,
             "change_type": self.change_type,
-            "changeSet": self.changeSet,
+            "changeSet": self.change_set,
         }
+
+    toDict = to_dict
 
     def __eq__(self, obj2):  # used for removal of objects from a list
         return True if obj2.toDict() == self.toDict() else False
@@ -933,13 +937,13 @@ class DetailedHistory:
 
 # convert a list of History objects into DetailedHistory objects
 def convert_histories(histories):
-    detailedHistories = []
+    detailed_histories = []
     for history in histories:
         if history.detail and ("add_rrsets" in history.detail or "del_rrsets" in history.detail):
-            detailedHistories.append(DetailedHistory(history, extract_changelogs_from_history([history])))
+            detailed_histories.append(DetailedHistory(history, extract_changelogs_from_history([history])))
         else:
-            detailedHistories.append(DetailedHistory(history, None))
-    return detailedHistories
+            detailed_histories.append(DetailedHistory(history, None))
+    return detailed_histories
 
 
 @admin_bp.route("/history", methods=["GET", "POST"])
@@ -1059,7 +1063,7 @@ def history_table():  # ajax call data
         else:
             return make_response(jsonify({"status": "error", "msg": "Can not remove histories."}), 500)
 
-    detailedHistories = []
+    detailed_histories = []
     lim = int(Setting().get("max_history_records"))  # max num of records
 
     if request.method == "GET":
@@ -1304,24 +1308,24 @@ def history_table():  # ajax call data
         else:  # default view
             histories = base_query.order_by(History.created_on.desc()).limit(lim).all()
 
-        detailedHistories = convert_histories(histories)
+        detailed_histories = convert_histories(histories)
 
         # Remove dates from previous or next day that were brought over
         if tzoffset is not None:
             min_date_split = min_date.split()[0] if min_date is not None else None
             max_date_split = max_date.split()[0] if max_date is not None else None
-            for i, history_rec in enumerate(detailedHistories):
+            for i, history_rec in enumerate(detailed_histories):
                 local_date = str(from_utc_to_local(int(tzoffset), history_rec.history.created_on).date())
                 if (min_date_split is not None and local_date == min_date_split) or (
                     max_date_split is not None and local_date == max_date_split
                 ):
-                    detailedHistories[i] = None
+                    detailed_histories[i] = None
 
         # Remove elements previously flagged as None
-        detailedHistories = [h for h in detailedHistories if h is not None]
+        detailed_histories = [h for h in detailed_histories if h is not None]
 
         return render_template(
-            "admin_history_table.html", histories=detailedHistories, len_histories=len(detailedHistories), lim=lim
+            "admin_history_table.html", histories=detailed_histories, len_histories=len(detailed_histories), lim=lim
         )
 
 

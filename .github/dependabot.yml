@@ -8,9 +8,9 @@ updates:
       interval: daily
     ignore:
       - dependency-name: "*"
-        update-types: [ "version-update:semver-major" ]
+        update-types: ["version-update:semver-major"]
     labels:
-      - 'feature / dependency'
+      - "feature / dependency"
   - package-ecosystem: pip
     target-branch: dev
     directory: /
@@ -18,6 +18,6 @@ updates:
       interval: daily
     ignore:
       - dependency-name: "*"
-        update-types: [ "version-update:semver-major" ]
+        update-types: ["version-update:semver-major"]
     labels:
-      - 'feature / dependency'
+      - "feature / dependency"

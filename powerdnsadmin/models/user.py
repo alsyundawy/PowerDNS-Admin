@@ -144,9 +144,9 @@ class User(db.Model):
                 synchronize_session=False,
             )
             db.session.commit()
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            current_app.logger.error("Cannot record OTP usage for user {0}. DETAIL: {1}".format(self.username, e))
+            current_app.logger.exception("Cannot record OTP usage for user {0}".format(self.username))
             return False
 
         return claimed == 1
@@ -195,8 +195,19 @@ class User(db.Model):
             filter_str = filter_str.replace(escape_char, replace_chars[escape_chars.index(escape_char)])
         return filter_str
 
-    def ldap_search(self, searchFilter, baseDN, retrieveAttributes=None):
-        searchScope = ldap.SCOPE_SUBTREE
+    def ldap_search(
+        self,
+        search_filter=None,
+        base_dn=None,
+        retrieve_attributes=None,
+        searchFilter=None,
+        baseDN=None,
+        retrieveAttributes=None,
+    ):
+        search_filter = search_filter or searchFilter
+        base_dn = base_dn or baseDN
+        retrieve_attributes = retrieve_attributes or retrieveAttributes
+        search_scope = ldap.SCOPE_SUBTREE
 
         try:
             conn = self.ldap_init_conn()
@@ -204,7 +215,7 @@ class User(db.Model):
                 conn.simple_bind_s("{0}@{1}".format(self.username, Setting().get("ldap_domain")), self.password)
             else:
                 conn.simple_bind_s(Setting().get("ldap_admin_username"), Setting().get("ldap_admin_password"))
-            ldap_result_id = conn.search(baseDN, searchScope, searchFilter, retrieveAttributes)
+            ldap_result_id = conn.search(base_dn, search_scope, search_filter, retrieve_attributes)
             result_set = []
 
             while 1:
@@ -216,18 +227,16 @@ class User(db.Model):
                         result_set.append(result_data)
             return result_set
 
-        except ldap.LDAPError as e:
-            current_app.logger.error(e)
-            current_app.logger.debug("baseDN: {0}".format(baseDN))
-            current_app.logger.debug(traceback.format_exc())
+        except ldap.LDAPError:
+            current_app.logger.exception("LDAP search failed for base_dn: {0}".format(base_dn))
 
     def ldap_auth(self, ldap_username, password):
         try:
             conn = self.ldap_init_conn()
             conn.simple_bind_s(ldap_username, password)
             return True
-        except ldap.LDAPError as e:
-            current_app.logger.error(e)
+        except ldap.LDAPError:
+            current_app.logger.exception("LDAP authentication failed")
             return False
 
     def is_validate(self, method, src_ip="", trust_user=False):
@@ -284,10 +293,10 @@ class User(db.Model):
 
             # Escape user-controlled username before using it in LDAP filter
             escaped_username = ldap.filter.escape_filter_chars(self.username or "")
-            searchFilter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME, escaped_username, LDAP_FILTER_BASIC)
-            current_app.logger.debug("Ldap searchFilter {0}".format(searchFilter))
+            search_filter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME, escaped_username, LDAP_FILTER_BASIC)
+            current_app.logger.debug("Ldap searchFilter {0}".format(search_filter))
 
-            ldap_result = self.ldap_search(searchFilter, LDAP_BASE_DN)
+            ldap_result = self.ldap_search(search_filter, LDAP_BASE_DN)
             current_app.logger.debug("Ldap search result: {0}".format(ldap_result))
 
             if not ldap_result:
@@ -314,25 +323,25 @@ class User(db.Model):
                     if LDAP_GROUP_SECURITY_ENABLED:
                         try:
                             if LDAP_TYPE == "ldap":
-                                groupSearchFilter = "(&({0}={1}){2})".format(
+                                group_search_filter = "(&({0}={1}){2})".format(
                                     LDAP_FILTER_GROUPNAME, ldap_username, LDAP_FILTER_GROUP
                                 )
-                                current_app.logger.debug("Ldap groupSearchFilter {0}".format(groupSearchFilter))
-                                if LDAP_ADMIN_GROUP and self.ldap_search(groupSearchFilter, LDAP_ADMIN_GROUP):
+                                current_app.logger.debug("Ldap groupSearchFilter {0}".format(group_search_filter))
+                                if LDAP_ADMIN_GROUP and self.ldap_search(group_search_filter, LDAP_ADMIN_GROUP):
                                     role_name = "Administrator"
                                     current_app.logger.info(
                                         'User {0} is part of the "{1}" group that allows admin access to PowerDNS-Admin'.format(
                                             self.username, LDAP_ADMIN_GROUP
                                         )
                                     )
-                                elif LDAP_OPERATOR_GROUP and self.ldap_search(groupSearchFilter, LDAP_OPERATOR_GROUP):
+                                elif LDAP_OPERATOR_GROUP and self.ldap_search(group_search_filter, LDAP_OPERATOR_GROUP):
                                     role_name = "Operator"
                                     current_app.logger.info(
                                         'User {0} is part of the "{1}" group that allows operator access to PowerDNS-Admin'.format(
                                             self.username, LDAP_OPERATOR_GROUP
                                         )
                                     )
-                                elif LDAP_USER_GROUP and self.ldap_search(groupSearchFilter, LDAP_USER_GROUP):
+                                elif LDAP_USER_GROUP and self.ldap_search(group_search_filter, LDAP_USER_GROUP):
                                     current_app.logger.info(
                                         'User {0} is part of the "{1}" group that allows user access to PowerDNS-Admin'.format(
                                             self.username, LDAP_USER_GROUP
@@ -408,9 +417,8 @@ class User(db.Model):
                             current_app.logger.debug(traceback.format_exc())
                             return False
 
-                except Exception as e:
-                    current_app.logger.error("Wrong LDAP configuration. {0}".format(e))
-                    current_app.logger.debug(traceback.format_exc())
+                except Exception:
+                    current_app.logger.exception("Wrong LDAP configuration")
                     return False
 
             # create user if not exist in the db
@@ -627,9 +635,9 @@ class User(db.Model):
             User.query.filter(User.username == self.username).delete()
             db.session.commit()
             return True
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            current_app.logger.error("Cannot delete user {0} from DB. DETAIL: {1}".format(self.username, e))
+            current_app.logger.exception("Cannot delete user {0} from DB".format(self.username))
             return False
 
     def revoke_privilege(self, update_user=False):
@@ -646,9 +654,9 @@ class User(db.Model):
                     AccountUser.query.filter(AccountUser.user_id == user_id).delete()
                 db.session.commit()
                 return True
-            except Exception as e:
+            except Exception:
                 db.session.rollback()
-                current_app.logger.error("Cannot revoke user {0} privileges. DETAIL: {1}".format(self.username, e))
+                current_app.logger.exception("Cannot revoke user {0} privileges".format(self.username))
                 return False
         return False
 
@@ -698,9 +706,9 @@ class User(db.Model):
         LDAP_BASE_DN = Setting().get("ldap_base_dn")
         LDAP_FILTER_USERNAME = Setting().get("ldap_filter_username")
         LDAP_FILTER_BASIC = Setting().get("ldap_filter_basic")
-        searchFilter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME, self.username, LDAP_FILTER_BASIC)
-        current_app.logger.debug("Ldap searchFilter {0}".format(searchFilter))
-        ldap_result = self.ldap_search(searchFilter, LDAP_BASE_DN, [key])
+        search_filter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME, self.username, LDAP_FILTER_BASIC)
+        current_app.logger.debug("Ldap searchFilter {0}".format(search_filter))
+        ldap_result = self.ldap_search(search_filter, LDAP_BASE_DN, [key])
         current_app.logger.debug("Ldap search result: {0}".format(ldap_result))
         entitlements = []
         if ldap_result:
@@ -713,28 +721,30 @@ class User(db.Model):
                 current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
         return entitlements
 
-    def updateUser(self, Entitlements):
+    def update_user(self, entitlements):
         """
         Update user associations based on ldap attribute
         """
-        entitlements = getCorrectEntitlements(Entitlements)
-        if len(entitlements) != 0:
+        correct_entitlements = get_correct_entitlements(entitlements)
+        if len(correct_entitlements) != 0:
             self.revoke_privilege(True)
-            for entitlement in entitlements:
+            for entitlement in correct_entitlements:
                 arguments = entitlement.split(":")
-                entArgs = arguments[arguments.index("powerdns-admin") + 1 :]
-                role = entArgs[0]
+                ent_args = arguments[arguments.index("powerdns-admin") + 1 :]
+                role = ent_args[0]
                 self.set_role(role)
-                if (role == "User") and len(entArgs) > 1:
-                    current_domains = getUserInfo(self.get_user_domains())
-                    current_accounts = getUserInfo(self.get_accounts())
-                    domain = entArgs[1]
-                    self.addMissingDomain(domain, current_domains)
-                    if len(entArgs) > 2:
-                        account = entArgs[2]
-                        self.addMissingAccount(account, current_accounts)
+                if (role == "User") and len(ent_args) > 1:
+                    current_domains = get_user_info(self.get_user_domains())
+                    current_accounts = get_user_info(self.get_accounts())
+                    domain = ent_args[1]
+                    self.add_missing_domain(domain, current_domains)
+                    if len(ent_args) > 2:
+                        account = ent_args[2]
+                        self.add_missing_account(account, current_accounts)
 
-    def addMissingDomain(self, autoprovision_domain, current_domains):
+    updateUser = update_user
+
+    def add_missing_domain(self, autoprovision_domain, current_domains):
         """
         Add domain gathered by autoprovisioning to the current zones list of a user
         """
@@ -746,7 +756,9 @@ class User(db.Model):
             if domain is not None:
                 domain.add_user(user)
 
-    def addMissingAccount(self, autoprovision_account, current_accounts):
+    addMissingDomain = add_missing_domain
+
+    def add_missing_account(self, autoprovision_account, current_accounts):
         """
         Add account gathered by autoprovisioning to the current accounts list of a user
         """
@@ -758,23 +770,25 @@ class User(db.Model):
             if account is not None:
                 account.add_user(user)
 
+    addMissingAccount = add_missing_account
 
-def getCorrectEntitlements(Entitlements):
+
+def get_correct_entitlements(entitlements):
     """
     Gather a list of valid records from the ldap attribute given
     """
     from ..models.role import Role
 
     urn_value = Setting().get("urn_value")
-    urnArgs = [x.lower() for x in urn_value.split(":")]
-    entitlements = []
-    for Entitlement in Entitlements:
-        arguments = Entitlement.split(":")
+    urn_args = [x.lower() for x in urn_value.split(":")]
+    result_entitlements = []
+    for entitlement in entitlements:
+        arguments = entitlement.split(":")
 
         if "powerdns-admin" in arguments:
             prefix = arguments[0 : arguments.index("powerdns-admin")]
             prefix = [x.lower() for x in prefix]
-            if prefix != urnArgs:
+            if prefix != urn_args:
                 e = "Typo in first part of urn value"
                 current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
                 continue
@@ -784,13 +798,13 @@ def getCorrectEntitlements(Entitlements):
             current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
             continue
 
-        if len(arguments) <= len(urnArgs) + 1:  # prefix:powerdns-admin
+        if len(arguments) <= len(urn_args) + 1:  # prefix:powerdns-admin
             e = "No value given after the prefix"
             current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
             continue
 
-        entArgs = arguments[arguments.index("powerdns-admin") + 1 :]
-        role = entArgs[0]
+        ent_args = arguments[arguments.index("powerdns-admin") + 1 :]
+        role = ent_args[0]
         roles = Role.query.all()
         role_names = get_role_names(roles)
 
@@ -799,48 +813,57 @@ def getCorrectEntitlements(Entitlements):
             current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
             continue
 
-        if len(entArgs) > 1:
+        if len(ent_args) > 1:
             if role != "User":
                 e = "Too many arguments for Admin or Operator"
                 current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
                 continue
             else:
-                if len(entArgs) <= 3:
-                    if entArgs[1] and not checkIfDomainExists(entArgs[1]):
+                if len(ent_args) <= 3:
+                    if ent_args[1] and not check_if_domain_exists(ent_args[1]):
                         continue
-                    if len(entArgs) == 3:
-                        if entArgs[2] and not checkIfAccountExists(entArgs[2]):
+                    if len(ent_args) == 3:
+                        if ent_args[2] and not check_if_account_exists(ent_args[2]):
                             continue
                 else:
                     e = "Too many arguments"
                     current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
                     continue
 
-        entitlements.append(Entitlement)
+        result_entitlements.append(entitlement)
 
-    return entitlements
+    return result_entitlements
 
 
-def checkIfDomainExists(domainName):
+getCorrectEntitlements = get_correct_entitlements
+
+
+def check_if_domain_exists(domain_name):
     from ..models.domain import Domain
 
-    domain = db.session.query(Domain).filter(Domain.name == domainName)
+    domain = db.session.query(Domain).filter(Domain.name == domain_name)
     if len(domain.all()) == 0:
-        e = domainName + " is not found in the database"
+        e = domain_name + " is not found in the database"
         current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
         return False
     return True
 
 
-def checkIfAccountExists(accountName):
+checkIfDomainExists = check_if_domain_exists
+
+
+def check_if_account_exists(account_name):
     from ..models.account import Account
 
-    account = db.session.query(Account).filter(Account.name == accountName)
+    account = db.session.query(Account).filter(Account.name == account_name)
     if len(account.all()) == 0:
-        e = accountName + " is not found in the database"
+        e = account_name + " is not found in the database"
         current_app.logger.warning("Cannot apply autoprovisioning on user: {}".format(e))
         return False
     return True
+
+
+checkIfAccountExists = check_if_account_exists
 
 
 def get_role_names(roles):
@@ -853,8 +876,11 @@ def get_role_names(roles):
     return roles_list
 
 
-def getUserInfo(DomainsOrAccounts):
+def get_user_info(domains_or_accounts):
     current = []
-    for DomainOrAccount in DomainsOrAccounts:
-        current.append(DomainOrAccount.name)
+    for domain_or_account in domains_or_accounts:
+        current.append(domain_or_account.name)
     return current
+
+
+getUserInfo = get_user_info

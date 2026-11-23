@@ -5,4 +5,4 @@ metadata:
 data:
   FLASK_APP: powerdnsadmin/__init__.py
   SECRET_KEY: changeme_secret
-  SQLALCHEMY_DATABASE_URI: 'mysql://user:password@host/database'
+  SQLALCHEMY_DATABASE_URI: "mysql://user:password@host/database"

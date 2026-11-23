@@ -24,7 +24,7 @@
 - [Environment Variables](configuration/Environment-variables.md)
 - [Getting started](configuration/Getting-started.md)
 - SystemD:
-  - [Running PowerDNS-Admin as a service using Systemd](install/Running-PowerDNS-Admin-as-a-service-(Systemd).md)
+  - [Running PowerDNS-Admin as a service using Systemd](<install/Running-PowerDNS-Admin-as-a-service-(Systemd).md>)
 
 ### Web Server configuration
 

@@ -7,6 +7,7 @@
 
     Please specify your assigned issue number on the line below.
 -->
+
 ### Fixes: #1234
 
 <!--

@@ -37,7 +37,7 @@ def github_oauth():
 
     github = authlib_oauth_client.register("github", **authlib_params)
 
-    @current_app.route("/github/authorized")
+    @current_app.route("/github/authorized", methods=["GET"])
     def github_authorized():
         use_ssl = current_app.config.get("SERVER_EXTERNAL_SSL")
         params = {"_external": True}

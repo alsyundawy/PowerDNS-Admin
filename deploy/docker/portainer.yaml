@@ -1,6 +1,5 @@
-version: '3.3'
+version: "3.3"
 services:
-
   core:
     image: powerdnsadmin/pda-legacy:latest
     restart: unless-stopped

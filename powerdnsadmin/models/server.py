@@ -1,4 +1,3 @@
-import traceback
 from urllib.parse import urljoin
 
 from flask import current_app
@@ -37,9 +36,8 @@ class Server(object):
                 verify=Setting().get("verify_ssl_connections"),
             )
             return jdata
-        except Exception as e:
-            current_app.logger.error("Can not get server configuration. DETAIL: {0}".format(e))
-            current_app.logger.debug(traceback.format_exc())
+        except Exception:
+            current_app.logger.exception("Can not get server configuration")
             return []
 
     def get_statistic(self):
@@ -57,9 +55,8 @@ class Server(object):
                 verify=Setting().get("verify_ssl_connections"),
             )
             return jdata
-        except Exception as e:
-            current_app.logger.error("Can not get server statistics. DETAIL: {0}".format(e))
-            current_app.logger.debug(traceback.format_exc())
+        except Exception:
+            current_app.logger.exception("Can not get server statistics")
             return []
 
     def global_search(self, object_type="all", query=""):
@@ -81,7 +78,6 @@ class Server(object):
                 verify=Setting().get("verify_ssl_connections"),
             )
             return jdata
-        except Exception as e:
-            current_app.logger.error("Can not make global search. DETAIL: {0}".format(e))
-            current_app.logger.debug(traceback.format_exc())
+        except Exception:
+            current_app.logger.exception("Can not make global search")
             return []

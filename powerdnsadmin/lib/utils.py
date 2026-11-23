@@ -94,9 +94,9 @@ def fetch_remote(
     try:
         if r.status_code not in (200, 201, 204, 400, 409, 422):
             r.raise_for_status()
-    except Exception:
+    except Exception as err:
         msg = "Returned status {0} and content {1}".format(r.status_code, r.text)
-        raise RuntimeError("Error while fetching {0}. {1}".format(remote_url, msg))
+        raise RuntimeError("Error while fetching {0}. {1}".format(remote_url, msg)) from err
 
     return r
 
@@ -121,10 +121,9 @@ def fetch_json(remote_url, method="GET", data=None, params=None, headers=None, t
     elif r.status_code == 409:
         return {"error": "Resource already exists or conflict", "http_code": r.status_code}
 
-    try:
-        assert "json" in r.headers["content-type"]
-    except Exception as e:
-        raise RuntimeError("Error while fetching {0}".format(remote_url)) from e
+    content_type = r.headers.get("content-type", "")
+    if "json" not in content_type:
+        raise RuntimeError("Error while fetching {0}: unexpected content-type {1}".format(remote_url, content_type))
 
     # don't use r.json here, as it will read from r.text, which will trigger
     # content encoding auto-detection in almost all cases, WHICH IS EXTREMELY
@@ -134,11 +133,8 @@ def fetch_json(remote_url, method="GET", data=None, params=None, headers=None, t
         data = json.loads(r.content.decode("utf-8"))
     except UnicodeDecodeError:
         # If the decoding fails, switch to slower but probably working .json()
-        try:
-            logging.warning("UTF-8 content.decode failed, switching to slower .json method")
-            data = r.json()
-        except Exception as e:
-            raise e
+        logging.warning("UTF-8 content.decode failed, switching to slower .json method")
+        data = r.json()
     except Exception as e:
         raise RuntimeError("Error while loading JSON data from {0}".format(remote_url)) from e
     return data
@@ -186,8 +182,10 @@ def display_time(amount, units="s", remove_seconds=True):
         (lambda decades: divmod(decades, 10), "Y"),
     ]
 
-    for index_start, (interval, unit) in enumerate(INTERVALS):
+    index_start = 0
+    for idx, (_, unit) in enumerate(INTERVALS):
         if unit == units:
+            index_start = idx
             break
 
     amount_abrev = []
@@ -263,7 +261,7 @@ def pretty_domain_name(domain_name):
             domain_name = idna.decode(domain_name)
         except Exception as e:
             # If the decoding fails, raise an exception with more information
-            raise Exception("Cannot decode IDN zone: {}".format(e))
+            raise ValueError("Cannot decode IDN zone: {}".format(e)) from e
 
     # Return the "pretty" version of the zone name
     return domain_name
@@ -289,7 +287,7 @@ def to_idna(value, action):
             else:
                 result.append(split)
     else:
-        raise Exception("No valid action received")
+        raise ValueError("No valid action received")
     return ".".join(result)
 
 

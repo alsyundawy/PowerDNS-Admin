@@ -9,9 +9,10 @@
 #
 ##############################################################
 
+import logging
+
 ### Imports
 import sys
-import logging
 
 from powerdnsadmin import create_app
 from powerdnsadmin.models.domain import Domain
@@ -21,7 +22,7 @@ app = create_app()
 app.logger.setLevel(logging.INFO)
 
 with app.app_context():
-    status = Setting().get('bg_domain_updates')
+    status = Setting().get("bg_domain_updates")
 
     ### Check if bg_domain_updates is set to true
     if not status:
@@ -29,6 +30,6 @@ with app.app_context():
         sys.exit(1)
 
     ### Start the update process
-    app.logger.info('Update zones from nameserver API')
+    app.logger.info("Update zones from nameserver API")
 
     Domain().update()

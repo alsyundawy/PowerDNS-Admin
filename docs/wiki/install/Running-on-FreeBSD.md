@@ -14,6 +14,7 @@ sudo pkg install libxml2 libxslt pkgconf py37-xmlsec py37-cffi py37-ldap
 ```
 
 ## Check Out Source Code
+
 _**Note:**_ Please adjust `/opt/powerdns-admin` to your local web application directory
 
 ```bash
@@ -32,13 +33,14 @@ python3 -m venv /web/python --system-site-packages
 source /web/python/bin/activate
 /web/python/bin/python3 -m pip install --upgrade pip wheel
 # this command comments out python-ldap
-perl -pi -e 's,^python-ldap,\# python-ldap,' requirements.txt 
+perl -pi -e 's,^python-ldap,\# python-ldap,' requirements.txt
 pip3 install -r requirements.txt
 ```
 
 ## Configuring PowerDNS-Admin
 
 NOTE: The default config file is located at `./powerdnsadmin/default_config.py`. If you want to load another one, please set the `FLASK_CONF` environment variable. E.g.
+
 ```bash
 cp configs/development.py /opt/powerdns-admin/production.py
 export FLASK_CONF=/opt/powerdns-admin/production.py
@@ -53,6 +55,7 @@ vim $FLASK_CONF
 ```
 
 Edit the values below to something sensible
+
 ```python
 ### BASIC APP CONFIG
 SALT = '[something]'

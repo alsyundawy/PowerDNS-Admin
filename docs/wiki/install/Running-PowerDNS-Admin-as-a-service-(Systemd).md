@@ -1,7 +1,9 @@
-***
+---
+
 **WARNING**
 This just uses the development server for testing purposes. For production environments you should probably go with a more robust solution, like [gunicorn](web-server/Running-PowerDNS-Admin-with-Systemd,-Gunicorn--and--Nginx.md) or a WSGI server.
-***
+
+---
 
 ### Following example shows a systemd unit file that can run PowerDNS-Admin
 
@@ -22,6 +24,7 @@ Create new systemd service file:
 > sudo vim /etc/systemd/system/powerdns-admin.service
 
 General example:
+
 ```
 [Unit]
 Description=PowerDNS-Admin
@@ -40,6 +43,7 @@ WantedBy=multi-user.target
 ```
 
 Debian example:
+
 ```
 [Unit]
 Description=PowerDNS-Admin
@@ -57,16 +61,21 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
+
 Before starting the service, we need to make sure that the new user can work on the files in the PowerDNS-Admin folder:
+
 > chown -R powerdnsadmin:powerdnsadmin /opt/web/powerdns-admin
 
 After saving the file, we need to reload the systemd daemon:
+
 > sudo systemctl daemon-reload
 
 We can now try to start the service:
+
 > sudo systemctl start powerdns-admin
 
 If you would like to start PowerDNS-Admin automagically at startup enable the service:
+
 > systemctl enable powerdns-admin
 
 Should the service not be up by now, consult your syslog. Generally this will be a file permission issue, or python not finding it's modules. See the Debian unit example to see how you can use systemd in a python `virtualenv`

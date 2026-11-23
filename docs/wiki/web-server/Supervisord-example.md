@@ -1,6 +1,7 @@
 Following is an example showing how to run PowerDNS-Admin with supervisord
 
 Create supervisord program config file
+
 ```
 $ sudo vim /etc/supervisor.d/powerdnsadmin.conf
 ```

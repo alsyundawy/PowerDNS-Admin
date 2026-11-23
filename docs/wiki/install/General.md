@@ -1,18 +1,20 @@
-# General installation 
+# General installation
 
 ## PowerDNS-Admin Architecture
 
 ![PowerDNS-Admin Component Layout](Architecture.png)
 
 A PowerDNS-Admin installation includes four main components:
+
 - PowerDNS-Admin Database
 - PowerDNS-Admin Application Server
 - PowerDNS-Admin Frontend Web server
-- PowerDNS server that 
+- PowerDNS server that
 
 All 3 components can be installed on one server or if your installation is large enough or for security reasons can be split across multiple servers.
 
 ## Requirements for PowerDNS-Admin:
+
 - A linux based system. Others (Arch-based for example) may work but are currently not tested.
   - Ubuntu versions tested:
     - To fill in

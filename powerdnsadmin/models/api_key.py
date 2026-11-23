@@ -46,20 +46,19 @@ class ApiKey(db.Model):
                 self.role = role
             db.session.add(self)
             db.session.commit()
-        except Exception as e:
-            current_app.logger.error("Can not update api key table. Error: {0}".format(e))
+        except Exception:
+            current_app.logger.exception("Can not update api key table")
             db.session.rollback()
-            raise e
+            raise
 
     def delete(self):
         try:
             db.session.delete(self)
             db.session.commit()
-        except Exception as e:
-            msg_str = "Can not delete api key template. Error: {0}"
-            current_app.logger.error(msg_str.format(e))
+        except Exception:
+            current_app.logger.exception("Can not delete api key template")
             db.session.rollback()
-            raise e
+            raise
 
     def update(self, role_name=None, description=None, domains=None, accounts=None):
         try:
@@ -80,11 +79,10 @@ class ApiKey(db.Model):
                 self.accounts[:] = account_object_list
 
             db.session.commit()
-        except Exception as e:
-            msg_str = "Update of apikey failed. Error: {0}"
-            current_app.logger.error(msg_str.format(e))
-            db.session.rollback()  # fixed line
-            raise e
+        except Exception:
+            current_app.logger.exception("Update of apikey failed")
+            db.session.rollback()
+            raise
 
     def get_hashed_password(self, plain_text_password=None):
         # Hash a password for the first time
@@ -122,16 +120,16 @@ class ApiKey(db.Model):
         """
         if method == "LOCAL":
             if not self.plain_text_password:
-                raise Exception("Unauthorized")
+                raise PermissionError("Unauthorized")
 
             passw_hash = self.get_hashed_password(self.plain_text_password)
             if not passw_hash:
-                raise Exception("Unauthorized")
+                raise PermissionError("Unauthorized")
 
             apikey = ApiKey.query.filter(ApiKey.key == passw_hash.decode("utf-8")).first()
 
             if not apikey:
-                raise Exception("Unauthorized")
+                raise PermissionError("Unauthorized")
 
             return apikey
 

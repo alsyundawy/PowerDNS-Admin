@@ -25,8 +25,8 @@ class DomainTemplate(db.Model):
                 self.records.append(record)
             db.session.commit()
             return {"status": "ok", "msg": "Template records have been modified"}
-        except Exception as e:
-            current_app.logger.error("Cannot create template records Error: {0}".format(e))
+        except Exception:
+            current_app.logger.exception("Cannot create template records")
             db.session.rollback()
             return {"status": "error", "msg": "Can not create template records"}
 
@@ -35,8 +35,8 @@ class DomainTemplate(db.Model):
             db.session.add(self)
             db.session.commit()
             return {"status": "ok", "msg": "Template has been created"}
-        except Exception as e:
-            current_app.logger.error("Can not update zone template table. Error: {0}".format(e))
+        except Exception:
+            current_app.logger.exception("Can not update zone template table")
             db.session.rollback()
             return {"status": "error", "msg": "Can not update zone template table"}
 
@@ -46,7 +46,7 @@ class DomainTemplate(db.Model):
             db.session.delete(self)
             db.session.commit()
             return {"status": "ok", "msg": "Template has been deleted"}
-        except Exception as e:
-            current_app.logger.error("Can not delete zone template. Error: {0}".format(e))
+        except Exception:
+            current_app.logger.exception("Can not delete zone template")
             db.session.rollback()
             return {"status": "error", "msg": "Can not delete zone template"}
