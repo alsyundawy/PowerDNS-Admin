@@ -35,9 +35,7 @@ def forward_request():
     # Validate and sanitize the target backend URL against SSRF
     base_parsed = urlsplit(pdns_api_url or "")
     if base_parsed.scheme not in ("http", "https") or not base_parsed.netloc:
-        return Response(
-            response='{"error":"invalid backend API configuration"}', status=500, mimetype=MIME_APPLICATION_JSON
-        )
+        return jsonify({"error": "invalid backend API configuration"}), 500
 
     # Sanitize incoming path to prevent protocol-relative host redirection
     req_path = request.path

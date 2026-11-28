@@ -1,6 +1,12 @@
 import datetime
 import hashlib
 
+try:
+    import ldap
+    import ldap.filter
+except ImportError:
+    ldap = None
+
 from flask import (
     Blueprint,
     abort,
@@ -182,8 +188,13 @@ def image():
     setting = Setting()
 
     if session["authentication_type"] == "LDAP":
+        escaped_username = (
+            ldap.filter.escape_filter_chars(str(current_user.username or ""))
+            if (ldap and hasattr(ldap, "filter"))
+            else User().escape_filter_chars(str(current_user.username or ""))
+        )
         search_filter = "(&({0}={1}){2})".format(
-            setting.get("ldap_filter_username"), current_user.username, setting.get("ldap_filter_basic")
+            setting.get("ldap_filter_username"), escaped_username, setting.get("ldap_filter_basic")
         )
         result = User().ldap_search(search_filter, setting.get("ldap_base_dn"))
         if result and result[0] and result[0][0] and result[0][0][1]:

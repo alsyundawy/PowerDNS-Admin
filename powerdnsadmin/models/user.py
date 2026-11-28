@@ -189,11 +189,14 @@ class User(db.Model):
         """
         Escape chars for ldap search
         """
+        if ldap and hasattr(ldap, "filter"):
+            return ldap.filter.escape_filter_chars(str(filter_str or ""))
         escape_chars = ["\\", "*", "(", ")", "\x00"]
         replace_chars = ["\\5c", "\\2a", "\\28", "\\29", "\\00"]
-        for escape_char in escape_chars:
-            filter_str = filter_str.replace(escape_char, replace_chars[escape_chars.index(escape_char)])
-        return filter_str
+        res = str(filter_str or "")
+        for escape_char, replace_char in zip(escape_chars, replace_chars):
+            res = res.replace(escape_char, replace_char)
+        return res
 
     def ldap_search(
         self,
@@ -360,7 +363,11 @@ class User(db.Model):
                                     Operator=LDAP_OPERATOR_GROUP,
                                     User=LDAP_USER_GROUP,
                                 )
-                                user_dn = self.escape_filter_chars(ldap_result[0][0][0])
+                                user_dn = (
+                                    ldap.filter.escape_filter_chars(str(ldap_result[0][0][0] or ""))
+                                    if (ldap and hasattr(ldap, "filter"))
+                                    else self.escape_filter_chars(str(ldap_result[0][0][0] or ""))
+                                )
                                 sf_groups = ""
 
                                 for group in ldap_group_security_roles.values():
@@ -706,7 +713,12 @@ class User(db.Model):
         LDAP_BASE_DN = Setting().get("ldap_base_dn")
         LDAP_FILTER_USERNAME = Setting().get("ldap_filter_username")
         LDAP_FILTER_BASIC = Setting().get("ldap_filter_basic")
-        search_filter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME, self.username, LDAP_FILTER_BASIC)
+        escaped_username = (
+            ldap.filter.escape_filter_chars(str(self.username or ""))
+            if (ldap and hasattr(ldap, "filter"))
+            else self.escape_filter_chars(str(self.username or ""))
+        )
+        search_filter = "(&({0}={1}){2})".format(LDAP_FILTER_USERNAME, escaped_username, LDAP_FILTER_BASIC)
         current_app.logger.debug("Ldap searchFilter {0}".format(search_filter))
         ldap_result = self.ldap_search(search_filter, LDAP_BASE_DN, [key])
         current_app.logger.debug("Ldap search result: {0}".format(ldap_result))
